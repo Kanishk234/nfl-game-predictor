@@ -470,16 +470,21 @@ def week_body(season: int, week: int, passes: list[dict], result: dict | None) -
     graded = {g["game_id"]: g for g in (result or {}).get("games", [])}
     status = "" if not result else (", complete" if result["complete"] else f', {result["n_graded"]} of {result["n_games"]} played')
     def slot_html(label: str, items: list) -> str:
-        cards = "".join(game_card(pn, p, graded.get(p["game_id"])) for pn, p in items)
-        all_played = all(p["game_id"] in graded for _, p in items)
-        # Slots that are fully played fold up, so later in the week the page opens on what is
-        # still to come; a reader can always expand them.
-        if all_played:
-            return (f'<details class="slot-fold"><summary class="slot">{e(label)} <small>({len(items)} played, tap to show)</small></summary>'
-                    f'<div class="cards">{cards}</div></details>')
-        return f'<h3 class="slot">{e(label)}</h3><div class="cards">{cards}</div>'
+        """A full-width divider then the slot's cards, all inside one continuous grid.
 
-    groups = "".join(slot_html(label, items) for label, items in group_by_slot(rows))
+        The NFL week is lopsided by nature — one Thursday game, nine on Sunday afternoon, one at
+        night. Separate grids per slot made the single-game slots look broken, so every card
+        lives in the same grid and the labels span all of its columns.
+        """
+        cards = "".join(game_card(pn, p, graded.get(p["game_id"])) for pn, p in items)
+        n = len(items)
+        played = sum(1 for _, p in items if p["game_id"] in graded)
+        count = f'{n} game{"s" if n != 1 else ""}' + (f', {played} played' if played else "")
+        return f'<h3 class="slot"><span>{e(label)}</span><small>{e(count)}</small></h3>{cards}'
+
+    groups = ('<div class="week-grid">'
+              + "".join(slot_html(label, items) for label, items in group_by_slot(rows))
+              + "</div>")
     return f'''<h2>Week {week}, {season}{e(status)}</h2>
 <details class="howto"><summary>How to read a card</summary>
 <p><strong>Our pick</strong> is the model's call, in that team's colour. The bar is the win probability; the small bronze
@@ -495,7 +500,8 @@ def week_body(season: int, week: int, passes: list[dict], result: dict | None) -
 
 def season_body(history: dict | None, season: int | None, backtest: dict | None) -> str:
     parts = ['<h2>Track record</h2>',
-             '<p class="how">How the picks are doing. Updated every Tuesday, after the previous week\'s games are graded.</p>']
+             ('<p class="lede-2">Every pick is published before kickoff and scored afterwards against the '
+              'Vegas line. This page updates as each week is graded.</p>')]
     s = (history or {}).get("seasons", {}).get(str(season)) if season else None
     if s and s["summary"].get("n"):
         weeks = [w for w in s["weeks"] if w["summary"].get("n")]
@@ -505,7 +511,8 @@ def season_body(history: dict | None, season: int | None, backtest: dict | None)
         parts.append(f'<h3 class="sub">{season} season so far</h3>' + summary_strip(s["summary"], "Every graded game, official predictions only.")
                      + (f'<figure><figcaption>Share of picks that were right, week by week. The dashed line is a coin flip.</figcaption>{chart}{legend_two()}</figure>' if chart else ""))
     else:
-        parts.append('<p class="empty">Nothing graded yet. The first results land the Tuesday after Week 1. Until then, the dry run below is the best guide to what to expect.</p>')
+        parts.append('<p class="empty">Nothing graded yet. The first results land the Tuesday after Week 1. '
+                     'Until then, the dry run below is the best guide to what to expect.</p>')
     if backtest:
         parts.append(backtest_section(backtest))
     parts.append(about_section())
@@ -521,33 +528,45 @@ def backtest_section(bt: dict) -> str:
         for s, x in bt["by_season"].items())
     return f'''<section id="backtest">
   <h3 class="sub">The dry run: {first} to {last}</h3>
-  <p>Before going live, we ran the model over the last five seasons as if they were happening week by week, never letting it
-     see a game before it was played. Over {bt["n_games"]:,} games it <strong>picked the winner {pct(m["win"]["accuracy"], 1)} of the
-     time; Vegas picked {pct(v["win"]["accuracy"], 1)}.</strong> Its spreads missed the final margin by {m["spread"]["mae"]:.1f} points per
-     game on average; the Vegas line missed by {v["spread"]["mae"]:.1f}. A solid model that has not beaten the market. That is
-     the bar for this season.</p>
-  <details class="more"><summary>Season by season, and how honest the percentages are</summary>
-  <table class="compact"><thead><tr><th>Season</th><th class="num">Our picks right</th><th class="num">Vegas</th><th class="num">Our spread miss</th><th class="num">Vegas</th></tr></thead>
-  <tbody>{rows}<tr class="total"><td>All</td><td class="num">{pct(m["win"]["accuracy"], 1)}</td><td class="num">{pct(v["win"]["accuracy"], 1)}</td>
-  <td class="num">{m["spread"]["mae"]:.1f}</td><td class="num">{v["spread"]["mae"]:.1f}</td></tr></tbody></table>
-  <figure><figcaption>When we said a team had a 70% chance, did it win about 70% of the time? Each dot is a group of games;
-     dots on the dashed line mean the percentages were honest.</figcaption>
-  {calibration_chart(bt["calibration"])}{legend_two()}</figure>
-  <p class="fine"><a href="{REPO_URL}/blob/main/data/backtest.json">The numbers</a> and
-     <a href="{REPO_URL}/blob/main/docs/reports/phase2_model_backtest.md">the full report</a>, including everything tried and rejected.</p>
-  </details>
+  <div class="split">
+    <div>
+      <p>Before going live, we ran the model over the last five seasons as if they were happening week by week, never
+         letting it see a game before it was played. A solid model that has not beaten the market — and that is the bar
+         for this season.</p>
+      <dl class="strip vertical">
+        <div><dt>Our picks right</dt><dd>{pct(m["win"]["accuracy"], 1)}</dd></div>
+        <div><dt>Vegas</dt><dd class="muted">{pct(v["win"]["accuracy"], 1)}</dd></div>
+        <div><dt>Our spread miss</dt><dd>{m["spread"]["mae"]:.1f} pts</dd></div>
+        <div><dt>Vegas</dt><dd class="muted">{v["spread"]["mae"]:.1f} pts</dd></div>
+      </dl>
+      <p class="fine">Across {bt["n_games"]:,} games and {bt["n_folds"]} retrains.
+         <a href="{REPO_URL}/blob/main/data/backtest.json">The numbers</a>,
+         <a href="{REPO_URL}/blob/main/docs/reports/phase2_model_backtest.md">the full report</a>.</p>
+    </div>
+    <div>
+      <table class="compact"><thead><tr><th>Season</th><th class="num">Us</th><th class="num">Vegas</th><th class="num">Our miss</th><th class="num">Vegas</th></tr></thead>
+      <tbody>{rows}<tr class="total"><td>All</td><td class="num">{pct(m["win"]["accuracy"], 1)}</td><td class="num">{pct(v["win"]["accuracy"], 1)}</td>
+      <td class="num">{m["spread"]["mae"]:.1f}</td><td class="num">{v["spread"]["mae"]:.1f}</td></tr></tbody></table>
+      <figure><figcaption>When we said a team had a 70% chance, did it win about 70% of the time? Dots on the dashed
+         line mean the percentages were honest.</figcaption>
+      {calibration_chart(bt["calibration"])}{legend_two()}</figure>
+    </div>
+  </div>
 </section>'''
 
 
 def about_section() -> str:
     return f'''<section id="about">
   <h3 class="sub">Why you can trust the record</h3>
-  <p>Every pick is saved to a public repository <em>before</em> kickoff, with the time it was made and the exact version
-     of the model that made it. The Vegas line is saved at the same moment, beside it. After the games, the results are
-     written by a separate step that can read the picks but cannot change them. A wrong pick stays wrong on the record.</p>
-  <p>The model uses only things known before a game starts: team strength ratings, recent form from play-by-play data,
-     the starting quarterbacks, rest days, and the schedule. It re-learns from every finished game since 2002 before each
-     set of picks.</p>
+  <div class="split">
+    <p>Every pick is saved to a public repository <em>before</em> kickoff, with the time it was made and the exact
+       version of the model that made it. The Vegas line is saved at the same moment, beside it. After the games, the
+       results are written by a separate step that can read the picks but cannot change them. A wrong pick stays wrong
+       on the record.</p>
+    <p>The model uses only things known before a game starts: team strength ratings, recent form from play-by-play
+       data, the starting quarterbacks, rest days, and the schedule. It re-learns from every finished game since 2002
+       before each set of picks.</p>
+  </div>
   <p><a href="{REPO_URL}">Repository</a>, <a href="{REPO_URL}/tree/main/data/predictions">predictions</a>,
      <a href="{REPO_URL}/tree/main/data/odds">odds snapshots</a>, <a href="{REPO_URL}/tree/main/data/results">results</a>,
      <a href="{REPO_URL}/actions">the scheduled jobs</a>.</p>
@@ -561,17 +580,17 @@ CSS = f"""
 html {{ color-scheme: dark; background: var(--bg); }}
 body {{ margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 "Source Sans 3", "Segoe UI", system-ui, sans-serif;
         font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased; }}
-main {{ max-width: 76rem; margin: 0 auto; padding: 1.5rem 1.25rem 5rem; }}
+main {{ max-width: 84rem; margin: 0 auto; padding: 1.5rem 1.5rem 5rem; }}
 h1, h2, h3, dd, .num, .conf, .score {{ font-family: "Bricolage Grotesque", "Source Sans 3", system-ui, sans-serif; }}
 h1 {{ font-size: 1.35rem; margin: 0; font-weight: 600; letter-spacing: -.01em; }}
 h1 a {{ color: inherit; text-decoration: none; }}
 h2 {{ font-size: 1.7rem; margin: 1.5rem 0 .25rem; font-weight: 600; letter-spacing: -.01em; }}
 h3 {{ font-size: 1.15rem; margin: 0; font-weight: 600; }}
-p {{ max-width: 66ch; }}
+p {{ max-width: 74ch; }}
 a {{ color: var(--model); text-underline-offset: .15em; }}
 a:focus-visible, summary:focus-visible {{ outline: 2px solid var(--model); outline-offset: 3px; }}
 .top {{ display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem 1.5rem; padding-bottom: .9rem; border-bottom: 1px solid var(--rule); }}
-.top .lede {{ color: var(--muted); margin: 0; font-size: .95rem; }}
+.top .lede {{ color: var(--muted); margin: 0; font-size: .95rem; max-width: none; }}
 .weeks {{ display: flex; flex-wrap: wrap; gap: .35rem; margin: .9rem 0 0; }}
 .weeks a {{ text-decoration: none; padding: .3rem .75rem; border: 1px solid var(--rule2); border-radius: 999px; color: var(--ink); font-size: .9rem; background: var(--panel); }}
 .weeks a[aria-current] {{ background: var(--ink); color: var(--bg); border-color: var(--ink); }}
@@ -581,10 +600,18 @@ a:focus-visible, summary:focus-visible {{ outline: 2px solid var(--model); outli
 .strip {{ display: flex; flex-wrap: wrap; gap: .5rem 2rem; margin: 1rem 0 .25rem; padding: .9rem 1.1rem; background: var(--panel);
           border: 1px solid var(--rule); border-radius: 10px; }}
 .strip div {{ min-width: 6rem; }} .strip dt {{ font-size: .8rem; color: var(--muted); }}
-.strip dd {{ margin: 0; font-size: 1.35rem; font-weight: 600; }}
-.slot {{ margin: 1.75rem 0 .6rem; color: var(--muted); font-weight: 500; font-size: .95rem; letter-spacing: .01em; }}
-.slot-fold summary.slot {{ cursor: pointer; list-style: none; }} .slot-fold summary.slot::before {{ content: "▸ "; }} .slot-fold[open] summary.slot::before {{ content: "▾ "; }}
-.cards {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(min(20rem, 100%), 1fr)); gap: .9rem; }}
+.strip dd {{ margin: 0; font-size: 1.35rem; font-weight: 600; }} .strip dd.muted {{ color: var(--muted); }}
+.strip.vertical {{ gap: .5rem 2.5rem; }}
+.lede-2 {{ color: var(--muted); font-size: 1.05rem; margin: .25rem 0 1rem; }}
+.split {{ display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem 2.5rem; align-items: start; }}
+.split p {{ max-width: none; }}
+.week-grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(min(19rem, 100%), 1fr)); gap: .9rem; align-items: start; }}
+.cards {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(min(19rem, 100%), 1fr)); gap: .9rem; }}
+.slot {{ grid-column: 1 / -1; display: flex; align-items: baseline; gap: .75rem; margin: 1.5rem 0 .1rem; color: var(--ink);
+         font-weight: 600; font-size: 1rem; }}
+.slot:first-child {{ margin-top: .5rem; }}
+.slot small {{ color: var(--muted); font-weight: 400; font-size: .85rem; white-space: nowrap; }}
+.slot::after {{ content: ""; flex: 1; height: 1px; background: var(--rule); }}
 .card {{ background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; padding: 1rem 1.1rem 1.05rem; scroll-margin-top: 1rem; min-width: 0; overflow: hidden; }}
 .card:target {{ border-color: var(--team); box-shadow: 0 0 0 1px var(--team); }}
 .card header {{ display: block; }}
@@ -645,7 +672,8 @@ figure {{ margin: 1.5rem 0; }} figcaption {{ color: var(--muted); font-size: .9r
 .sub {{ font-size: 1.25rem; margin: 2rem 0 .5rem; }} .empty {{ padding: 1rem 1.1rem; background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; }}
 .more {{ margin: 1rem 0; }} .more summary {{ cursor: pointer; color: var(--model); }}
 footer {{ margin-top: 3rem; }}
-@media (max-width: 720px) {{ .two-col {{ grid-template-columns: 1fr; }} .cards {{ grid-template-columns: 1fr; }} body {{ font-size: 15px; }} }}
+@media (max-width: 860px) {{ .split {{ grid-template-columns: 1fr; }} }}
+@media (max-width: 720px) {{ .two-col {{ grid-template-columns: 1fr; }} .cards, .week-grid {{ grid-template-columns: 1fr; }} body {{ font-size: 15px; }} }}
 @media (prefers-reduced-motion: reduce) {{ * {{ transition: none !important; }} }}
 """
 

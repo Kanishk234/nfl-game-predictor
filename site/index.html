@@ -15,17 +15,17 @@
 html { color-scheme: dark; background: var(--bg); }
 body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 "Source Sans 3", "Segoe UI", system-ui, sans-serif;
         font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased; }
-main { max-width: 76rem; margin: 0 auto; padding: 1.5rem 1.25rem 5rem; }
+main { max-width: 84rem; margin: 0 auto; padding: 1.5rem 1.5rem 5rem; }
 h1, h2, h3, dd, .num, .conf, .score { font-family: "Bricolage Grotesque", "Source Sans 3", system-ui, sans-serif; }
 h1 { font-size: 1.35rem; margin: 0; font-weight: 600; letter-spacing: -.01em; }
 h1 a { color: inherit; text-decoration: none; }
 h2 { font-size: 1.7rem; margin: 1.5rem 0 .25rem; font-weight: 600; letter-spacing: -.01em; }
 h3 { font-size: 1.15rem; margin: 0; font-weight: 600; }
-p { max-width: 66ch; }
+p { max-width: 74ch; }
 a { color: var(--model); text-underline-offset: .15em; }
 a:focus-visible, summary:focus-visible { outline: 2px solid var(--model); outline-offset: 3px; }
 .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem 1.5rem; padding-bottom: .9rem; border-bottom: 1px solid var(--rule); }
-.top .lede { color: var(--muted); margin: 0; font-size: .95rem; }
+.top .lede { color: var(--muted); margin: 0; font-size: .95rem; max-width: none; }
 .weeks { display: flex; flex-wrap: wrap; gap: .35rem; margin: .9rem 0 0; }
 .weeks a { text-decoration: none; padding: .3rem .75rem; border: 1px solid var(--rule2); border-radius: 999px; color: var(--ink); font-size: .9rem; background: var(--panel); }
 .weeks a[aria-current] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
@@ -35,10 +35,18 @@ a:focus-visible, summary:focus-visible { outline: 2px solid var(--model); outlin
 .strip { display: flex; flex-wrap: wrap; gap: .5rem 2rem; margin: 1rem 0 .25rem; padding: .9rem 1.1rem; background: var(--panel);
           border: 1px solid var(--rule); border-radius: 10px; }
 .strip div { min-width: 6rem; } .strip dt { font-size: .8rem; color: var(--muted); }
-.strip dd { margin: 0; font-size: 1.35rem; font-weight: 600; }
-.slot { margin: 1.75rem 0 .6rem; color: var(--muted); font-weight: 500; font-size: .95rem; letter-spacing: .01em; }
-.slot-fold summary.slot { cursor: pointer; list-style: none; } .slot-fold summary.slot::before { content: "▸ "; } .slot-fold[open] summary.slot::before { content: "▾ "; }
-.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(20rem, 100%), 1fr)); gap: .9rem; }
+.strip dd { margin: 0; font-size: 1.35rem; font-weight: 600; } .strip dd.muted { color: var(--muted); }
+.strip.vertical { gap: .5rem 2.5rem; }
+.lede-2 { color: var(--muted); font-size: 1.05rem; margin: .25rem 0 1rem; }
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem 2.5rem; align-items: start; }
+.split p { max-width: none; }
+.week-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(19rem, 100%), 1fr)); gap: .9rem; align-items: start; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(19rem, 100%), 1fr)); gap: .9rem; }
+.slot { grid-column: 1 / -1; display: flex; align-items: baseline; gap: .75rem; margin: 1.5rem 0 .1rem; color: var(--ink);
+         font-weight: 600; font-size: 1rem; }
+.slot:first-child { margin-top: .5rem; }
+.slot small { color: var(--muted); font-weight: 400; font-size: .85rem; white-space: nowrap; }
+.slot::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
 .card { background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; padding: 1rem 1.1rem 1.05rem; scroll-margin-top: 1rem; min-width: 0; overflow: hidden; }
 .card:target { border-color: var(--team); box-shadow: 0 0 0 1px var(--team); }
 .card header { display: block; }
@@ -99,7 +107,8 @@ figure { margin: 1.5rem 0; } figcaption { color: var(--muted); font-size: .9rem;
 .sub { font-size: 1.25rem; margin: 2rem 0 .5rem; } .empty { padding: 1rem 1.1rem; background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; }
 .more { margin: 1rem 0; } .more summary { cursor: pointer; color: var(--model); }
 footer { margin-top: 3rem; }
-@media (max-width: 720px) { .two-col { grid-template-columns: 1fr; } .cards { grid-template-columns: 1fr; } body { font-size: 15px; } }
+@media (max-width: 860px) { .split { grid-template-columns: 1fr; } }
+@media (max-width: 720px) { .two-col { grid-template-columns: 1fr; } .cards, .week-grid { grid-template-columns: 1fr; } body { font-size: 15px; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 </head>
@@ -115,7 +124,7 @@ footer { margin-top: 3rem; }
    rows show how much each of us expects the winner to win by: ours in the team colour, Vegas in bronze. Once a game is
    played, the score and a verdict appear at the bottom.</p></details>
 
-<h3 class="slot">Wednesday night</h3><div class="cards"><article class="card upcoming" id="2026_01_NE_SEA" style="--team:#0064C8">
+<div class="week-grid"><h3 class="slot"><span>Wednesday night</span><small>1 game</small></h3><article class="card upcoming" id="2026_01_NE_SEA" style="--team:#0064C8">
   <header>
     <p class="matchup"><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/ne.png" alt="" width="40" height="40" loading="lazy"><span class="vs">Patriots <small>at</small> Seahawks</span><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/sea.png" alt="" width="40" height="40" loading="lazy"></p>
     <time datetime="2026-09-10T00:20:00+00:00">Wed Sep 9, 8:20 pm ET</time>
@@ -125,7 +134,7 @@ footer { margin-top: 3rem; }
   <p class="vegas-call"><span class="who">Vegas</span> <img class="logo small" src="https://a.espncdn.com/i/teamlogos/nfl/500/sea.png" alt="" width="40" height="40" loading="lazy"><strong>SEA</strong> 62%</p>
   <div class="spread"><div class="spread-head"><span>Spread</span><span class="spread-axis"><span>NE</span><span>even</span><span>SEA</span></span></div><div class="spread-row ours" style="--fav:#0064C8"><span class="spread-who">Us</span><span class="spread-val">SEA by 5.1</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:25.4%"></span></span></div><div class="spread-row vegas" style=""><span class="spread-who">Vegas</span><span class="spread-val">SEA by 3.0</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:15.0%"></span></span></div></div>
   
-</article></div><h3 class="slot">Thursday night</h3><div class="cards"><article class="card upcoming" id="2026_01_SF_LA" style="--team:#0054EB">
+</article><h3 class="slot"><span>Thursday night</span><small>1 game</small></h3><article class="card upcoming" id="2026_01_SF_LA" style="--team:#0054EB">
   <header>
     <p class="matchup"><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/sf.png" alt="" width="40" height="40" loading="lazy"><span class="vs">49ers <small>at</small> Rams</span><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/lar.png" alt="" width="40" height="40" loading="lazy"></p>
     <time datetime="2026-09-11T00:35:00+00:00">Thu Sep 10, 8:35 pm ET</time>
@@ -135,7 +144,7 @@ footer { margin-top: 3rem; }
   <p class="vegas-call"><span class="who">Vegas</span> <img class="logo small" src="https://a.espncdn.com/i/teamlogos/nfl/500/lar.png" alt="" width="40" height="40" loading="lazy"><strong>LA</strong> 64%</p>
   <div class="spread"><div class="spread-head"><span>Spread</span><span class="spread-axis"><span>SF</span><span>even</span><span>LA</span></span></div><div class="spread-row ours" style="--fav:#0054EB"><span class="spread-who">Us</span><span class="spread-val">LA by 2.4</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:12.1%"></span></span></div><div class="spread-row vegas" style=""><span class="spread-who">Vegas</span><span class="spread-val">LA by 3.5</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:17.5%"></span></span></div></div>
   
-</article></div><h3 class="slot">Sunday 1:00 pm</h3><div class="cards"><article class="card upcoming" id="2026_01_ATL_PIT" style="--team:#FFB612">
+</article><h3 class="slot"><span>Sunday 1:00 pm</span><small>8 games</small></h3><article class="card upcoming" id="2026_01_ATL_PIT" style="--team:#FFB612">
   <header>
     <p class="matchup"><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/atl.png" alt="" width="40" height="40" loading="lazy"><span class="vs">Falcons <small>at</small> Steelers</span><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/pit.png" alt="" width="40" height="40" loading="lazy"></p>
     <time datetime="2026-09-13T17:00:00+00:00">Sun Sep 13, 1:00 pm ET</time>
@@ -215,7 +224,7 @@ footer { margin-top: 3rem; }
   <p class="vegas-call"><span class="who">Vegas</span> <img class="logo small" src="https://a.espncdn.com/i/teamlogos/nfl/500/cin.png" alt="" width="40" height="40" loading="lazy"><strong>CIN</strong> 64%</p>
   <div class="spread"><div class="spread-head"><span>Spread</span><span class="spread-axis"><span>TB</span><span>even</span><span>CIN</span></span></div><div class="spread-row ours" style="--fav:#FB4F14"><span class="spread-who">Us</span><span class="spread-val">CIN by 1.8</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:8.9%"></span></span></div><div class="spread-row vegas" style=""><span class="spread-who">Vegas</span><span class="spread-val">CIN by 3.5</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:17.5%"></span></span></div></div>
   
-</article></div><h3 class="slot">Sunday 4:25 pm</h3><div class="cards"><article class="card upcoming" id="2026_01_ARI_LAC" style="--team:#007BC7">
+</article><h3 class="slot"><span>Sunday 4:25 pm</span><small>4 games</small></h3><article class="card upcoming" id="2026_01_ARI_LAC" style="--team:#007BC7">
   <header>
     <p class="matchup"><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/ari.png" alt="" width="40" height="40" loading="lazy"><span class="vs">Cardinals <small>at</small> Chargers</span><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/lac.png" alt="" width="40" height="40" loading="lazy"></p>
     <time datetime="2026-09-13T20:25:00+00:00">Sun Sep 13, 4:25 pm ET</time>
@@ -255,7 +264,7 @@ footer { margin-top: 3rem; }
   <p class="vegas-call"><span class="who">Vegas</span> <img class="logo small" src="https://a.espncdn.com/i/teamlogos/nfl/500/phi.png" alt="" width="40" height="40" loading="lazy"><strong>PHI</strong> 67%</p>
   <div class="spread"><div class="spread-head"><span>Spread</span><span class="spread-axis"><span>WAS</span><span>even</span><span>PHI</span></span></div><div class="spread-row ours" style="--fav:#00707B"><span class="spread-who">Us</span><span class="spread-val">PHI by 3.3</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:16.4%"></span></span></div><div class="spread-row vegas" style=""><span class="spread-who">Vegas</span><span class="spread-val">PHI by 5.5</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:27.5%"></span></span></div></div>
   
-</article></div><h3 class="slot">Sunday night</h3><div class="cards"><article class="card upcoming" id="2026_01_DAL_NYG" style="--team:#0064C8">
+</article><h3 class="slot"><span>Sunday night</span><small>1 game</small></h3><article class="card upcoming" id="2026_01_DAL_NYG" style="--team:#0064C8">
   <header>
     <p class="matchup"><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/dal.png" alt="" width="40" height="40" loading="lazy"><span class="vs">Cowboys <small>at</small> Giants</span><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/nyg.png" alt="" width="40" height="40" loading="lazy"></p>
     <time datetime="2026-09-14T00:20:00+00:00">Sun Sep 13, 8:20 pm ET</time>
@@ -265,7 +274,7 @@ footer { margin-top: 3rem; }
   <p class="vegas-call"><span class="who">Vegas</span> <img class="logo small" src="https://a.espncdn.com/i/teamlogos/nfl/500/dal.png" alt="" width="40" height="40" loading="lazy"><strong>DAL</strong> 59%</p>
   <div class="spread"><div class="spread-head"><span>Spread</span><span class="spread-axis"><span>DAL</span><span>even</span><span>NYG</span></span></div><div class="spread-row ours" style="--fav:#0064C8"><span class="spread-who">Us</span><span class="spread-val">DAL by 0.8</span><span class="spread-track"><span class="spread-bar" style="left:46.2%;width:3.8%"></span></span></div><div class="spread-row vegas" style=""><span class="spread-who">Vegas</span><span class="spread-val">DAL by 3.0</span><span class="spread-track"><span class="spread-bar" style="left:35.0%;width:15.0%"></span></span></div></div>
   
-</article></div><h3 class="slot">Monday night</h3><div class="cards"><article class="card upcoming" id="2026_01_DEN_KC" style="--team:#E31837">
+</article><h3 class="slot"><span>Monday night</span><small>1 game</small></h3><article class="card upcoming" id="2026_01_DEN_KC" style="--team:#E31837">
   <header>
     <p class="matchup"><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/den.png" alt="" width="40" height="40" loading="lazy"><span class="vs">Broncos <small>at</small> Chiefs</span><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/kc.png" alt="" width="40" height="40" loading="lazy"></p>
     <time datetime="2026-09-15T00:15:00+00:00">Mon Sep 14, 8:15 pm ET</time>
@@ -279,7 +288,7 @@ footer { margin-top: 3rem; }
 <h3 class="table-title">All games this week</h3>
 <table class="ledger"><thead><tr><th>Kickoff</th><th>Game</th><th>Pick</th><th class="num">Win prob</th><th>Our spread</th><th>Line</th><th class="num">Vegas prob</th><th>Pass</th><th>Result</th></tr></thead><tbody><tr><td>Wed Sep 9, 8:20 pm ET</td><td>NE at SEA</td><td><strong>SEA</strong></td><td class="num">67%</td><td>SEA by 5.1</td><td>SEA by 3.0</td><td class="num">62%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Thu Sep 10, 8:35 pm ET</td><td>SF at LA</td><td><strong>LA</strong></td><td class="num">57%</td><td>LA by 2.4</td><td>LA by 3.5</td><td class="num">64%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 1:00 pm ET</td><td>ATL at PIT</td><td><strong>PIT</strong></td><td class="num">56%</td><td>PIT by 1.2</td><td>PIT by 3.5</td><td class="num">62%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 1:00 pm ET</td><td>BAL at IND</td><td><strong>IND</strong></td><td class="num">52%</td><td>IND by 0.8</td><td>BAL by 3.5</td><td class="num">38%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 1:00 pm ET</td><td>BUF at HOU</td><td><strong>HOU</strong></td><td class="num">56%</td><td>HOU by 1.7</td><td>BUF by 1.5</td><td class="num">48%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 1:00 pm ET</td><td>CHI at CAR</td><td><strong>CHI</strong></td><td class="num">57%</td><td>CHI by 2.3</td><td>CHI by 3.0</td><td class="num">40%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 1:00 pm ET</td><td>CLE at JAX</td><td><strong>JAX</strong></td><td class="num">75%</td><td>JAX by 6.5</td><td>JAX by 8.5</td><td class="num">79%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 1:00 pm ET</td><td>NO at DET</td><td><strong>DET</strong></td><td class="num">75%</td><td>DET by 8.2</td><td>DET by 7.0</td><td class="num">73%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 1:00 pm ET</td><td>NYJ at TEN</td><td><strong>NYJ</strong></td><td class="num">61%</td><td>NYJ by 3.5</td><td>TEN by 1.5</td><td class="num">53%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 1:00 pm ET</td><td>TB at CIN</td><td><strong>CIN</strong></td><td class="num">57%</td><td>CIN by 1.8</td><td>CIN by 3.5</td><td class="num">64%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 4:25 pm ET</td><td>ARI at LAC</td><td><strong>LAC</strong></td><td class="num">73%</td><td>LAC by 6.8</td><td>LAC by 9.5</td><td class="num">81%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 4:25 pm ET</td><td>GB at MIN</td><td><strong>MIN</strong></td><td class="num">63%</td><td>MIN by 3.6</td><td>MIN by 1.5</td><td class="num">52%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 4:25 pm ET</td><td>MIA at LV</td><td><strong>LV</strong></td><td class="num">56%</td><td>LV by 0.9</td><td>LV by 3.5</td><td class="num">62%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 4:25 pm ET</td><td>WAS at PHI</td><td><strong>PHI</strong></td><td class="num">62%</td><td>PHI by 3.3</td><td>PHI by 5.5</td><td class="num">67%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 8:20 pm ET</td><td>DAL at NYG</td><td><strong>DAL</strong></td><td class="num">53%</td><td>DAL by 0.8</td><td>DAL by 3.0</td><td class="num">41%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Mon Sep 14, 8:15 pm ET</td><td>DEN at KC</td><td><strong>KC</strong></td><td class="num">53%</td><td>KC by 0.9</td><td>KC by 2.5</td><td class="num">57%</td><td>early</td><td><span class="pending">—</span></td></tr></tbody></table>
 <details class="prov"><summary>Where this came from</summary><ul><li><strong>Early pass</strong> published <time datetime="2026-09-08T17:20:19.312876+00:00">Tue Sep 8, 1:20 pm ET</time>, 31 hours before the first kickoff it covers, 16 games. Model trained on 6,499 games through 2025_22_SEA_NE, code <a href="https://github.com/Kanishk234/nfl-game-predictor/commit/5c78b84">5c78b84</a>. <a href="https://github.com/Kanishk234/nfl-game-predictor/blob/main/data/predictions/2026_01_early.json">prediction file</a>, <a href="https://github.com/Kanishk234/nfl-game-predictor/blob/main/data/odds/2026_01_early.json">odds snapshot</a>.</li></ul></details>
-<footer class="fine"><p>Built Tue Sep 8, 5:07 pm ET from the committed data. No JavaScript, no tracking.</p></footer>
+<footer class="fine"><p>Built Tue Sep 8, 5:15 pm ET from the committed data. No JavaScript, no tracking.</p></footer>
 </main>
 </body>
 </html>

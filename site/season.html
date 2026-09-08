@@ -15,17 +15,17 @@
 html { color-scheme: dark; background: var(--bg); }
 body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 "Source Sans 3", "Segoe UI", system-ui, sans-serif;
         font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased; }
-main { max-width: 76rem; margin: 0 auto; padding: 1.5rem 1.25rem 5rem; }
+main { max-width: 84rem; margin: 0 auto; padding: 1.5rem 1.5rem 5rem; }
 h1, h2, h3, dd, .num, .conf, .score { font-family: "Bricolage Grotesque", "Source Sans 3", system-ui, sans-serif; }
 h1 { font-size: 1.35rem; margin: 0; font-weight: 600; letter-spacing: -.01em; }
 h1 a { color: inherit; text-decoration: none; }
 h2 { font-size: 1.7rem; margin: 1.5rem 0 .25rem; font-weight: 600; letter-spacing: -.01em; }
 h3 { font-size: 1.15rem; margin: 0; font-weight: 600; }
-p { max-width: 66ch; }
+p { max-width: 74ch; }
 a { color: var(--model); text-underline-offset: .15em; }
 a:focus-visible, summary:focus-visible { outline: 2px solid var(--model); outline-offset: 3px; }
 .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem 1.5rem; padding-bottom: .9rem; border-bottom: 1px solid var(--rule); }
-.top .lede { color: var(--muted); margin: 0; font-size: .95rem; }
+.top .lede { color: var(--muted); margin: 0; font-size: .95rem; max-width: none; }
 .weeks { display: flex; flex-wrap: wrap; gap: .35rem; margin: .9rem 0 0; }
 .weeks a { text-decoration: none; padding: .3rem .75rem; border: 1px solid var(--rule2); border-radius: 999px; color: var(--ink); font-size: .9rem; background: var(--panel); }
 .weeks a[aria-current] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
@@ -35,10 +35,18 @@ a:focus-visible, summary:focus-visible { outline: 2px solid var(--model); outlin
 .strip { display: flex; flex-wrap: wrap; gap: .5rem 2rem; margin: 1rem 0 .25rem; padding: .9rem 1.1rem; background: var(--panel);
           border: 1px solid var(--rule); border-radius: 10px; }
 .strip div { min-width: 6rem; } .strip dt { font-size: .8rem; color: var(--muted); }
-.strip dd { margin: 0; font-size: 1.35rem; font-weight: 600; }
-.slot { margin: 1.75rem 0 .6rem; color: var(--muted); font-weight: 500; font-size: .95rem; letter-spacing: .01em; }
-.slot-fold summary.slot { cursor: pointer; list-style: none; } .slot-fold summary.slot::before { content: "▸ "; } .slot-fold[open] summary.slot::before { content: "▾ "; }
-.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(20rem, 100%), 1fr)); gap: .9rem; }
+.strip dd { margin: 0; font-size: 1.35rem; font-weight: 600; } .strip dd.muted { color: var(--muted); }
+.strip.vertical { gap: .5rem 2.5rem; }
+.lede-2 { color: var(--muted); font-size: 1.05rem; margin: .25rem 0 1rem; }
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem 2.5rem; align-items: start; }
+.split p { max-width: none; }
+.week-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(19rem, 100%), 1fr)); gap: .9rem; align-items: start; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(19rem, 100%), 1fr)); gap: .9rem; }
+.slot { grid-column: 1 / -1; display: flex; align-items: baseline; gap: .75rem; margin: 1.5rem 0 .1rem; color: var(--ink);
+         font-weight: 600; font-size: 1rem; }
+.slot:first-child { margin-top: .5rem; }
+.slot small { color: var(--muted); font-weight: 400; font-size: .85rem; white-space: nowrap; }
+.slot::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
 .card { background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; padding: 1rem 1.1rem 1.05rem; scroll-margin-top: 1rem; min-width: 0; overflow: hidden; }
 .card:target { border-color: var(--team); box-shadow: 0 0 0 1px var(--team); }
 .card header { display: block; }
@@ -99,7 +107,8 @@ figure { margin: 1.5rem 0; } figcaption { color: var(--muted); font-size: .9rem;
 .sub { font-size: 1.25rem; margin: 2rem 0 .5rem; } .empty { padding: 1rem 1.1rem; background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; }
 .more { margin: 1rem 0; } .more summary { cursor: pointer; color: var(--model); }
 footer { margin-top: 3rem; }
-@media (max-width: 720px) { .two-col { grid-template-columns: 1fr; } .cards { grid-template-columns: 1fr; } body { font-size: 15px; } }
+@media (max-width: 860px) { .split { grid-template-columns: 1fr; } }
+@media (max-width: 720px) { .two-col { grid-template-columns: 1fr; } .cards, .week-grid { grid-template-columns: 1fr; } body { font-size: 15px; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 </head>
@@ -108,36 +117,48 @@ footer { margin-top: 3rem; }
 <div class="top"><h1><a href="index.html">nfl-predict</a></h1>
 <p class="lede">Every NFL game picked before kickoff, written down where it cannot be changed, graded against Vegas.</p></div>
 <nav class="weeks"><a href="index.html">This week</a><a href="weeks/2026_01.html">Week 1</a><a href="season.html" aria-current="page">Season</a></nav>
-<h2>Track record</h2><p class="how">How the picks are doing. Updated every Tuesday, after the previous week's games are graded.</p><p class="empty">Nothing graded yet. The first results land the Tuesday after Week 1. Until then, the dry run below is the best guide to what to expect.</p><section id="backtest">
+<h2>Track record</h2><p class="lede-2">Every pick is published before kickoff and scored afterwards against the Vegas line. This page updates as each week is graded.</p><p class="empty">Nothing graded yet. The first results land the Tuesday after Week 1. Until then, the dry run below is the best guide to what to expect.</p><section id="backtest">
   <h3 class="sub">The dry run: 2021 to 2025</h3>
-  <p>Before going live, we ran the model over the last five seasons as if they were happening week by week, never letting it
-     see a game before it was played. Over 1,424 games it <strong>picked the winner 65.0% of the
-     time; Vegas picked 66.5%.</strong> Its spreads missed the final margin by 10.1 points per
-     game on average; the Vegas line missed by 9.8. A solid model that has not beaten the market. That is
-     the bar for this season.</p>
-  <details class="more"><summary>Season by season, and how honest the percentages are</summary>
-  <table class="compact"><thead><tr><th>Season</th><th class="num">Our picks right</th><th class="num">Vegas</th><th class="num">Our spread miss</th><th class="num">Vegas</th></tr></thead>
-  <tbody><tr><td>2021</td><td class="num">63.2%</td><td class="num">62.1%</td><td class="num">11.0</td><td class="num">10.7</td></tr><tr><td>2022</td><td class="num">63.7%</td><td class="num">66.5%</td><td class="num">9.0</td><td class="num">8.8</td></tr><tr><td>2023</td><td class="num">65.3%</td><td class="num">67.4%</td><td class="num">10.3</td><td class="num">10.0</td></tr><tr><td>2024</td><td class="num">68.1%</td><td class="num">70.5%</td><td class="num">10.0</td><td class="num">9.7</td></tr><tr><td>2025</td><td class="num">64.6%</td><td class="num">66.0%</td><td class="num">10.0</td><td class="num">9.7</td></tr><tr class="total"><td>All</td><td class="num">65.0%</td><td class="num">66.5%</td>
-  <td class="num">10.1</td><td class="num">9.8</td></tr></tbody></table>
-  <figure><figcaption>When we said a team had a 70% chance, did it win about 70% of the time? Each dot is a group of games;
-     dots on the dashed line mean the percentages were honest.</figcaption>
-  <svg class="chart" viewBox="0 0 360 320" role="img" aria-label="calibration: predicted vs observed"><line class="ref" x1="44.0" y1="280.0" x2="344.0" y2="16.0"/><text class="tick" x="38" y="284.0" text-anchor="end">0%</text><text class="tick" x="44.0" y="298" text-anchor="middle">0%</text><text class="tick" x="38" y="218.0" text-anchor="end">25%</text><text class="tick" x="119.0" y="298" text-anchor="middle">25%</text><text class="tick" x="38" y="152.0" text-anchor="end">50%</text><text class="tick" x="194.0" y="298" text-anchor="middle">50%</text><text class="tick" x="38" y="86.0" text-anchor="end">75%</text><text class="tick" x="269.0" y="298" text-anchor="middle">75%</text><text class="tick" x="38" y="20.0" text-anchor="end">100%</text><text class="tick" x="344.0" y="298" text-anchor="middle">100%</text><text class="tick" x="194.0" y="314" text-anchor="middle">predicted home win</text><circle class="dot model" cx="92.7" cy="211.9" r="5"><title>model: predicted 16%, observed 26% (n=31)</title></circle><circle class="dot model" cx="118.9" cy="192.0" r="5"><title>model: predicted 25%, observed 33% (n=90)</title></circle><circle class="dot model" cx="150.4" cy="184.8" r="5"><title>model: predicted 35%, observed 36% (n=158)</title></circle><circle class="dot model" cx="179.0" cy="182.7" r="5"><title>model: predicted 45%, observed 37% (n=228)</title></circle><circle class="dot model" cx="209.6" cy="132.4" r="5"><title>model: predicted 55%, observed 56% (n=279)</title></circle><circle class="dot model" cx="238.2" cy="127.4" r="5"><title>model: predicted 65%, observed 58% (n=282)</title></circle><circle class="dot model" cx="267.8" cy="89.1" r="5"><title>model: predicted 75%, observed 72% (n=224)</title></circle><circle class="dot model" cx="296.1" cy="48.7" r="5"><title>model: predicted 84%, observed 88% (n=121)</title></circle><circle class="dot model" cx="319.4" cy="40.0" r="5"><title>model: predicted 92%, observed 91% (n=11)</title></circle><circle class="dot vegas" cx="67.4" cy="280.0" r="4" fill="none"><title>vegas: predicted 8%, observed 0% (n=2)</title></circle><circle class="dot vegas" cx="91.5" cy="212.6" r="5"><title>vegas: predicted 16%, observed 26% (n=47)</title></circle><circle class="dot vegas" cx="122.3" cy="221.3" r="5"><title>vegas: predicted 26%, observed 22% (n=117)</title></circle><circle class="dot vegas" cx="152.3" cy="185.1" r="5"><title>vegas: predicted 36%, observed 36% (n=231)</title></circle><circle class="dot vegas" cx="171.6" cy="160.9" r="5"><title>vegas: predicted 43%, observed 45% (n=164)</title></circle><circle class="dot vegas" cx="216.7" cy="136.7" r="5"><title>vegas: predicted 58%, observed 54% (n=291)</title></circle><circle class="dot vegas" cx="238.2" cy="106.9" r="5"><title>vegas: predicted 65%, observed 66% (n=241)</title></circle><circle class="dot vegas" cx="265.9" cy="88.6" r="5"><title>vegas: predicted 74%, observed 72% (n=200)</title></circle><circle class="dot vegas" cx="296.9" cy="40.4" r="5"><title>vegas: predicted 84%, observed 91% (n=119)</title></circle><circle class="dot vegas" cx="320.0" cy="16.0" r="5"><title>vegas: predicted 92%, observed 100% (n=12)</title></circle></svg><p class="legend"><span class="swatch model"></span>Model <span class="swatch vegas"></span>Vegas</p></figure>
-  <p class="fine"><a href="https://github.com/Kanishk234/nfl-game-predictor/blob/main/data/backtest.json">The numbers</a> and
-     <a href="https://github.com/Kanishk234/nfl-game-predictor/blob/main/docs/reports/phase2_model_backtest.md">the full report</a>, including everything tried and rejected.</p>
-  </details>
+  <div class="split">
+    <div>
+      <p>Before going live, we ran the model over the last five seasons as if they were happening week by week, never
+         letting it see a game before it was played. A solid model that has not beaten the market — and that is the bar
+         for this season.</p>
+      <dl class="strip vertical">
+        <div><dt>Our picks right</dt><dd>65.0%</dd></div>
+        <div><dt>Vegas</dt><dd class="muted">66.5%</dd></div>
+        <div><dt>Our spread miss</dt><dd>10.1 pts</dd></div>
+        <div><dt>Vegas</dt><dd class="muted">9.8 pts</dd></div>
+      </dl>
+      <p class="fine">Across 1,424 games and 110 retrains.
+         <a href="https://github.com/Kanishk234/nfl-game-predictor/blob/main/data/backtest.json">The numbers</a>,
+         <a href="https://github.com/Kanishk234/nfl-game-predictor/blob/main/docs/reports/phase2_model_backtest.md">the full report</a>.</p>
+    </div>
+    <div>
+      <table class="compact"><thead><tr><th>Season</th><th class="num">Us</th><th class="num">Vegas</th><th class="num">Our miss</th><th class="num">Vegas</th></tr></thead>
+      <tbody><tr><td>2021</td><td class="num">63.2%</td><td class="num">62.1%</td><td class="num">11.0</td><td class="num">10.7</td></tr><tr><td>2022</td><td class="num">63.7%</td><td class="num">66.5%</td><td class="num">9.0</td><td class="num">8.8</td></tr><tr><td>2023</td><td class="num">65.3%</td><td class="num">67.4%</td><td class="num">10.3</td><td class="num">10.0</td></tr><tr><td>2024</td><td class="num">68.1%</td><td class="num">70.5%</td><td class="num">10.0</td><td class="num">9.7</td></tr><tr><td>2025</td><td class="num">64.6%</td><td class="num">66.0%</td><td class="num">10.0</td><td class="num">9.7</td></tr><tr class="total"><td>All</td><td class="num">65.0%</td><td class="num">66.5%</td>
+      <td class="num">10.1</td><td class="num">9.8</td></tr></tbody></table>
+      <figure><figcaption>When we said a team had a 70% chance, did it win about 70% of the time? Dots on the dashed
+         line mean the percentages were honest.</figcaption>
+      <svg class="chart" viewBox="0 0 360 320" role="img" aria-label="calibration: predicted vs observed"><line class="ref" x1="44.0" y1="280.0" x2="344.0" y2="16.0"/><text class="tick" x="38" y="284.0" text-anchor="end">0%</text><text class="tick" x="44.0" y="298" text-anchor="middle">0%</text><text class="tick" x="38" y="218.0" text-anchor="end">25%</text><text class="tick" x="119.0" y="298" text-anchor="middle">25%</text><text class="tick" x="38" y="152.0" text-anchor="end">50%</text><text class="tick" x="194.0" y="298" text-anchor="middle">50%</text><text class="tick" x="38" y="86.0" text-anchor="end">75%</text><text class="tick" x="269.0" y="298" text-anchor="middle">75%</text><text class="tick" x="38" y="20.0" text-anchor="end">100%</text><text class="tick" x="344.0" y="298" text-anchor="middle">100%</text><text class="tick" x="194.0" y="314" text-anchor="middle">predicted home win</text><circle class="dot model" cx="92.7" cy="211.9" r="5"><title>model: predicted 16%, observed 26% (n=31)</title></circle><circle class="dot model" cx="118.9" cy="192.0" r="5"><title>model: predicted 25%, observed 33% (n=90)</title></circle><circle class="dot model" cx="150.4" cy="184.8" r="5"><title>model: predicted 35%, observed 36% (n=158)</title></circle><circle class="dot model" cx="179.0" cy="182.7" r="5"><title>model: predicted 45%, observed 37% (n=228)</title></circle><circle class="dot model" cx="209.6" cy="132.4" r="5"><title>model: predicted 55%, observed 56% (n=279)</title></circle><circle class="dot model" cx="238.2" cy="127.4" r="5"><title>model: predicted 65%, observed 58% (n=282)</title></circle><circle class="dot model" cx="267.8" cy="89.1" r="5"><title>model: predicted 75%, observed 72% (n=224)</title></circle><circle class="dot model" cx="296.1" cy="48.7" r="5"><title>model: predicted 84%, observed 88% (n=121)</title></circle><circle class="dot model" cx="319.4" cy="40.0" r="5"><title>model: predicted 92%, observed 91% (n=11)</title></circle><circle class="dot vegas" cx="67.4" cy="280.0" r="4" fill="none"><title>vegas: predicted 8%, observed 0% (n=2)</title></circle><circle class="dot vegas" cx="91.5" cy="212.6" r="5"><title>vegas: predicted 16%, observed 26% (n=47)</title></circle><circle class="dot vegas" cx="122.3" cy="221.3" r="5"><title>vegas: predicted 26%, observed 22% (n=117)</title></circle><circle class="dot vegas" cx="152.3" cy="185.1" r="5"><title>vegas: predicted 36%, observed 36% (n=231)</title></circle><circle class="dot vegas" cx="171.6" cy="160.9" r="5"><title>vegas: predicted 43%, observed 45% (n=164)</title></circle><circle class="dot vegas" cx="216.7" cy="136.7" r="5"><title>vegas: predicted 58%, observed 54% (n=291)</title></circle><circle class="dot vegas" cx="238.2" cy="106.9" r="5"><title>vegas: predicted 65%, observed 66% (n=241)</title></circle><circle class="dot vegas" cx="265.9" cy="88.6" r="5"><title>vegas: predicted 74%, observed 72% (n=200)</title></circle><circle class="dot vegas" cx="296.9" cy="40.4" r="5"><title>vegas: predicted 84%, observed 91% (n=119)</title></circle><circle class="dot vegas" cx="320.0" cy="16.0" r="5"><title>vegas: predicted 92%, observed 100% (n=12)</title></circle></svg><p class="legend"><span class="swatch model"></span>Model <span class="swatch vegas"></span>Vegas</p></figure>
+    </div>
+  </div>
 </section><section id="about">
   <h3 class="sub">Why you can trust the record</h3>
-  <p>Every pick is saved to a public repository <em>before</em> kickoff, with the time it was made and the exact version
-     of the model that made it. The Vegas line is saved at the same moment, beside it. After the games, the results are
-     written by a separate step that can read the picks but cannot change them. A wrong pick stays wrong on the record.</p>
-  <p>The model uses only things known before a game starts: team strength ratings, recent form from play-by-play data,
-     the starting quarterbacks, rest days, and the schedule. It re-learns from every finished game since 2002 before each
-     set of picks.</p>
+  <div class="split">
+    <p>Every pick is saved to a public repository <em>before</em> kickoff, with the time it was made and the exact
+       version of the model that made it. The Vegas line is saved at the same moment, beside it. After the games, the
+       results are written by a separate step that can read the picks but cannot change them. A wrong pick stays wrong
+       on the record.</p>
+    <p>The model uses only things known before a game starts: team strength ratings, recent form from play-by-play
+       data, the starting quarterbacks, rest days, and the schedule. It re-learns from every finished game since 2002
+       before each set of picks.</p>
+  </div>
   <p><a href="https://github.com/Kanishk234/nfl-game-predictor">Repository</a>, <a href="https://github.com/Kanishk234/nfl-game-predictor/tree/main/data/predictions">predictions</a>,
      <a href="https://github.com/Kanishk234/nfl-game-predictor/tree/main/data/odds">odds snapshots</a>, <a href="https://github.com/Kanishk234/nfl-game-predictor/tree/main/data/results">results</a>,
      <a href="https://github.com/Kanishk234/nfl-game-predictor/actions">the scheduled jobs</a>.</p>
 </section>
-<footer class="fine"><p>Built Tue Sep 8, 5:07 pm ET from the committed data. No JavaScript, no tracking.</p></footer>
+<footer class="fine"><p>Built Tue Sep 8, 5:15 pm ET from the committed data. No JavaScript, no tracking.</p></footer>
 </main>
 </body>
 </html>

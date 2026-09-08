@@ -170,3 +170,9 @@ Open:
 - **Re-running a published week is a green no-op**, not `PredictionExistsError` (this is what made the first scheduled `predict-early` red).
 - Site: removed the disagreement summary line; fixed card overflow (grid `minmax(min(20rem,100%),1fr)`, `min-width:0` on flex children, bar flex-basis 0).
 - No separate retrain job: every pass refits on all completed games.
+
+## 2026-09-08 — Site layout: one week grid, wider page
+
+- Per-slot grids made single-game slots (Wed, Thu, Sun night, Mon) look broken. Now one continuous `.week-grid`; slot labels span all columns as full-width dividers with a rule and a game count ("Sunday 1:00 pm — 9 games, 3 played"). Cards stay uniform and flow.
+- Page widened 76rem -> 84rem, prose 66ch -> 74ch, header lede uncapped. Season page's dry-run and trust sections are now two-column (`.split`) instead of a narrow text column in a wide page.
+- Backtest numbers moved from a prose sentence into a stat strip (ours bold, Vegas muted).

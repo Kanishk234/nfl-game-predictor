@@ -74,7 +74,8 @@ class TestPages:
         assert '<span class="spread-who">Vegas</span><span class="spread-val">SEA by 3.0</span>' in page
         assert "no line yet" in page                       # missing line is shown as missing
         assert 'style="--team:#' in page                    # picked team's colour on the card
-        assert '<h3 class="slot">Wednesday night</h3>' in page
+        assert '<h3 class="slot"><span>Wednesday night</span>' in page
+        assert page.count('<div class="week-grid">') == 1  # one grid, labels span it
         assert "All games this week" in page               # the table at the end
         assert "30 hours before the first kickoff" in page  # provenance, collapsed
         assert "abc1234" in page
@@ -92,7 +93,7 @@ class TestPages:
         assert '<span class="score">NE 17, SEA 24</span>' in page
         assert "SEA won, <span class=\"hit\">✓ we were right</span> and our side covered the spread." in page
         assert "Week 1, 2026, complete" in page
-        assert '<details class="slot-fold">' in page  # a fully played slot folds up
+        assert "1 game, 1 played" in page  # the slot label counts what is done
 
     def test_late_pass_supersedes_early_for_its_games(self):
         early = _pred(1, "early", [_row("2026_01_NE_SEA", "SEA", "NE", p=0.62), _row("2026_01_ATL_PIT", "PIT", "ATL", p=0.55)])
@@ -110,7 +111,9 @@ class TestPages:
               "calibration": {"model": [{"bin_low": 0.5, "bin_high": 0.6, "n": 50, "mean_predicted": 0.55, "observed": 0.52}],
                               "vegas": [{"bin_low": 0.5, "bin_high": 0.6, "n": 5, "mean_predicted": 0.55, "observed": 0.6}]}}
         page = S.render_site([], {}, None, bt, NOW)["season.html"]
-        assert "picked the winner 64.6% of the\n     time; Vegas picked 66.5%." in page and "The dry run: 2021 to 2022" in page
+        assert "The dry run: 2021 to 2022" in page
+        assert "<dd>64.6%</dd>" in page and '<dd class="muted">66.5%</dd>' in page   # us, then Vegas
+        assert "<dd>10.1 pts</dd>" in page and '<dd class="muted">9.8 pts</dd>' in page
         assert "Nothing graded yet" in page
         assert 'fill="none"' in page  # the n=5 bin is hollow
 
