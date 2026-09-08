@@ -81,3 +81,15 @@ Open:
 - Rejected: success rate, competitive-only EPA/SR, TO rates, early-down EPA, CPOE, pass-rate-over-expected; snap-weighted injuries (+0.0013 even at kickoff as-of); roster continuity; season trend; referee (unusable in advance anyway); coach; TO-margin form; three Elo variants (all worse); total-variance scaling.
 - **Noise floor stated in report:** SE of a logloss diff ~0.002-0.003 tuning / ~0.004 holdout. Every post-QB gain is that size; Vegas leads by 0.020. Model is at the dataset's resolution limit on public data.
 - Holdout now: 65.0% / 0.631 / MAE 10.07 vs Vegas 66.5% / 0.610 / 9.76. 30 features. `pytest` 51 passed, ruff clean.
+
+## 2026-09-08 — Phase 3 odds baseline
+
+- `odds/fetch.py`: The Odds API -> per-book lines + consensus (median spread sign-flipped to nflreadpy convention, de-vigged moneyline prob) -> matched to nflverse game_id -> immutable snapshot. `fetch_snapshot` for Phase 4; CLI for on-demand.
+- Real fetch 2026 wk1: 16/16 games, written to scratch (first committed snapshot comes with the Phase 4 prediction run). Key verified absent from output. 14 tests.
+- Budget: whole season in one call, 3 credits/snapshot, ~25/month of 500.
+
+Broke / fixed:
+- `load_teams()` has the Rams as both LA and LAR; dict kept LAR -> `2026_01_SF_LA` silently unmatched (15/16). Name map now restricted to the week's schedule codes. Regression test added.
+
+Open:
+- **Week 1 opens Wed Sept 9 (00:20 UTC Sept 10).** Phase 4 predict.py must run before then for Week 1 to be in the track record.
