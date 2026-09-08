@@ -70,8 +70,10 @@ class TestPages:
         assert '<strong>SEA</strong><span class="conf">67%</span>' in page and "to win" in page
         assert '<span class="who">Vegas</span>' in page and "62%" in page
         assert "teamlogos/nfl/500/sea.png" in page and "teamlogos/nfl/500/ne.png" in page
-        assert '<span class="spread-who ours">Us</span><span class="spread-val">SEA by 5.1</span>' in page
-        assert '<span class="spread-who vegas">Vegas</span><span class="spread-val">SEA by 3.0</span>' in page
+        assert '<span class="spread-who">Us</span><span class="spread-val">SEA by 5.1</span>' in page
+        assert '<span class="spread-who">Vegas</span><span class="spread-val">SEA by 3.0</span>' in page
+        # every spread row carries the same three cells, so the bars cannot fall out of line
+        assert page.count('class="spread-row ') == page.count('class="spread-track"')
         assert "no line yet" in page                       # missing line is shown as missing
         assert 'style="--team:#' in page                    # picked team's colour on the card
         assert '<h3 class="slot"><span>Wednesday night</span>' in page

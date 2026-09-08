@@ -339,17 +339,19 @@ def spread_rows(ours: float, line: float | None, actual: float | None, home: str
         rows.append(("Vegas", line, "vegas"))
     if actual is not None:
         rows.append(("Final", actual, "final"))
-    out = ['<div class="spread"><span class="spread-label">Points</span>']
+    out = ['<div class="spread"><span class="spread-label">Points</span><div class="spread-rows">']
     for who, v, cls in rows:
         v_c = max(-half, min(half, v))
         width = abs(v_c) / half * 50
         left = 50 if v_c >= 0 else 50 - width
         fav = home if v >= 0 else away
         style = f"--fav:{team_vars_pair(fav)}" if cls == "ours" else ""
-        out.append(f'<span class="spread-who {cls}">{who}</span>'
+        out.append(f'<div class="spread-row {cls}" style="{e(style)}">'
+                   f'<span class="spread-who">{who}</span>'
                    f'<span class="spread-val">{e(by_team(v, home, away))}</span>'
-                   f'<span class="spread-track {cls}" style="{e(style)}"><span class="spread-bar"></span>'
-                   f'<span class="spread-fill" style="left:{left:.1f}%;width:{width:.1f}%"></span></span>')
+                   f'<span class="spread-track"><span class="spread-bar"></span>'
+                   f'<span class="spread-fill" style="left:{left:.1f}%;width:{width:.1f}%"></span></span></div>')
+    out.append("</div>")
     out.append("</div>")
     return "".join(out)
 
@@ -641,17 +643,22 @@ a:focus-visible, summary:focus-visible {{ outline: 2px solid var(--model); outli
 .vegas-call .who {{ display: inline-block; width: 3.4rem; color: var(--vegas); font-weight: 600; }}
 .vegas-call strong {{ color: var(--ink); font-size: 1rem; }}
 .disagree {{ color: var(--vegas); font-weight: 600; margin-left: .35rem; }}
-.spread {{ display: grid; grid-template-columns: 3.1rem 2.9rem minmax(5.2rem, auto) 1fr; align-items: center;
-           gap: .55rem .5rem; font-size: .85rem; min-width: 0; }}
-.spread-label {{ grid-row: 1 / -1; color: var(--muted); font-size: .78rem; line-height: 1.2; }}
-.spread-who {{ color: var(--muted); }} .spread-who.vegas {{ color: var(--vegas); font-weight: 600; }}
+/* Each row is its own grid with the same template, so the bars line up by construction. A
+   single grid with a row-spanning caption does not: `grid-row: 1 / -1` only spans the explicit
+   grid, so the caption took a cell and pushed every later row one column out of line. */
+.spread {{ display: flex; align-items: center; gap: .7rem; min-width: 0; font-size: .85rem; }}
+.spread-label {{ flex: none; width: 2.9rem; color: var(--muted); font-size: .78rem; line-height: 1.15; }}
+.spread-rows {{ flex: 1; min-width: 0; display: grid; gap: .5rem; }}
+.spread-row {{ display: grid; grid-template-columns: 2.9rem minmax(5.2rem, auto) 1fr; align-items: center;
+               gap: .5rem; min-width: 0; --favc: var(--fav); }}
+.spread-who {{ color: var(--muted); }} .spread-row.vegas .spread-who {{ color: var(--vegas); font-weight: 600; }}
 .spread-val {{ font-weight: 600; color: var(--ink); }}
-.spread-track {{ position: relative; height: 10px; min-width: 0; --favc: var(--fav); }}
+.spread-track {{ position: relative; height: 10px; min-width: 0; }}
 .spread-bar {{ position: absolute; inset: 0; background: var(--away); border-radius: 5px; }}
 .spread-track::after {{ content: ""; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 2px; background: var(--rule2); z-index: 1; }}
 .spread-fill {{ position: absolute; top: 0; height: 10px; border-radius: 5px; background: var(--favc); min-width: 3px; }}
-.spread-track.vegas .spread-fill {{ background: var(--vegas); }}
-.spread-track.final .spread-fill {{ background: var(--ink); }}
+.spread-row.vegas .spread-fill {{ background: var(--vegas); }}
+.spread-row.final .spread-fill {{ background: var(--ink); }}
 .final {{ margin: 1.15rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); font-size: .95rem; }}
 .score {{ font-weight: 600; margin-right: .5rem; }}
 .hit {{ color: var(--hit); font-weight: 700; }} .miss {{ color: var(--miss); font-weight: 700; }}
