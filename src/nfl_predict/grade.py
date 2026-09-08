@@ -149,7 +149,9 @@ def grade_week(season: int, week: int, games: pl.DataFrame) -> dict | None:
     n_week = week_games.height
     return {
         "season": season, "week": week,
-        "graded_at_utc": datetime.now().astimezone().isoformat(),
+        # No "graded at" timestamp: results are a pure function of the predictions and the
+        # final scores, so the file must be byte-identical when nothing has changed. A wall-clock
+        # stamp would make every grade run a fresh diff and push a junk commit three times a week.
         "n_games": n_week,
         "n_predicted": len(official),
         "n_graded": len(graded),

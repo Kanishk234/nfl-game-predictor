@@ -23,7 +23,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import polars as pl
@@ -42,6 +42,21 @@ from nfl_predict.odds.fetch import fetch_snapshot, snapshot_path, write_snapshot
 
 PREDICTIONS_DIR = Path("data/predictions")
 PASSES = ("early", "late")
+
+#: How close the next kickoff must be for the late pass to be a *late* pass.
+#:
+#: The Sunday cron fires every Sunday, including the ones before a week has begun — the Sunday
+#: before the season opener, and the Sunday inside a gap between the regular season and the
+#: playoffs. Without this, that firing targets the coming week and burns its late slot with a
+#: prediction made eight days early; the real Sunday-morning refresh then finds the file already
+#: published and does nothing. A late pass only makes sense once its games are hours away.
+LATE_PASS_LEAD_LIMIT = timedelta(hours=24)
+
+
+def _utcnow() -> datetime:
+    """Wall clock, as a seam. Production always uses the real clock; the season simulator in
+    tools/ replaces this so a replayed pass stamps itself with the time it is pretending to be."""
+    return datetime.now(UTC)
 
 
 class PredictionExistsError(FileExistsError):
@@ -141,7 +156,7 @@ def write_record(record: dict, path: Path) -> Path:
 
 def run(pass_name: str, now: datetime | None = None, retrain: bool = True,
         only_early_openers: bool = False) -> tuple[Path, Path] | None:
-    now = now or datetime.now(UTC)
+    now = now or _utcnow()
 
     frame = build_frame()
     assert_no_leakage(frame)
@@ -150,6 +165,12 @@ def run(pass_name: str, now: datetime | None = None, retrain: bool = True,
 
     target = next_week_target(frame, now)
     assert_before_kickoff(target, now)
+
+    if pass_name == "late" and target.earliest_kickoff - now > LATE_PASS_LEAD_LIMIT:
+        print(f"{target.season} week {target.week} does not start for "
+              f"{(target.earliest_kickoff - now).total_seconds() / 3600:.0f}h; a late pass now would "
+              "not be late. Leaving the slot for the Sunday of that week.")
+        return None
 
     if only_early_openers and target.earliest_kickoff > next_scheduled_early_pass(now):
         # The safety-net run. This week opens after the regular Thursday pass, so that pass
@@ -182,7 +203,7 @@ def run(pass_name: str, now: datetime | None = None, retrain: bool = True,
         raise RuntimeError(f"features entirely null for the target week: {missing}")
 
     # Same instant: the baseline is frozen with the prediction, never before or after.
-    stamp = datetime.now(UTC)
+    stamp = _utcnow()
     odds = fetch_snapshot(target, pass_name, frame, now=stamp)
     predictions = make_predictions(bundle, frame, rows, odds)
     record = build_record(target, pass_name, stamp, bundle, predictions)

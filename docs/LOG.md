@@ -220,3 +220,35 @@ Open:
 - **Confirmed: index.html always shows the newest week**, with older weeks at their own URLs and every page carrying the full strip.
 - **Bug found and fixed.** In a part-played week the weekly accuracy chart plotted the current week's rate from a single graded game (0%), and 0% is below the chart's 30% floor, so the lines drew *outside the plot area*. Now `line_chart` clamps to the axis range, and only **complete** weeks are charted, with the caption saying so. Partial weeks still count in the season totals.
 - 2 new tests; suite 103 passed.
+
+## 2026-09-08 — Full-season simulation, and three bugs it caught
+
+`tools/simulate_season.py` walks the real cron timeline across a whole season in order — every
+Tuesday safety net, Thursday early pass, Sunday late pass, Friday/Monday/Tuesday grade — calling
+the **real** `predict.run`, `grade.run` and `site_build.main` with only the clock, the nflreadpy
+frame and the odds fetch moved back in time. It asserts eight invariants after every single job
+and fails on the first violation.
+
+2025 replay: **128,123 invariant checks passed**, 44 prediction files, 285/285 games given a
+pre-kickoff pick, 285 graded, 24 site pages. 22 weeks including the playoffs. Both safety-net
+weeks fired (Thanksgiving Nov 25, Christmas Dec 23). Final: 64.6% vs Vegas 66.0%, spread error
+10.03 vs 9.67, ATS 138-146-1.
+
+Bugs found and fixed:
+
+1. **The late pass burned Week 1's slot eight days early.** The Sunday cron fires on the Sunday
+   *before* the season too; it targeted Week 1 and published `2025_01_late.json` with all 16
+   games, so Week 1 never got its real Sunday-morning refresh. Added `LATE_PASS_LEAD_LIMIT` —
+   a late pass whose next kickoff is more than 24h away is not late and skips. Same hazard
+   existed in the gap before the playoffs.
+2. **Every grade run rewrote every result file.** `graded_at_utc` was a wall-clock stamp, so all
+   22 files differed on each run and the scheduled job would have pushed a junk commit three
+   times a week forever. Removed; results are now a pure function of predictions + scores.
+   (Same bug class as `rebuilt_at_utc` in history.json, fixed earlier — this one survived.)
+3. **A tie rendered as "it was a tie, a tie"**, and the week table's Vegas column showed the
+   *home* team's probability while the card showed the *favourite's* — 26% next to 74% for the
+   same game. The tie now reads "It was a tie, so the pick does not count"; both table columns
+   now describe the team we picked ("Our odds" / "Vegas on our pick").
+
+The 2025 season contained exactly one tie (GB 40, DAL 40 in week 4), which is why this only
+surfaced under a full-season replay.

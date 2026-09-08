@@ -139,3 +139,34 @@ class TestGateInRun:
         assert rec["n_games"] == 3 and odds_path.exists()
         # frozen together: the odds timestamp is the prediction timestamp
         assert json.loads(odds_path.read_text())["fetched_at_utc"] == rec["generated_at_utc"]
+
+
+class TestLatePassMustActuallyBeLate:
+    """The Sunday cron fires on Sundays outside the week it would target, too."""
+
+    def _setup(self, monkeypatch, tmp_path):
+        monkeypatch.setattr(P, "build_frame", _frame)
+        monkeypatch.setattr(P, "assert_no_leakage", lambda f: None)
+        monkeypatch.setattr(P, "PROCESSED_PATH", tmp_path / "games.parquet")
+        monkeypatch.setattr(P, "PREDICTIONS_DIR", tmp_path / "predictions")
+        monkeypatch.setattr(P, "snapshot_path", lambda t, n: tmp_path / "odds" / f"{t.season}_{t.week:02d}_{n}.json")
+        monkeypatch.setattr(P, "fetch_snapshot", lambda t, n, f, now=None: {**_odds(), "fetched_at_utc": now.isoformat()})
+        monkeypatch.setattr(P, "fit_final", lambda frame, spec: _bundle())
+
+    def test_a_sunday_a_week_early_does_not_burn_the_slot(self, monkeypatch, tmp_path):
+        self._setup(monkeypatch, tmp_path)
+        assert P.run("late", now=T0 - timedelta(days=7)) is None
+        assert not list((tmp_path / "predictions").glob("*.json")) if (tmp_path / "predictions").exists() else True
+
+    def test_the_sunday_of_the_week_publishes(self, monkeypatch, tmp_path):
+        self._setup(monkeypatch, tmp_path)
+        # three hours before the Sunday slate, with the Wed/Thu games already kicked off
+        paths = P.run("late", now=T0 + timedelta(days=3) - timedelta(hours=3))
+        assert paths is not None
+        rec = json.loads(paths[0].read_text())
+        assert [p["game_id"] for p in rec["predictions"]] == ["2026_01_ATL_PIT"]
+
+    def test_the_early_pass_is_not_restricted_this_way(self, monkeypatch, tmp_path):
+        """An early pass a few days ahead is exactly what the Thursday cron does."""
+        self._setup(monkeypatch, tmp_path)
+        assert P.run("early", now=T0 - timedelta(days=7)) is not None

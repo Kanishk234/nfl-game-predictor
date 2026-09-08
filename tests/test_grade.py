@@ -105,6 +105,16 @@ class TestIdempotency:
         monkeypatch.setattr(G, "HISTORY_PATH", res_dir / "history.json")
         monkeypatch.setattr(G, "load_games", lambda: _finals(played))
 
+    def test_every_written_file_is_byte_identical_on_a_second_run(self, monkeypatch, tmp_path):
+        """Not just the history: a re-grade must produce no diff at all, or the scheduled job
+        pushes a junk commit every time it runs."""
+        self._setup(monkeypatch, tmp_path, ("2026_01_A_B", "2026_01_C_D", "2026_01_E_F"))
+        G.run(2026)
+        first = {p.name: p.read_text() for p in (tmp_path / "results").glob("*.json")}
+        G.run(2026)
+        second = {p.name: p.read_text() for p in (tmp_path / "results").glob("*.json")}
+        assert first == second, f"changed: {[k for k in first if first[k] != second.get(k)]}"
+
     def test_second_run_is_identical_and_does_not_duplicate(self, monkeypatch, tmp_path):
         self._setup(monkeypatch, tmp_path, ("2026_01_A_B", "2026_01_C_D", "2026_01_E_F"))
         G.run(2026)

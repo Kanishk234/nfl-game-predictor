@@ -94,7 +94,7 @@ class TestPages:
         results = {(2026, 1): _result(1, [_graded("2026_01_NE_SEA", "SEA", "NE", "SEA", 1)])}
         page = S.render_site(preds, results, None, None, NOW)["index.html"]
         assert '<span class="score">NE 17, SEA 24</span>' in page
-        assert "SEA won, <span class=\"hit\">✓ we were right</span> and our side covered the spread." in page
+        assert 'SEA won, <span class="hit">✓ we were right</span>, and our side covered the spread.' in page
         assert "Week 1, 2026, complete" in page
         assert "1 game, 1 played" in page  # the slot label counts what is done
 
@@ -207,3 +207,24 @@ class TestSeasonChartHonesty:
         ys = [float(m) for m in re.findall(r'cy="([\d.]+)"', svg)]
         assert ys, "expected plotted points"
         assert all(16 <= y <= 208 for y in ys), f"points drawn outside the plot area: {ys}"
+
+
+class TestTiesAndTableConsistency:
+    def test_a_tie_reads_as_a_sentence_and_is_not_scored(self):
+        preds = [_pred(1, "early", [_row("2026_01_NE_SEA", "SEA", "NE")])]
+        tie = {**_graded("2026_01_NE_SEA", "SEA", "NE", "tie", None),
+               "home_score": 20, "away_score": 20, "margin": 0.0}
+        tie["model"]["correct"] = None
+        page = S.render_site(preds, {(2026, 1): _result(1, [tie])}, None, None, NOW)["index.html"]
+        assert "It was a tie, so the pick does not count" in page
+        assert "a tie, a tie" not in page          # the sentence it used to produce
+        assert "✓ we were right" not in page and "✗ we were wrong" not in page
+
+    def test_both_probability_columns_describe_the_team_we_picked(self):
+        # We pick the away team at 60%; Vegas has the home team at 58%, i.e. our pick at 42%.
+        preds = [_pred(1, "early", [_row("2026_01_NE_SEA", "SEA", "NE", p=0.40, pv=0.58)])]
+        page = S.render_site(preds, {}, None, None, NOW)["index.html"]
+        row = re.search(r"<tr><td>.*?</tr>", page, re.DOTALL).group(0)
+        cells = [c.strip() for c in re.sub(r"<[^>]+>", "\n", row).split("\n") if c.strip()]
+        assert "NE" in cells and "60%" in cells and "42%" in cells, cells
+        assert "Vegas on our pick" in page

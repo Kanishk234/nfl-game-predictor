@@ -402,12 +402,18 @@ def game_card(pass_name: str, p: dict, g: dict | None) -> str:
 
     if g:
         ok = g["model"]["correct"]
-        verdict = "a tie" if ok is None else ('<span class="hit">✓ we were right</span>' if ok else '<span class="miss">✗ we were wrong</span>')
-        ats_txt = {"win": "and our side covered the spread", "loss": "but our side did not cover the spread",
-                   "push": "and the spread was a push"}.get(g["model"].get("ats"), "")
-        winner = f'{e(g["winner"])} won' if g["winner"] != "tie" else "it was a tie"
+        # A tie is neither right nor wrong: the pick simply does not count towards accuracy.
+        if g["winner"] == "tie":
+            verdict = "It was a tie, so the pick does not count"
+        else:
+            mark = ('<span class="hit">✓ we were right</span>' if ok
+                    else '<span class="miss">✗ we were wrong</span>')
+            verdict = f'{e(g["winner"])} won, {mark}'
+        ats_txt = {"win": "our side covered the spread", "loss": "our side did not cover the spread",
+                   "push": "the spread was a push"}.get(g["model"].get("ats"), "")
+        joiner = "; " if g["winner"] == "tie" else ", and "
         outcome = (f'<p class="final"><span class="score">{e(away)} {g["away_score"]}, {e(home)} {g["home_score"]}</span><br>'
-                   f'{winner}, {verdict}' + (f' {e(ats_txt)}' if ats_txt else "") + '.</p>')
+                   f'{verdict}' + (f'{joiner}{e(ats_txt)}' if ats_txt else "") + '.</p>')
         actual, status = g["margin"], "played"
     else:
         outcome, actual, status = "", None, "upcoming"
@@ -428,8 +434,9 @@ def game_card(pass_name: str, p: dict, g: dict | None) -> str:
 
 
 def week_table(rows: list[tuple[str, dict]], graded: dict[str, dict]) -> str:
-    out = ['<table class="ledger"><thead><tr><th>Kickoff</th><th>Game</th><th>Pick</th><th class="num">Win prob</th>',
-           '<th>Our spread</th><th>Line</th><th class="num">Vegas prob</th><th>Pass</th><th>Result</th></tr></thead><tbody>']
+    out = ['<table class="ledger"><thead><tr><th>Kickoff</th><th>Game</th><th>Pick</th>',
+           '<th class="num">Our odds</th><th class="num">Vegas on our pick</th>',
+           '<th>Our spread</th><th>Line</th><th>Pass</th><th>Result</th></tr></thead><tbody>']
     for pass_name, p in rows:
         home, away = p["home_team"], p["away_team"]
         g = graded.get(p["game_id"]); v = p.get("vegas")
@@ -439,9 +446,14 @@ def week_table(rows: list[tuple[str, dict]], graded: dict[str, dict]) -> str:
             res = f'{e(g["winner"])}{mark} <small>{g["away_score"]}–{g["home_score"]}</small>'
         else:
             res = '<span class="pending">—</span>'
+        # Both probability columns describe the team *we* picked, so they compare directly.
+        v_same_side = None
+        if v and v.get("p_home_moneyline") is not None:
+            v_same_side = v["p_home_moneyline"] if p["pick"] == home else 1 - v["p_home_moneyline"]
         out.append(f'<tr><td>{e(fmt_et(p["kickoff_utc"]))}</td><td>{e(away)} at {e(home)}</td><td><strong>{e(p["pick"])}</strong></td>'
-                   f'<td class="num">{pct(p_pick(p))}</td><td>{e(by_team(p["pred_margin"], home, away))}</td>'
-                   f'<td>{e(by_team(v["spread_line"], home, away)) if v else "—"}</td><td class="num">{pct(v["p_home_moneyline"]) if v else "—"}</td>'
+                   f'<td class="num">{pct(p_pick(p))}</td><td class="num">{pct(v_same_side)}</td>'
+                   f'<td>{e(by_team(p["pred_margin"], home, away))}</td>'
+                   f'<td>{e(by_team(v["spread_line"], home, away)) if v else "—"}</td>'
                    f'<td>{e(pass_name)}</td><td>{res}</td></tr>')
     out.append("</tbody></table>")
     return "".join(out)
