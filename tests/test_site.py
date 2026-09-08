@@ -1,5 +1,6 @@
 """The site is a view over data/: it must render every state the data can be in."""
 
+import re
 from datetime import UTC, datetime, timedelta
 
 from nfl_predict import site_build as S
@@ -169,3 +170,40 @@ def test_real_build_writes_pages_without_secrets(tmp_path, monkeypatch):
     assert (tmp_path / "weeks" / "2026_01.html").exists() and (tmp_path / "season.html").exists()
     assert "apiKey" not in index and "<script" not in index and "http://" not in index
     assert "2026_01_early.json" in index
+
+
+class TestSeasonChartHonesty:
+    """A week in progress must not distort the weekly chart, and nothing may draw off-plot."""
+
+    @staticmethod
+    def _history(weeks):
+        return {"seasons": {"2025": {
+            "summary": {"n": sum(w["n_graded"] for w in weeks), "n_with_line": 1,
+                        "model": {"accuracy": 0.6, "brier": 0.2, "log_loss": 0.6, "auc": 0.6, "ece": 0.1,
+                                  "spread_mae": 10.0, "ats": {"ats_w": 5, "ats_l": 4, "ats_push": 0, "ats_pct": 0.55}},
+                        "vegas": {"accuracy": 0.65, "brier": 0.2, "log_loss": 0.6, "auc": 0.6, "ece": 0.1, "spread_mae": 9.7}},
+            "weeks": weeks, "calibration": {"model": [], "vegas": []}}}}
+
+    @staticmethod
+    def _week(n, acc, complete, graded=16):
+        return {"season": 2025, "week": n, "n_games": 16, "n_graded": graded, "complete": complete,
+                "summary": {"n": graded,
+                            "model": {"accuracy": acc, "brier": 0.2, "log_loss": 0.6, "auc": 0.6, "ece": 0.1, "spread_mae": 10.0},
+                            "vegas": {"accuracy": acc, "brier": 0.2, "log_loss": 0.6, "auc": 0.6, "ece": 0.1, "spread_mae": 9.7}}}
+
+    def test_a_part_played_week_is_left_off_the_chart(self):
+        hist = self._history([self._week(1, 0.75, True), self._week(2, 0.62, True),
+                              self._week(3, 0.0, False, graded=1)])   # one game in, and it was wrong
+        # the season page follows the season of the latest published week
+        preds = [{**_pred(3, "early", [_row("2025_03_A_B", "B", "A", week=3)]), "season": 2025}]
+        page = S.render_site(preds, {}, hist, None, NOW)["season.html"]
+        assert "wk 1" in page and "wk 2" in page
+        assert "wk 3" not in page                        # not plotted
+        assert "joins the line once all its games are played" in page
+        assert hist["seasons"]["2025"]["summary"]["n"] == 33   # but its games still count in the total
+
+    def test_values_below_the_axis_are_clamped_into_the_plot(self):
+        svg = S.line_chart({"Model": [(1, 0.0), (2, 1.0)]}, "picks right", 0.3, 1.0)
+        ys = [float(m) for m in re.findall(r'cy="([\d.]+)"', svg)]
+        assert ys, "expected plotted points"
+        assert all(16 <= y <= 208 for y in ys), f"points drawn outside the plot area: {ys}"

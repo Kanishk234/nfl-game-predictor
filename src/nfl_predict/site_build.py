@@ -290,7 +290,10 @@ def line_chart(series: dict[str, list[tuple[int, float]]], y_label: str, y_min: 
         return ""
     x0, x1 = min(weeks), max(weeks)
     def X(wk): return ml + (0 if x1 == x0 else (wk - x0) / (x1 - x0)) * (w - ml - mr)
-    def Y(v): return mt + (1 - (v - y_min) / (y_max - y_min)) * (h - mt - mb)
+    def Y(v):
+        # Clamp: a value outside the axis range must not be drawn outside the plot.
+        v = max(y_min, min(y_max, v))
+        return mt + (1 - (v - y_min) / (y_max - y_min)) * (h - mt - mb)
     out = [f'<svg class="chart" viewBox="0 0 {w} {h}" role="img" aria-label="{e(y_label)} by week">']
     for t in (y_min, (y_min + y_max) / 2, y_max):
         out.append(f'<line class="grid" x1="{ml}" y1="{Y(t):.1f}" x2="{w - mr}" y2="{Y(t):.1f}"/>'
@@ -520,12 +523,18 @@ def season_body(history: dict | None, season: int | None, backtest: dict | None)
               'Vegas line. This page updates as each week is graded.</p>')]
     s = (history or {}).get("seasons", {}).get(str(season)) if season else None
     if s and s["summary"].get("n"):
-        weeks = [w for w in s["weeks"] if w["summary"].get("n")]
+        graded = [w for w in s["weeks"] if w["summary"].get("n")]
+        # Only finished weeks go on the chart. A week with two of sixteen games played has a
+        # "weekly accuracy" of 0% or 100% and would swamp the line with noise.
+        weeks = [w for w in graded if w.get("complete")]
         series = {"Model": [(w["week"], w["summary"]["model"]["accuracy"]) for w in weeks],
                   "Vegas": [(w["week"], w["summary"]["vegas"]["accuracy"]) for w in weeks if "vegas" in w["summary"]]}
         chart = line_chart(series, "picks right", 0.3, 1.0, ref=0.5) if len(weeks) >= 2 else ""
+        partial = len(graded) - len(weeks)
+        caption = ("Share of picks that were right, week by week. The dashed line is a coin flip."
+                   + (" A week in progress joins the line once all its games are played." if partial else ""))
         parts.append(f'<h3 class="sub">{season} season so far</h3>' + summary_strip(s["summary"], "Every graded game, official predictions only.")
-                     + (f'<figure><figcaption>Share of picks that were right, week by week. The dashed line is a coin flip.</figcaption>{chart}{legend_two()}</figure>' if chart else ""))
+                     + (f'<figure><figcaption>{caption}</figcaption>{chart}{legend_two()}</figure>' if chart else ""))
     else:
         parts.append('<p class="empty">Nothing graded yet. The first results land the Tuesday after Week 1. '
                      'Until then, the dry run below is the best guide to what to expect.</p>')

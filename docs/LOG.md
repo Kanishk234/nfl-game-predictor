@@ -211,3 +211,12 @@ Open:
 - `tools/preview_graded_week.py` replays real completed weeks (2025 wk1-2) through the whole pipeline — walk-forward predict, freeze the real historical Vegas lines, grade against real finals, render the site — into a scratch directory. `data/` untouched (verified with git status).
 - Confirms the parts that had only ever been exercised by test fixtures: the Final row in the spread block, the score + verdict line ("GB won, ✓ we were right and our side covered the spread"), the week results strip, slot labels counting played games, and the season page's weekly accuracy chart.
 - Round trip is sound: 32 games graded, per-week and season summaries agree, history rebuilt.
+
+## 2026-09-08 — Full-season simulator, and the bug it found
+
+- `tools/preview_season.py` replays any real season through the whole pipeline at any moment in time: walk-forward predictions for both passes, real historical Vegas lines frozen beside them, grading of whatever has finished as of `--as-of`, and a rendered site. Writes to a scratch dir; `data/` untouched (verified).
+- Replaced the single-purpose `preview_graded_week.py`.
+- Verified states that had only ever existed as test fixtures: 6 weeks with **both passes** per week (the late pass superseding for Sunday games — wk5 graded 2 games from `early`, 12 from `late`), an 18-slot week strip with the current week marked, a **mid-week partial** (`Week 6, 2025, 1 of 15 played`), bye weeks (14- and 15-game weeks), and slot labels counting played games.
+- **Confirmed: index.html always shows the newest week**, with older weeks at their own URLs and every page carrying the full strip.
+- **Bug found and fixed.** In a part-played week the weekly accuracy chart plotted the current week's rate from a single graded game (0%), and 0% is below the chart's 30% floor, so the lines drew *outside the plot area*. Now `line_chart` clamps to the axis range, and only **complete** weeks are charted, with the caption saying so. Partial weeks still count in the season totals.
+- 2 new tests; suite 103 passed.
