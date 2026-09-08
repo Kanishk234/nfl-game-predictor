@@ -38,7 +38,8 @@ from nfl_predict.data.schedule import (
 from nfl_predict.model.backtest import DEFAULT_SPEC
 from nfl_predict.model.baseline import SpreadToWinProb
 from nfl_predict.model.train import fit_final
-from nfl_predict.odds.fetch import fetch_snapshot, snapshot_path, write_snapshot
+from nfl_predict.odds.fetch import OddsFetchError, fetch_snapshot, snapshot_path, write_snapshot
+from nfl_predict.retry import with_retries
 
 PREDICTIONS_DIR = Path("data/predictions")
 PASSES = ("early", "late")
@@ -158,7 +159,7 @@ def run(pass_name: str, now: datetime | None = None, retrain: bool = True,
         only_early_openers: bool = False) -> tuple[Path, Path] | None:
     now = now or _utcnow()
 
-    frame = build_frame()
+    frame = with_retries(build_frame, what="loading nflverse data")
     assert_no_leakage(frame)
     PROCESSED_PATH.parent.mkdir(parents=True, exist_ok=True)
     frame.write_parquet(PROCESSED_PATH)
@@ -204,7 +205,17 @@ def run(pass_name: str, now: datetime | None = None, retrain: bool = True,
 
     # Same instant: the baseline is frozen with the prediction, never before or after.
     stamp = _utcnow()
-    odds = fetch_snapshot(target, pass_name, frame, now=stamp)
+    try:
+        odds = fetch_snapshot(target, pass_name, frame, now=stamp)
+    except (OddsFetchError, RuntimeError) as exc:
+        # The Vegas line is the comparison, not the product. If the odds provider is down we
+        # still publish the prediction — a missing baseline is a gap in one column, a missing
+        # prediction is a permanent hole in the record that cannot be back-filled.
+        print(f"odds unavailable ({exc}); publishing the prediction without a baseline")
+        odds = {"season": target.season, "week": target.week, "pass": pass_name,
+                "fetched_at_utc": stamp.isoformat(), "unavailable": str(exc),
+                "n_games_in_week": target.n_games, "n_games_with_lines": 0,
+                "games_without_lines": [], "lines": []}
     predictions = make_predictions(bundle, frame, rows, odds)
     record = build_record(target, pass_name, stamp, bundle, predictions)
 

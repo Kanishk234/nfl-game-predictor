@@ -40,9 +40,29 @@ def _finals(played=("2026_01_A_B", "2026_01_C_D", "2026_01_E_F")):
         {"game_id": "2026_01_C_D", "home_score": 20, "away_score": 17},   # home wins by 3 = late line -> push
         {"game_id": "2026_01_E_F", "home_score": 10, "away_score": 13},   # home loses
     ]
+    kicks = {"2026_01_A_B": T_THU, "2026_01_C_D": T_SUN, "2026_01_E_F": T_SUN}
     return pl.DataFrame([{**r, "season": 2026, "week": 1, "is_played": r["game_id"] in played,
+                          "kickoff_utc": kicks[r["game_id"]],
                           "home_score": r["home_score"] if r["game_id"] in played else None,
                           "away_score": r["away_score"] if r["game_id"] in played else None} for r in rows])
+
+
+class TestRescheduledGames:
+    """A prediction records the kickoff that was scheduled when it was written. Games move."""
+
+    def test_a_game_brought_forward_invalidates_a_pass_that_is_now_late(self):
+        passes = _passes()
+        # The Sunday game is moved to Saturday, before the late pass was generated.
+        moved = {"2026_01_C_D": T_LATE - timedelta(hours=2)}
+        off = G.official_predictions(passes, moved)
+        assert off["2026_01_C_D"][0] == "early"   # the late pass is now after kickoff
+
+    def test_a_game_pushed_back_keeps_the_later_pass(self):
+        off = G.official_predictions(_passes(), {"2026_01_C_D": T_SUN + timedelta(days=1)})
+        assert off["2026_01_C_D"][0] == "late"
+
+    def test_the_recorded_kickoff_is_used_when_the_schedule_says_nothing(self):
+        assert G.official_predictions(_passes(), {})["2026_01_C_D"][0] == "late"
 
 
 class TestOfficialRule:

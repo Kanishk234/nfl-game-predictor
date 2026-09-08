@@ -58,14 +58,29 @@ immutability means there is nothing to do, and nothing to do is not a failure.
 **The key** enters exactly one step, as `${{ secrets.ODDS_API_KEY }}`, on the predict step.
 GitHub masks it in logs; the code side scrubs it from every exception (Phase 3).
 
+## Built to survive an unattended season
+
+- **Transient failures are retried** — four attempts with backoff, ~45s, on the nflverse load
+  and the odds request. A 30-second outage no longer costs a week's prediction, which can never
+  be back-filled.
+- **Permanent failures fail fast** — a bad key, a 403, an exhausted quota. Retrying proves
+  nothing and delays the job.
+- **An odds outage does not cost the prediction.** The pass publishes with `vegas: null` and
+  records why in the snapshot. The Vegas line is the comparison, not the product.
+- **Rescheduled games are judged against reality.** The grader compares each prediction to the
+  game's actual kickoff from the schedule, not the kickoff recorded in the prediction file, and
+  lists moved games under `rescheduled_games`.
+- **The record audits itself.** `python -m nfl_predict.health` runs at the end of every grade
+  job and fails it if anything is missing, which sends GitHub's failure email.
+
 ## Verified
 
 - All five workflow files parse; triggers and job graphs confirmed programmatically.
-- The commit step's shell was simulated locally end to end (stage → detect → derive message).
+- **A whole season replayed through the real cron timeline** (`tools/simulate_season.py`):
+  128,123 invariant checks across 2025's 22 weeks, 44 prediction files, 285/285 games given a
+  pre-kickoff pick and graded, 24 pages built. It found three bugs, all fixed — see docs/LOG.md.
 - **Not yet verified: an actual scheduled run.** That is the phase's exit criterion and can
-  only happen live. The safe way to exercise the full chain before Sunday is to dispatch
-  `grade` by hand: it is idempotent, writes nothing for a week with no completed games, and
-  still runs checkout → install → run → commit-skip → deploy.
+  only happen live.
 
 ## Dispatching by hand
 

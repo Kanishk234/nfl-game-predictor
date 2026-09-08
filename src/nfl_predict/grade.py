@@ -47,13 +47,22 @@ def load_predictions(season: int, week: int) -> dict[str, dict]:
     return out
 
 
-def official_predictions(passes: dict[str, dict]) -> dict[str, tuple[str, dict]]:
-    """game_id -> (pass_name, prediction row): the latest pass generated before that kickoff."""
+def official_predictions(passes: dict[str, dict],
+                         kickoffs: dict[str, datetime] | None = None) -> dict[str, tuple[str, dict]]:
+    """game_id -> (pass_name, prediction row): the latest pass generated before that kickoff.
+
+    `kickoffs` is the authoritative schedule. A prediction file records the kickoff that was
+    scheduled when it was written, and games do get moved — for weather, for a stadium problem.
+    If a game is brought *forward*, a prediction that looked pre-kickoff at the time may not be,
+    and the record must be judged against when the game actually started, not when we thought
+    it would.
+    """
     chosen: dict[str, tuple[str, dict, datetime]] = {}
+    kickoffs = kickoffs or {}
     for pass_name, rec in passes.items():
         generated = datetime.fromisoformat(rec["generated_at_utc"])
         for row in rec["predictions"]:
-            kickoff = datetime.fromisoformat(row["kickoff_utc"])
+            kickoff = kickoffs.get(row["game_id"]) or datetime.fromisoformat(row["kickoff_utc"])
             if generated >= kickoff:
                 continue  # a late prediction is not a prediction
             prev = chosen.get(row["game_id"])
@@ -140,12 +149,16 @@ def grade_week(season: int, week: int, games: pl.DataFrame) -> dict | None:
     if not passes:
         return None
     week_games = games.filter((pl.col("season") == season) & (pl.col("week") == week))
-    official = official_predictions(passes)
+    kickoffs = dict(week_games.select("game_id", "kickoff_utc").iter_rows())
+    official = official_predictions(passes, kickoffs)
     graded = grade_rows(list(official.values()), week_games)
     per_pass = {
         name: summarise(grade_rows([(name, r) for r in rec["predictions"]], week_games))
         for name, rec in passes.items()
     }
+    moved = sorted(g for g, k in kickoffs.items()
+                   for rec in passes.values() for row in rec["predictions"]
+                   if row["game_id"] == g and datetime.fromisoformat(row["kickoff_utc"]) != k)
     n_week = week_games.height
     return {
         "season": season, "week": week,
@@ -157,7 +170,8 @@ def grade_week(season: int, week: int, games: pl.DataFrame) -> dict | None:
         "n_graded": len(graded),
         "complete": len(graded) == n_week and n_week > 0,
         "passes": sorted(passes),
-        "official_rule": "latest pass generated before each game's kickoff",
+        "official_rule": "latest pass generated before each game's actual kickoff",
+        "rescheduled_games": sorted(set(moved)),
         "summary": summarise(graded),
         "by_pass": per_pass,
         "games": graded,

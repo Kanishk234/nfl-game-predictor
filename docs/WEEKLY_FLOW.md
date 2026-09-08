@@ -109,6 +109,26 @@ python -m nfl_predict.site_build             # rebuild site/ from data/
 From the Actions tab, `grade` is always safe to dispatch. Dispatching `predict-late` before
 Sunday would burn that week's late slot with an earlier prediction, so only do it deliberately.
 
+## What happens when something goes wrong
+
+The season is meant to run untouched, so every failure mode has a defined behaviour rather than
+a person noticing.
+
+| what fails | what happens |
+|---|---|
+| nflverse or the odds API returns a 5xx | retried four times with backoff (~45s total) before the job gives up |
+| a bad odds key, or the free quota is gone | fails fast — retrying cannot fix it |
+| **the odds API is down entirely** | **the prediction is still published**, with `vegas: null` on every game and the reason recorded in the odds snapshot. A missing baseline is a gap in one column; a missing prediction is a permanent hole. |
+| a season's play-by-play release has not landed | those features hold their last value; Elo and margin still update from the score |
+| the runner is late | only games still ahead are predicted; the job goes red only if the whole week has started |
+| a game is rescheduled | grading judges every prediction against the game's **actual** kickoff, not the one recorded when the prediction was written, and lists the moved games in the result file |
+| a week is missed entirely | the health check fails the next grade job, which sends GitHub's failure email |
+
+After every grade job, `python -m nfl_predict.health` audits the record and exits non-zero if it
+finds a played game with no pre-kickoff prediction, a played week with no prediction file, a game
+still ungraded four days after it finished, or a prediction published without a baseline. It only
+audits seasons we have actually published for.
+
 ## When something looks wrong
 
 - **A red `predict` job** usually means the runner was late enough that the whole week had

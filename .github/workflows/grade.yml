@@ -56,6 +56,11 @@ jobs:
           git pull --rebase origin main
           git push origin HEAD:main
 
+      # Last, and allowed to fail the job: nobody is watching an unattended season, so a hole in
+      # the record has to announce itself. A red job sends GitHub's failure email.
+      - name: check the record for holes
+        run: python -m nfl_predict.health
+
   deploy:
     needs: grade
     uses: ./.github/workflows/deploy-site.yml

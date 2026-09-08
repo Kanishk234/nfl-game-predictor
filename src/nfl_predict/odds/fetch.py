@@ -34,6 +34,7 @@ import requests
 
 from nfl_predict.data.games import load_games
 from nfl_predict.data.schedule import WeekTarget, next_week_target
+from nfl_predict.retry import with_retries
 
 ODDS_DIR = Path("data/odds")
 API_URL = "https://api.the-odds-api.com/v4/sports/americanfootball_nfl/odds"
@@ -44,7 +45,11 @@ _ENV_FILE = Path(".env")
 
 
 class OddsFetchError(RuntimeError):
-    pass
+    """The odds could not be fetched. Not fatal to a prediction: see predict.run."""
+
+
+class OddsPermanentError(OddsFetchError):
+    """A failure retrying cannot fix: a bad key, an exhausted quota, a malformed request."""
 
 
 class SnapshotExistsError(FileExistsError):
@@ -102,9 +107,9 @@ def _request(key: str) -> tuple[list[dict], dict]:
     except requests.RequestException as exc:  # never let the URL with the key escape
         raise OddsFetchError(f"odds request failed: {scrub(str(exc), key)}") from None
     if resp.status_code != 200:
-        raise OddsFetchError(
-            f"odds API returned {resp.status_code}: {scrub(resp.text[:300], key)}"
-        )
+        # 401/403 = bad key, 422 = bad request, 429 = quota gone. Retrying cannot help.
+        cls = OddsPermanentError if resp.status_code in (401, 403, 422, 429) else OddsFetchError
+        raise cls(f"odds API returned {resp.status_code}: {scrub(resp.text[:300], key)}")
     quota = {
         "requests_used": resp.headers.get("x-requests-used"),
         "requests_remaining": resp.headers.get("x-requests-remaining"),
@@ -186,7 +191,10 @@ def fetch_snapshot(target: WeekTarget, pass_name: str, games: pl.DataFrame, now:
     """Fetch, parse and match lines for the target week. Does not write."""
     key = load_api_key()
     now = now or datetime.now(UTC)
-    events, quota = _request(key)
+    events, quota = with_retries(
+        lambda: _request(key), what="odds fetch",
+        retry_on=(OddsFetchError, OSError), give_up_on=(OddsPermanentError,),
+    )
     week_games = games.filter((pl.col("season") == target.season) & (pl.col("week") == target.week))
     abbr = team_name_map(set(week_games["home_team"]) | set(week_games["away_team"]))
     parsed = [p for p in (_parse_event(e, abbr) for e in events) if p is not None]

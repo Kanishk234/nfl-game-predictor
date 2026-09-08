@@ -252,3 +252,24 @@ Bugs found and fixed:
 
 The 2025 season contained exactly one tie (GB 40, DAL 40 in week 4), which is why this only
 surfaced under a full-season replay.
+
+## 2026-09-08 — Hardened for an unattended season
+
+Four failure modes that a person would otherwise have had to notice:
+
+1. **Transient network failures cost a whole week.** Added `retry.py`; the nflverse load and the
+   odds request now retry four times with backoff (~45s). Permanent failures (401/403/422/429 —
+   bad key, exhausted quota) raise `OddsPermanentError` and fail fast instead.
+2. **An odds outage killed the prediction.** Now the pass publishes anyway with `vegas: null`
+   and records the reason in the snapshot. A missing baseline is one empty column; a missing
+   prediction is a hole that cannot be filled, because a prediction made after kickoff is not a
+   prediction.
+3. **A rescheduled game broke the gate.** The grader used the kickoff *recorded in the
+   prediction file*. If a game is moved forward, a pass that looked pre-kickoff when written
+   might not be. It now judges against the schedule's actual kickoff and lists moved games.
+4. **Nothing noticed a missed week.** `health.py` runs at the end of every grade job and exits
+   non-zero on: a played week with no prediction file, a played game with no pre-kickoff pick, a
+   game ungraded four days after finishing, or a prediction published without a baseline. Scoped
+   to seasons we have actually published for, so last season is not reported as our hole.
+
+13 new tests. Suite 125 passed; the full-season simulation still reports 128,123 checks clean.
