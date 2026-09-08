@@ -55,11 +55,12 @@ jobs:
           # file; see odds/fetch.py for the scrubbing on the code side.
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
         run: python -m nfl_predict.predict --pass early
-      - name: commit and push the frozen prediction + odds
+      - run: python -m nfl_predict.site_build
+      - name: commit and push the frozen prediction + odds and the rebuilt site
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/predictions data/odds
+          git add data/predictions data/odds site
           if git diff --cached --quiet; then echo "nothing new to publish"; exit 0; fi
           latest=$(git diff --cached --name-only -- data/predictions | head -1 | xargs -n1 basename | sed 's/\.json$//')
           git commit -m "publish ${latest} prediction"
