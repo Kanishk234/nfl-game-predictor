@@ -107,3 +107,14 @@ Broke / fixed:
 Open:
 - **Push before Wed Sept 9, 8:20 PM ET** or Week 1's prediction is not provably pre-kickoff.
 - Late pass for Week 1 should run Sunday morning (Phase 7 cron; manual until then).
+
+## 2026-09-08 — Phase 5 grading
+
+- `grade.py`: per-week results (model + frozen Vegas, per-pass, ATS w/l/push) + season history with calibration bins. History rebuilt from per-week files each run -> idempotent by construction (tested).
+- Official prediction per game = latest pass generated before that kickoff; post-kickoff passes ignored (tested).
+- Tie rule unified: p_home >= 0.5 is a home pick in predict, grade, and `win_prob_metrics` (was strict `>` in metrics; grader tests caught it).
+- Real run vs Week 1: no completed games yet, no file written. First real grading Tue Sept 15.
+- 8 grading tests; suite 72 passed offline.
+
+Open:
+- Correction-file naming convention still undefined (needed by both predict and grade); define when first needed.
