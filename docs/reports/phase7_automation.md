@@ -2,17 +2,22 @@
 
 **Status:** wired; exit criterion (one full unattended live week) pending Week 1. **Date:** 2026-09-08.
 
-## The three scheduled jobs
+## The scheduled jobs
 
 | workflow | cron (UTC) | ET | does |
 |---|---|---|---|
-| `grade` | `0 12 * * 2` (Tue) | 8 AM EDT / 7 AM EST | `python -m nfl_predict.grade` → commit `data/results` → deploy |
-| `predict-early` | `0 16 * * 2` (Tue) | 12 PM EDT / 11 AM EST | `predict --pass early` → commit `data/predictions` + `data/odds` → deploy |
-| `predict-late` | `0 14 * * 0` (Sun) | 10 AM EDT / 9 AM EST | `predict --pass late` → same |
+| `predict-early` | `0 21 * * 4` (Thu) | 5 PM EDT / 4 PM EST | predicts every game still ahead → commit → rebuild site → deploy |
+| `predict-late` | `0 14 * * 0` (Sun) | 10 AM EDT / 9 AM EST | re-predicts the Sunday/Monday slate with Thursday's result in the model |
+| `grade` | `0 12 * * 5`, `0 12 * * 1`, `0 12 * * 2` | 8 AM EDT | grades what has finished, updates history, rebuilds the site |
 
-Ordering on Tuesday is deliberate: grade at 12:00, predict at 16:00, so the new week's model
-trains on a fully graded previous week. The ET→UTC conversion and the DST reasoning are
-documented in each file's header so they are never re-derived.
+Thursday 21:00 UTC is 3h15m before the earliest possible TNF kickoff (8:15 PM ET) in the tighter
+EDT half of the season; Sunday 14:00 UTC is three hours before the 1 PM ET slate. Grading runs
+three times a week — Friday after Thursday night, Monday after the Sunday slate, Tuesday after
+Monday night — so the cards fill in with results as the week goes rather than all at once.
+
+**There is no separate retrain job.** Every prediction pass refits on every completed game, so
+Thursday's pass already carries the whole previous week. The ET→UTC conversion and the DST
+reasoning live in each workflow's header.
 
 ## Design decisions
 
@@ -33,9 +38,11 @@ the commit the caller started from.
 never race on a push. `cancel-in-progress: false` means a queued job waits rather than being
 dropped.
 
-**The gate fails the job.** If the runner is late and the week's first kickoff has passed,
-`predict.py` raises `LateRunError` before writing anything, and the job goes red. A red job is
-the correct outcome; a late prediction is not.
+**The gate is per game, and only a truly late run fails.** A pass predicts only games whose
+kickoff is still ahead, so a delayed Thursday run simply covers fewer games. `LateRunError` and
+a red job are reserved for a run after the entire week has started, when there is nothing valid
+left to publish. A week that is already published exits green without touching the files —
+immutability means there is nothing to do, and nothing to do is not a failure.
 
 **The key** enters exactly one step, as `${{ secrets.ODDS_API_KEY }}`, on the predict step.
 GitHub masks it in logs; the code side scrubs it from every exception (Phase 3).
@@ -49,11 +56,14 @@ GitHub masks it in logs; the code side scrubs it from every exception (Phase 3).
   `grade` by hand: it is idempotent, writes nothing for a week with no completed games, and
   still runs checkout → install → run → commit-skip → deploy.
 
-## Do not dispatch the predict workflows early
+## Dispatching by hand
 
-Each `(week, pass)` file is immutable. A manual Tuesday dispatch of `predict-late` would burn
-Week 1's late slot with a Tuesday prediction and the real Sunday run would refuse to overwrite
-it. The headers say so in capitals.
+Safe. Each `(week, pass)` file is immutable and a re-run for a week already published is a
+no-op. Dispatching `predict-late` early would still burn that week's late slot with an early
+prediction, so only do it deliberately.
+
+**A week that opens before Thursday needs a manual pass.** 2026 Week 1 opened on Wednesday; its
+prediction was published by hand on the Tuesday. The Thursday cron covers every normal week.
 
 ## Deferred
 

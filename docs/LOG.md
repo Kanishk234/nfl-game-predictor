@@ -162,3 +162,11 @@ Open:
 - Team colours were vanishing in dark mode (navy/black primaries on a dark panel). Added contrast-aware selection: per team, per surface, primary if it reaches 3:1, else secondary, else lightened; emitted as `--tl`/`--td` CSS variables so the page picks the right one for the colour scheme. Test asserts all 32 teams pass on both surfaces.
 - Spread number line had colliding labels. Replaced with aligned rows (Us / Vegas / Final) — fixed text column, bar from a shared zero coloured by the favoured team. Labels are never positioned by value.
 - No browser tools available this session; user reviewed live.
+
+## 2026-09-08 — Schedule change and gate loosened to per-game
+
+- Cron: predict-early Thu 21:00 UTC (was Tue 16:00), predict-late Sun 14:00 UTC (unchanged), grade Fri/Mon/Tue 12:00 UTC (was Tue only) so results appear through the week.
+- **Gate is now per game.** `assert_before_kickoff` fails only once the week's *last* kickoff has passed; `WeekTarget.earliest_kickoff` is the next kickoff still ahead. A Thursday pass after a Wednesday opener covers the rest of the week instead of refusing. Games already started are excluded by `games_to_predict`, and the grader ignores post-kickoff predictions, so nothing loosens the invariant.
+- **Re-running a published week is a green no-op**, not `PredictionExistsError` (this is what made the first scheduled `predict-early` red).
+- Site: removed the disagreement summary line; fixed card overflow (grid `minmax(min(20rem,100%),1fr)`, `min-width:0` on flex children, bar flex-basis 0).
+- No separate retrain job: every pass refits on all completed games.
