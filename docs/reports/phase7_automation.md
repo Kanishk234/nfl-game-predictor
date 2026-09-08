@@ -67,9 +67,10 @@ prediction was published by hand on the Tuesday. The Thursday cron covers every 
 
 ## Deferred
 
-- `site_build` does not exist yet (Phase 6). The deploy job currently republishes the
-  placeholder page; once the builder exists, the cron workflows gain a build step before commit
-  and the `site/` output is committed with the data.
+- ~~`site_build` does not exist yet (Phase 6); the deploy job republishes the placeholder page.~~
+  Withdrawn — Phase 6 shipped. All three workflows now run `python -m nfl_predict.site_build`
+  after their data step and commit `site/` alongside the data, so the page is rebuilt on every
+  publish and every grade.
 - Bye weeks / the postseason: `next_week_target` targets the week of the next kickoff, so a bye
   week simply predicts the following week early. Postseason (single elimination, one game per
   round for some teams) is Phase 8.
