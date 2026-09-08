@@ -1,0 +1,20 @@
+name: grade
+
+# Post-weekend grading pass — pulls final scores and updates the accuracy history.
+#
+# UTC conversion: Monday Night Football ends around 11:30 PM ET, i.e. ~03:30 UTC Tue (EDT) or
+# ~04:30 UTC Tue (EST). We run 12:00 UTC Tue (8:00 AM EDT / 7:00 AM EST), well after the last
+# game of the week has finished and after the box scores have settled upstream.
+
+on:
+  schedule:
+    - cron: "0 12 * * 2"
+  workflow_dispatch:
+
+jobs:
+  grade:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: placeholder
+        run: echo "Phase 0 scaffold — grading logic lands in Phase 5 (see docs/PLAN.md)"

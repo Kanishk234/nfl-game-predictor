@@ -1,0 +1,24 @@
+name: predict-thu
+
+# Thursday pass — the frozen official prediction for Thursday Night Football.
+#
+# UTC conversion (GitHub Actions cron is always UTC and has no DST awareness, so one fixed
+# time must be safe in both halves of the season):
+#   TNF kickoff  8:15 PM ET  =  00:15 UTC Fri during EDT (UTC-4, Sep-early Nov)
+#                            =  01:15 UTC Fri during EST (UTC-5, Nov-Jan)
+#   We run       21:00 UTC Thu  =  5:00 PM EDT / 4:00 PM EST
+# That is 3h15m of slack in the tighter (EDT) case. The slack is deliberate: scheduled runs on
+# free runners can be delayed under load, and a late run breaks the gate, not just the schedule.
+
+on:
+  schedule:
+    - cron: "0 21 * * 4"
+  workflow_dispatch:
+
+jobs:
+  predict:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: placeholder
+        run: echo "Phase 0 scaffold — prediction logic lands in Phase 4 (see docs/PLAN.md)"
