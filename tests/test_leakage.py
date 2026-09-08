@@ -162,3 +162,68 @@ def test_real_frame_has_no_leakage():
     frame = build_frame()
     assert_no_leakage(frame)
     assert frame.height > 6000
+
+
+class TestQbFeaturesAreBackwardLooking:
+    """QB ratings come from a strict backward as-of join on the QB's last completed game."""
+
+    @staticmethod
+    def _games_with_qbs(rows):
+        return _games(rows).with_columns(
+            pl.Series("home_qb_id", [r["hq"] for r in rows]),
+            pl.Series("away_qb_id", [r["aq"] for r in rows]),
+        )
+
+    def test_rating_is_replacement_level_before_any_history(self, monkeypatch):
+        from nfl_predict.data import features as F
+
+        monkeypatch.setattr(F, "_qb_game_log", lambda seasons: pl.DataFrame(
+            schema={"game_id": pl.String, "player_id": pl.String,
+                    "attempts": pl.Int64, "passing_epa": pl.Float64}))
+        games = self._games_with_qbs([{**_game("g1", T0, "AAA", "BBB", 20, 10), "hq": "Q1", "aq": "Q2"}])
+        q = F.qb_features(games).row(0, named=True)
+        assert q["home_qb_rating"] == F.QB_REPLACEMENT_EPA
+        assert q["qb_rating_diff"] == 0.0
+        assert q["qb_as_of_utc"] is None
+
+    def test_a_qbs_own_game_is_not_in_his_rating_and_the_next_one_is(self, monkeypatch):
+        from nfl_predict.data import features as F
+
+        # Q1 throws a monster game in g1. It must not show up in his g1 rating; it must in g2.
+        monkeypatch.setattr(F, "_qb_game_log", lambda seasons: pl.DataFrame({
+            "game_id": ["g1"], "player_id": ["Q1"], "attempts": [30], "passing_epa": [30.0]}))
+        games = self._games_with_qbs([
+            {**_game("g1", T0, "AAA", "BBB", 20, 10), "hq": "Q1", "aq": "Q2"},
+            {**_game("g2", T0 + timedelta(days=7), "AAA", "CCC", 20, 10, week=2), "hq": "Q1", "aq": "Q3"},
+        ])
+        q = F.qb_features(games).sort("game_id")
+        first, second = q.row(0, named=True), q.row(1, named=True)
+        assert first["home_qb_rating"] == F.QB_REPLACEMENT_EPA
+        assert second["home_qb_rating"] > F.QB_REPLACEMENT_EPA
+        assert second["qb_as_of_utc"] == T0 + GAME_DURATION
+
+    def test_a_game_at_exactly_completion_time_does_not_see_the_result(self, monkeypatch):
+        from nfl_predict.data import features as F
+
+        monkeypatch.setattr(F, "_qb_game_log", lambda seasons: pl.DataFrame({
+            "game_id": ["g1"], "player_id": ["Q1"], "attempts": [30], "passing_epa": [30.0]}))
+        games = self._games_with_qbs([
+            {**_game("g1", T0, "AAA", "BBB", 20, 10), "hq": "Q1", "aq": "Q2"},
+            {**_game("g2", T0 + GAME_DURATION, "AAA", "CCC", 20, 10), "hq": "Q1", "aq": "Q3"},
+        ])
+        second = F.qb_features(games).sort("game_id").row(1, named=True)
+        assert second["home_qb_rating"] == F.QB_REPLACEMENT_EPA
+
+    def test_starter_change_delta_is_zero_when_the_starter_is_unchanged(self, monkeypatch):
+        from nfl_predict.data import features as F
+
+        monkeypatch.setattr(F, "_qb_game_log", lambda seasons: pl.DataFrame({
+            "game_id": ["g1", "g1"], "player_id": ["Q1", "Q2"],
+            "attempts": [30, 30], "passing_epa": [30.0, -30.0]}))
+        games = self._games_with_qbs([
+            {**_game("g1", T0, "AAA", "BBB", 20, 10), "hq": "Q1", "aq": "Q2"},
+            {**_game("g2", T0 + timedelta(days=7), "AAA", "BBB", 20, 10, week=2), "hq": "Q1", "aq": "Q9"},
+        ])
+        second = F.qb_features(games).sort("game_id").row(1, named=True)
+        # Home kept Q1 -> 0. Away swapped the (bad) Q2 for unknown Q9 (replacement) -> positive.
+        assert second["qb_change_delta"] < 0.0  # home 0 minus a positive away delta
