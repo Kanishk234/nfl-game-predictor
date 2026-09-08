@@ -336,3 +336,24 @@ three-repo git race:
 
 Verified end to end with two clones racing against a bare origin: a grade commit lands first, the
 predict job rebases onto it, and origin ends with both. A re-run is a clean no-op, exit 0.
+
+## 2026-09-08 — weekday coverage, quota warning, completed-week preview
+
+- Checked every weekday the NFL has ever used, 2002-2026 (6,771 games): Sun 5732, Mon 448,
+  Thu 334, Sat 233, Fri 13, Wed 6, Tue 5. Every one of them is preceded by a publish pass —
+  0 games uncovered. Saturday's 233 all fall to the Thursday pass (earliest Saturday kickoff is
+  00:00 UTC, after the 21:00 UTC Thursday run); the stray Wed/Fri/Tue games are split between
+  the Thursday pass and the Tuesday safety net, all with >=21h of lead.
+- Confirmed weekly retraining from the simulated 2025 season's published files: training set
+  grows on every single pass, 6214 games at week 1 early -> 6498 at week 22 late (+284 learned
+  in-season).
+- health.py: added an odds-quota check (warn under 100 requests remaining, read from the newest
+  snapshot that recorded one). Moved it and the "published without a baseline" check into
+  odds_problems(), ahead of the early returns in problems() - both previously sat after the
+  "nothing played yet" return, so neither could fire before the season's first game finished.
+  That was a real hole: an exhausted quota would have gone unreported exactly when there was
+  still time to do something about it.
+- site_build: the card legend still said the Vegas marker was "bronze". It has been pink since
+  the colour-distance work. Fixed the wording, and the same stale claim in phase6's report.
+- Rebuilt the full 2025 simulation's 24 site pages with current code to show what a completed
+  week looks like.
