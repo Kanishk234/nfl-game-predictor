@@ -93,3 +93,17 @@ Broke / fixed:
 
 Open:
 - **Week 1 opens Wed Sept 9 (00:20 UTC Sept 10).** Phase 4 predict.py must run before then for Week 1 to be in the track record.
+
+## 2026-09-08 — Phase 4 prediction generation
+
+- `predict.py`: rebuild frame -> gate (refuse after first kickoff) -> retrain -> predict unplayed games in target week -> fetch odds with the SAME timestamp -> write both immutable files.
+- Rows carry `p_home`, `pred_margin`, `pick` + frozen Vegas `spread_line`, `p_home_moneyline`, `p_home_from_spread` (backtest-comparable). Header: gate seconds, full model provenance.
+- **Ran for real: `data/predictions/2026_01_early.json` + `data/odds/2026_01_early.json`, 16/16 games, 31.0h before first kickoff.** First entry in the track record. 13/16 picks agree with Vegas.
+
+Broke / fixed:
+- **Upcoming games had null Elo/form features** — the feature builders only emitted played games. Would have silently predicted from imputed means. Fixed with a shared `latest_state_before_kickoff` as-of helper; holdout backtest bit-identical after.
+- Decided: late pass retrains (seconds; keeps model consistent with features).
+
+Open:
+- **Push before Wed Sept 9, 8:20 PM ET** or Week 1's prediction is not provably pre-kickoff.
+- Late pass for Week 1 should run Sunday morning (Phase 7 cron; manual until then).
