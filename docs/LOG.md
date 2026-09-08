@@ -197,3 +197,11 @@ Open:
 
 - Added `docs/WEEKLY_FLOW.md`: the running schedule (what fires when, what each job writes, what is immutable, how the gate is enforced, manual commands, what a red/no-op job means). Linked from PLAN.md.
 - Wrote `README.md` as the repo's front door: what the project is, a user-facing "when the site updates" table, what a game card shows, the honest 65.0% vs Vegas 66.5% comparison, why the record is trustworthy (with links straight into `data/predictions`, `data/odds`, `data/results` and Actions), the model in a paragraph, and how to run it. All relative links verified; the 30-feature claim checked against `FEATURE_COLUMNS`.
+
+## 2026-09-08 — Pre-emptive fix: a crash that would have hit Sunday's pass
+
+- Simulated Sunday morning (Wed/Thu games marked played, pbp release not yet up) and the pipeline **crashed**: `nfl.load_pbp(seasons=[2026])` raises `ValueError("Season must be between 1999 and 2025")`, and the loaders only caught `(ConnectionError, OSError)`.
+- The trigger is exact: 2026 only enters the loader's season list once its first game is `is_played`. So the failure would have appeared for the first time on Sunday's live pass, not before.
+- Fixed: `_FEED_NOT_READY = (ConnectionError, OSError, ValueError)` across all four per-season loaders. 6 new tests parametrised over all three exception types, plus an end-to-end "partly published season" test.
+- Verified the simulation end to end: completed games 6499 -> 6501, the Sunday game's Elo as-of advances from Feb (last season) to Sep 11 (Thursday night), and pbp form still builds 13,542 rows with the feed refusing.
+- Suite 101 passed.

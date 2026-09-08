@@ -50,9 +50,16 @@ week 1 and week 12 only.
 
 ### `predict-late` — Sunday 14:00 UTC
 
-Same steps, but Thursday's result is now in the training data and only the Sunday/Monday games
-are still ahead, so only those are re-predicted. Games already played keep their early-pass
-prediction, which is immutable.
+Same steps, with the week's completed games now in the training data — Thursday night, and any
+Wednesday or Saturday game — and only the Sunday/Monday games still ahead, so only those are
+re-predicted. Games already played keep their early-pass prediction, which is immutable.
+
+**Upstream data arrives in pieces, and that is fine.** By Sunday morning the schedule carries
+Thursday's score, so Elo and scoring-margin form update from it immediately. The play-by-play
+and team-stat releases can lag; when they do, the EPA-derived features simply hold their last
+value rather than failing. Every per-season loader treats "this feed is not published yet" as
+empty — including nflreadpy's `ValueError` for a season it does not consider current, which is
+what `load_pbp` raises the moment a new season's first game is marked played.
 
 ### `grade` — Friday, Monday, Tuesday 12:00 UTC
 
