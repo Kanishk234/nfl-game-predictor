@@ -31,8 +31,12 @@ ET = ZoneInfo("America/New_York")
 
 #: Chart colours, validated for colour-vision-deficiency separation and contrast on both
 #: surfaces with the dataviz validator.
-MODEL_LIGHT, VEGAS_LIGHT = "#1F6FB5", "#9A6A1F"
-MODEL_DARK, VEGAS_DARK = "#3F7FC6", "#B8891F"
+MODEL_LIGHT, VEGAS_LIGHT = "#1F6FB5", "#C43F8B"
+#: Vegas is drawn in pink on purpose: no NFL team uses pink in either of its colours, so the
+#: market's marker can never be mistaken for a team's. Chosen by measuring CIELAB distance from
+#: every team colour (and every lightened variant the cards can show) - pink sits ~34 away from
+#: its nearest neighbour, where the gold it replaced sat ~15 from Vikings/Steelers/Packers gold.
+MODEL_DARK, VEGAS_DARK = "#3F7FC6", "#F06BB0"
 
 #: Primary colour, secondary colour, full name. From nflverse's teams table; fixed facts, so
 #: hardcoded rather than downloaded at build time.
@@ -326,26 +330,26 @@ def legend_two() -> str:
 # ----------------------------------------------------------------------------- game cards
 
 def spread_rows(ours: float, line: float | None, actual: float | None, home: str, away: str) -> str:
-    """Two (three, once played) aligned rows: a fixed text column on the left, a bar on the
-    right whose length is the margin and whose colour is the favoured team's. Text is never
-    positioned by value, so labels cannot collide."""
+    """Two (three, once played) aligned rows in one grid: a caption spanning them on the left,
+    then who / how much / a bar growing from a shared centre. Text is never positioned by value,
+    so labels cannot collide, and the axis needs no header row of its own."""
     half = 10.0
     rows = [("Us", ours, "ours")]
     if line is not None:
         rows.append(("Vegas", line, "vegas"))
     if actual is not None:
         rows.append(("Final", actual, "final"))
-    out = [f'<div class="spread"><div class="spread-head"><span>Spread</span><span class="spread-axis"><span>{e(away)}</span><span>even</span><span>{e(home)}</span></span></div>'
-           ]
+    out = ['<div class="spread"><span class="spread-label">Points</span>']
     for who, v, cls in rows:
         v_c = max(-half, min(half, v))
         width = abs(v_c) / half * 50
         left = 50 if v_c >= 0 else 50 - width
         fav = home if v >= 0 else away
         style = f"--fav:{team_vars_pair(fav)}" if cls == "ours" else ""
-        out.append(f'<div class="spread-row {cls}" style="{e(style)}"><span class="spread-who">{who}</span>'
+        out.append(f'<span class="spread-who {cls}">{who}</span>'
                    f'<span class="spread-val">{e(by_team(v, home, away))}</span>'
-                   f'<span class="spread-track"><span class="spread-bar" style="left:{left:.1f}%;width:{width:.1f}%"></span></span></div>')
+                   f'<span class="spread-track {cls}" style="{e(style)}"><span class="spread-bar"></span>'
+                   f'<span class="spread-fill" style="left:{left:.1f}%;width:{width:.1f}%"></span></span>')
     out.append("</div>")
     return "".join(out)
 
@@ -400,10 +404,12 @@ def game_card(pass_name: str, p: dict, g: dict | None) -> str:
     <p class="matchup">{logo(away)}<span class="vs">{e(team_nick(away))} <small>at</small> {e(team_nick(home))}</span>{logo(home)}</p>
     <time datetime="{e(p["kickoff_utc"])}">{e(fmt_et(p["kickoff_utc"]))}</time>
   </header>
-  <p class="our-call"><span class="who">Our pick</span>{logo(pick, "logo big")}<strong>{e(pick)}</strong><span class="conf">{pct(p_pick(p))}</span></p>
-  <div class="bar-row"><span class="bar-end">{e(away)} {pct(1 - p_home)}</span>{prob_bar(p_home, v["p_home_moneyline"] if v else None, home, away)}<span class="bar-end">{e(home)} {pct(p_home)}</span></div>
-  {vegas_row}
-  {spread_rows(p["pred_margin"], v["spread_line"] if v else None, actual, home, away)}
+  <div class="zone">
+    <p class="our-call">{logo(pick, "logo big")}<strong>{e(pick)}</strong><span class="conf">{pct(p_pick(p))}</span><span class="towin">to win</span></p>
+    <div class="bar-row"><span class="bar-end">{e(away)} {pct(1 - p_home)}</span>{prob_bar(p_home, v["p_home_moneyline"] if v else None, home, away)}<span class="bar-end">{e(home)} {pct(p_home)}</span></div>
+    {vegas_row}
+  </div>
+  <div class="zone">{spread_rows(p["pred_margin"], v["spread_line"] if v else None, actual, home, away)}</div>
   {outcome}
 </article>'''
 
@@ -575,7 +581,7 @@ def about_section() -> str:
 
 CSS = f"""
 :root {{ --bg: #0A0A0A; --panel: #111111; --panel2: #171717; --ink: #EDEDED; --muted: #8A8F98; --rule: #262626; --rule2: #333333;
-         --model: {MODEL_DARK}; --vegas: #D6A21E; --away: #2A2F36; --hit: #3FB950; --miss: #F85149; }}
+         --model: {MODEL_DARK}; --vegas: {VEGAS_DARK}; --away: #2A2F36; --hit: #3FB950; --miss: #F85149; }}
 * {{ box-sizing: border-box; }}
 html {{ color-scheme: dark; background: var(--bg); }}
 body {{ margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 "Source Sans 3", "Segoe UI", system-ui, sans-serif;
@@ -605,45 +611,48 @@ a:focus-visible, summary:focus-visible {{ outline: 2px solid var(--model); outli
 .lede-2 {{ color: var(--muted); font-size: 1.05rem; margin: .25rem 0 1rem; }}
 .split {{ display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem 2.5rem; align-items: start; }}
 .split p {{ max-width: none; }}
-.week-grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(min(19rem, 100%), 1fr)); gap: .9rem; align-items: start; }}
-.cards {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(min(19rem, 100%), 1fr)); gap: .9rem; }}
+.week-grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(min(21rem, 100%), 1fr)); gap: 1.1rem; align-items: start; }}
+.cards {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(min(21rem, 100%), 1fr)); gap: 1.1rem; }}
 .slot {{ grid-column: 1 / -1; display: flex; align-items: baseline; gap: .75rem; margin: 1.5rem 0 .1rem; color: var(--ink);
          font-weight: 600; font-size: 1rem; }}
 .slot:first-child {{ margin-top: .5rem; }}
 .slot small {{ color: var(--muted); font-weight: 400; font-size: .85rem; white-space: nowrap; }}
 .slot::after {{ content: ""; flex: 1; height: 1px; background: var(--rule); }}
-.card {{ background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; padding: 1rem 1.1rem 1.05rem; scroll-margin-top: 1rem; min-width: 0; overflow: hidden; }}
+.card {{ background: var(--panel); border: 1px solid var(--rule); border-radius: 14px; padding: 1.15rem 1.25rem 1.25rem; scroll-margin-top: 1rem; min-width: 0; overflow: hidden; }}
+.zone {{ margin-top: 1.15rem; padding-top: 1.1rem; border-top: 1px solid var(--rule); }}
 .card:target {{ border-color: var(--team); box-shadow: 0 0 0 1px var(--team); }}
 .card header {{ display: block; }}
 .matchup {{ display: flex; align-items: center; gap: .5rem; margin: 0; }}
 .matchup .vs {{ flex: 1; text-align: center; font-family: "Bricolage Grotesque", system-ui, sans-serif; font-weight: 600; font-size: 1.1rem; line-height: 1.2; }}
 .matchup small {{ color: var(--muted); font-weight: 400; }}
-.card time {{ display: block; text-align: center; margin-top: .3rem; color: var(--muted); font-size: .85rem; }}
+.card time {{ display: block; text-align: center; margin-top: .45rem; color: var(--muted); font-size: .85rem; }}
 .logo {{ width: 40px; height: 40px; object-fit: contain; flex: none; background: #fff; border-radius: 50%; padding: 5px; }}
 .logo.small {{ width: 24px; height: 24px; padding: 3px; vertical-align: -7px; margin: 0 .2rem 0 .35rem; }}
-.logo.big {{ width: 46px; height: 46px; padding: 5px; margin: 0 .55rem 0 .6rem; }}
-.our-call {{ display: flex; align-items: center; margin: .9rem 0 .55rem; min-width: 0; }}
-.our-call .who {{ color: var(--muted); font-size: .85rem; width: 4rem; }}
-.our-call strong {{ font-family: "Bricolage Grotesque", system-ui, sans-serif; font-size: 1.9rem; color: var(--team); letter-spacing: -.01em; }}
-.our-call .conf {{ font-weight: 600; font-size: 1.5rem; margin-left: auto; }}
-.bar-row {{ display: flex; align-items: center; gap: .5rem; min-width: 0; }}
+.logo.big {{ width: 48px; height: 48px; padding: 6px; margin: 0 .7rem 0 0; }}
+.our-call {{ display: flex; align-items: center; gap: .1rem; margin: 0 0 .8rem; min-width: 0; }}
+.our-call strong {{ font-family: "Bricolage Grotesque", system-ui, sans-serif; font-size: 2rem; color: var(--team); letter-spacing: -.01em; margin-right: .55rem; }}
+.our-call .conf {{ font-weight: 600; font-size: 1.55rem; }}
+.our-call .towin {{ color: var(--muted); font-size: .85rem; margin-left: .4rem; align-self: flex-end; padding-bottom: .3rem; }}
+.bar-row {{ display: flex; align-items: center; gap: .6rem; min-width: 0; margin-bottom: .7rem; }}
 .bar-end {{ color: var(--muted); font-size: .8rem; white-space: nowrap; min-width: 3.6rem; }} .bar-end:last-child {{ text-align: right; }}
 .bar {{ display: block; flex: 1 1 0; min-width: 0; width: 100%; height: auto; overflow: visible; }}
 .bar-vegas {{ fill: var(--vegas); }}
-.vegas-call {{ margin: .5rem 0 .2rem; font-size: .9rem; color: var(--muted); }}
-.vegas-call .who {{ display: inline-block; width: 4rem; }} .vegas-call strong {{ color: var(--ink); font-size: 1rem; }}
+.vegas-call {{ margin: 0; font-size: .9rem; color: var(--muted); }}
+.vegas-call .who {{ display: inline-block; width: 3.4rem; color: var(--vegas); font-weight: 600; }}
+.vegas-call strong {{ color: var(--ink); font-size: 1rem; }}
 .disagree {{ color: var(--vegas); font-weight: 600; margin-left: .35rem; }}
-.spread {{ margin-top: .7rem; font-size: .85rem; }}
-.spread-head {{ display: grid; grid-template-columns: 8.4rem 1fr; color: var(--muted); margin-bottom: .2rem; }}
-.spread-axis {{ display: flex; justify-content: space-between; }}
-.spread-row {{ display: grid; grid-template-columns: 2.8rem minmax(5.4rem, auto) 1fr; align-items: center; margin: .3rem 0; min-width: 0; }}
-.spread-who {{ color: var(--muted); }} .spread-val {{ font-weight: 600; color: var(--ink); }}
-.spread-track {{ position: relative; height: 12px; background: var(--away); border-radius: 6px; }}
-.spread-track::before {{ content: ""; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 2px; background: var(--rule2); }}
-.spread-bar {{ position: absolute; top: 0; height: 12px; border-radius: 6px; background: var(--favc); min-width: 4px; }}
-.spread-row {{ --favc: var(--fav); }}
-.spread-row.vegas .spread-bar {{ background: var(--vegas); }} .spread-row.final .spread-bar {{ background: var(--ink); }}
-.final {{ margin: .8rem 0 0; padding-top: .7rem; border-top: 1px dashed var(--rule2); }}
+.spread {{ display: grid; grid-template-columns: 3.1rem 2.9rem minmax(5.2rem, auto) 1fr; align-items: center;
+           gap: .55rem .5rem; font-size: .85rem; min-width: 0; }}
+.spread-label {{ grid-row: 1 / -1; color: var(--muted); font-size: .78rem; line-height: 1.2; }}
+.spread-who {{ color: var(--muted); }} .spread-who.vegas {{ color: var(--vegas); font-weight: 600; }}
+.spread-val {{ font-weight: 600; color: var(--ink); }}
+.spread-track {{ position: relative; height: 10px; min-width: 0; --favc: var(--fav); }}
+.spread-bar {{ position: absolute; inset: 0; background: var(--away); border-radius: 5px; }}
+.spread-track::after {{ content: ""; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 2px; background: var(--rule2); z-index: 1; }}
+.spread-fill {{ position: absolute; top: 0; height: 10px; border-radius: 5px; background: var(--favc); min-width: 3px; }}
+.spread-track.vegas .spread-fill {{ background: var(--vegas); }}
+.spread-track.final .spread-fill {{ background: var(--ink); }}
+.final {{ margin: 1.15rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); font-size: .95rem; }}
 .score {{ font-weight: 600; margin-right: .5rem; }}
 .hit {{ color: var(--hit); font-weight: 700; }} .miss {{ color: var(--miss); font-weight: 700; }}
 .pending {{ color: var(--muted); }}

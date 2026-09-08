@@ -176,3 +176,8 @@ Open:
 - Per-slot grids made single-game slots (Wed, Thu, Sun night, Mon) look broken. Now one continuous `.week-grid`; slot labels span all columns as full-width dividers with a rule and a game count ("Sunday 1:00 pm — 9 games, 3 played"). Cards stay uniform and flow.
 - Page widened 76rem -> 84rem, prose 66ch -> 74ch, header lede uncapped. Season page's dry-run and trust sections are now two-column (`.split`) instead of a narrow text column in a wide page.
 - Backtest numbers moved from a prose sentence into a stat strip (ours bold, Vegas muted).
+
+## 2026-09-08 — Vegas colour and card density
+
+- **Vegas is pink (#F06BB0), not gold.** Gold sat ~15 CIELAB units from Vikings/Steelers/Packers/Chiefs gold. Measured every candidate against all 32 teams' primary, secondary and lightened-for-dark colours: pink is ~34 from its nearest neighbour and no NFL team uses pink at all, so the market marker can never read as a team. Test asserts it matches no team colour.
+- **Cards decluttered:** dropped the "Spread | away | even | home" axis header (the values already name the team); the spread is now one grid with a "Points" caption spanning both rows. Card split into three zones separated by hairlines (matchup / pick / points), padding 1.15rem, card min-width 21rem, gap 1.1rem. Eight rows down to six with more air between them.

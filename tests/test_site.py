@@ -67,11 +67,11 @@ class TestPages:
                                     _row("2026_01_SF_LA", "LA", "SF", line=None)])]
         page = S.render_site(preds, {}, None, None, NOW)["index.html"]
         assert 'Patriots <small>at</small> Seahawks' in page
-        assert '<span class="who">Our pick</span>' in page and "<strong>SEA</strong>" in page and "67%" in page
+        assert '<strong>SEA</strong><span class="conf">67%</span>' in page and "to win" in page
         assert '<span class="who">Vegas</span>' in page and "62%" in page
         assert "teamlogos/nfl/500/sea.png" in page and "teamlogos/nfl/500/ne.png" in page
-        assert '<span class="spread-who">Us</span><span class="spread-val">SEA by 5.1</span>' in page
-        assert '<span class="spread-who">Vegas</span><span class="spread-val">SEA by 3.0</span>' in page
+        assert '<span class="spread-who ours">Us</span><span class="spread-val">SEA by 5.1</span>' in page
+        assert '<span class="spread-who vegas">Vegas</span><span class="spread-val">SEA by 3.0</span>' in page
         assert "no line yet" in page                       # missing line is shown as missing
         assert 'style="--team:#' in page                    # picked team's colour on the card
         assert '<h3 class="slot"><span>Wednesday night</span>' in page
@@ -83,7 +83,7 @@ class TestPages:
     def test_away_pick_shows_away_confidence(self):
         preds = [_pred(1, "early", [_row("2026_01_NE_SEA", "SEA", "NE", p=0.40, m=-2.0)])]
         page = S.render_site(preds, {}, None, None, NOW)["index.html"]
-        assert "<strong>NE</strong><span class=\"conf\">60%</span>" in page
+        assert '<strong>NE</strong><span class="conf">60%</span>' in page
         assert "we disagree" in page  # Vegas (58% SEA) and we (NE) differ
 
     def test_graded_card_shows_score_winner_and_verdict(self):
@@ -142,6 +142,13 @@ class TestSlots:
         assert S.slot_label("2026-09-13T17:00:00+00:00") == "Sunday 1:00 pm"
         assert S.slot_label("2026-09-13T20:25:00+00:00") == "Sunday 4:25 pm"
         assert S.slot_label("2026-09-15T00:15:00+00:00") == "Monday night"
+
+
+def test_vegas_colour_is_not_any_team_colour():
+    """Pink on purpose: no NFL team uses it, so the market marker is never mistaken for a team."""
+    every_team = {c.upper() for p1, p2, _ in S.TEAM_COLORS.values() for c in (p1, p2)}
+    every_team |= {S.readable_team_color(a, S.DARK_PANEL).upper() for a in S.TEAM_COLORS}
+    assert S.VEGAS_DARK.upper() not in every_team
 
 
 class TestBar:
