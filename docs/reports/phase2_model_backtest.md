@@ -10,11 +10,11 @@ kickoff):
 
 | | accuracy | log loss | Brier | AUC | ECE | spread MAE |
 |---|---|---|---|---|---|---|
-| **Model** | **64.6%** | **0.632** | 0.221 | 0.695 | 0.037 | **10.07** |
+| **Model** | **64.4%** | **0.632** | 0.221 | 0.695 | 0.039 | **10.08** |
 | Vegas closing line | 66.5% | 0.610 | 0.212 | 0.727 | 0.026 | 9.76 |
 
-**The model does not beat Vegas.** It trails by 1.9 points of accuracy, 0.022 of log loss and
-0.31 points of spread MAE, and its against-the-spread record is 682–709–33, 49.0% (breakeven
+**The model does not beat Vegas.** It trails by 2.1 points of accuracy, 0.022 of log loss and
+0.31 points of spread MAE, and its against-the-spread record is 687–704–33, 49.4% (breakeven
 at −110 is 52.4%). It is, however, a real model: bare Elo is at 62–63%, the untuned first attempt was 63.1%,
 and the gap to the market roughly halved over this phase. Every number above comes from a
 window that nothing was tuned on.
@@ -90,15 +90,48 @@ Tuning seasons: log loss 0.6224 → 0.6190. **Holdout, confirmatory:** 0.6391 �
 - **Margin-derived win probability** (ridge margin → normal CDF): 0.6197 vs the classifier's
   0.6190. Same information, marginally worse calibration.
 
+## Second pass: everything else that was tried
+
+After the first version shipped, a deliberate attempt to squeeze out whatever else public data
+supports. Same rules: screened on the tuning seasons, holdout touched once at the end.
+
+**Adopted: a longer QB rating window.** Walk-forward log loss improved monotonically with window
+length — 8 games (+0.0008, worse than none), 16 (the original), 32 (−0.0012), then a plateau
+from 48 games on (−0.0022 to −0.0025); shrinkage priors of 50–200 attempts were within 0.0005 of
+one another. `QB_WINDOW` is now 64 with a 100-attempt prior, both mid-plateau. Tuning seasons:
+0.6190 → 0.6167. **The holdout did not move** (0.6321 → 0.6322, 64.6% → 64.4%). It stays
+because the selection rule is the tuning window, and reverting on holdout evidence would be the
+same sin as adopting on it; the report simply records that this one did not transfer.
+
+**Rejected, each with numbers, on the tuning seasons:**
+
+| candidate | best Δ log loss | note |
+|---|---|---|
+| SRS-style joint margin rating (6 configs, completion-time strict) | −0.0002 | as an Elo *replacement*: +0.0010 |
+| Bye / short-week indicators, playoff flag, primetime | −0.0002 to 0 | |
+| Time-zone difference, west-coast body clock at 1pm ET | +0.0006 / +0.0014 | |
+| Wind, temperature (dome-aware), freezing/windy flags, grass | +0.0003 / −0.0003 | grass at −0.0003 was the single best situational feature: noise |
+| Coaching change vs previous game | 0 | |
+| EPA form at 4 / 16 games, season-to-date, opponent-adjusted | −0.0003 to +0.0013 | |
+| Team form window 4–32 (properly re-run; a first attempt silently tested nothing) | ±0.0005, no trend | stays at 8 |
+| Interactions: Elo×week, QB×week, Elo², QB×experience | 0 to +0.0009 | |
+| CPOE-based QB rating alongside EPA | +0.0003 | |
+| Injury reports 2009+: Out/Doubtful counts, offensive-only, plus Questionable | −0.0005 (kickoff as-of), 0 (Tuesday as-of) | only the Sunday pass could use the kickoff version; not worth a per-pass feature set |
+
+Nineteen situational groups, six rating configurations and six injury variants, and nothing
+cleared −0.0005. That is a result: on schedule + EPA + QB data, a linear model is close to
+saturated, and the remaining gap to the market is information we do not have (roster detail
+beyond the QB, and the market's own aggregation of it) rather than modelling left on the table.
+
 ## Per-season, holdout
 
 | season | model acc | model logloss | Vegas acc | Vegas logloss |
 |---|---|---|---|---|
-| 2021 | 61.8% | 0.655 | 62.1% | 0.628 |
-| 2022 | 64.4% | 0.629 | 66.5% | 0.603 |
-| 2023 | 65.6% | 0.636 | 67.4% | 0.623 |
-| 2024 | 68.4% | 0.612 | 70.5% | 0.589 |
-| 2025 | 62.8% | 0.630 | 66.0% | 0.607 |
+| 2021 | 60.0% | 0.652 | 62.1% | 0.628 |
+| 2022 | 63.4% | 0.629 | 66.5% | 0.603 |
+| 2023 | 64.6% | 0.633 | 67.4% | 0.623 |
+| 2024 | 68.4% | 0.614 | 70.5% | 0.589 |
+| 2025 | 65.6% | 0.633 | 66.0% | 0.606 |
 
 ## Known limitations — the honest part
 
@@ -107,8 +140,8 @@ Tuning seasons: log loss 0.6224 → 0.6190. **Holdout, confirmatory:** 0.6391 �
 to ~51–55% after 2019, and a model that weights 2004 like 2024 carries the old level. This is
 the largest identifiable gap to the market, and it is where most of the calibration deficit
 (ECE 0.037 vs 0.026) lives. The reliability bins locate it precisely: in the coin-flip zone the
-model's 0.4–0.5 bin predicts a 45.3% home win and observes 38.1%; its 0.5–0.6 bin predicts
-55.1% and observes 51.3%. Above 0.6 it is calibrated to within two points, as is Vegas.
+model's 0.4–0.5 bin predicts ~45% home wins and observes ~38%; its 0.5–0.6 bin predicts
+~55% and observes ~51%. Above 0.6 it is calibrated to within two points, as is Vegas.
 
 It is *not* fixed here, deliberately. Both principled remedies (decay weights, an HFA feature)
 were neutral-to-negative on the tuning seasons, where HFA happened to be flat. Adopting either

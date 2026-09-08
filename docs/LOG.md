@@ -55,3 +55,11 @@ Open:
 - **Model over-calls home wins in every holdout season** (56.7% predicted vs 51.6% actual in 2021). League HFA dropped post-2019. Both principled fixes were neutral on tuning seasons; adopting them for the holdout would contaminate it. Left in, documented, to be judged live in 2026 (Phase 8).
 - QB "listed starter" is the actual starter for past games — slightly optimistic vs a Tuesday projection.
 - `data/models/` and `backtest.json` are gitignored and regenerable; site (Phase 6) rebuilds them.
+
+## 2026-09-08 — Phase 2 second pass (squeeze)
+
+- Screened on tuning seasons: SRS joint rating (6 configs), 19 situational/multi-window/interaction groups, CPOE QB rating, team form window 4-32, injury reports 2009+ (6 variants), QB window/prior/replacement grid.
+- **Adopted only `QB_WINDOW` 16 -> 64, prior 200 -> 100** (tuning 0.6190 -> 0.6167, monotone plateau from 48). Holdout unchanged (0.6322). Kept per the selection rule; recorded as not transferring.
+- Everything else rejected; nothing cleared -0.0005. Feature set is near saturation for public data + linear model.
+- Fixed a screen that silently tested nothing (form window bound as a default arg). Injuries: 2025 rows lack `date_modified`; some polars concat schema drift across seasons.
+- Holdout now: 64.4% / 0.632 / MAE 10.08 / ATS 49.4% vs Vegas 66.5% / 0.610 / 9.76. `pytest` 49 passed, ruff clean.
