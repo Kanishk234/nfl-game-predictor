@@ -1,7 +1,7 @@
 name: predict-late
 
 # Late pass — a fresher pass covering the Sunday/Monday slate, after the week's early games
-# have been played and their results are available to retrain on.
+# have been played and their results are in the training data.
 #
 # UTC conversion (see predict-early.yml for why one fixed UTC time must cover EDT and EST):
 #   Sunday early slate  1:00 PM ET  =  17:00 UTC (EDT) / 18:00 UTC (EST)
@@ -10,17 +10,57 @@ name: predict-late
 # delayed under load and a delayed run breaks the gate, not merely the schedule.
 #
 # This pass covers only games that have not yet kicked off. Games already played earlier in the
-# week keep their early-pass prediction, which is immutable.
+# week keep their early-pass prediction, which is immutable. The grader's "official" rule picks
+# the latest pass generated before each game's kickoff, so this one wins for Sun/Mon games.
+#
+# Do NOT dispatch this by hand ahead of Sunday — see predict-early.yml.
 
 on:
   schedule:
     - cron: "0 14 * * 0"
   workflow_dispatch:
 
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: data-writes
+  cancel-in-progress: false
+
 jobs:
   predict:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - name: placeholder
-        run: echo "Phase 0 scaffold - prediction logic lands in Phase 4 (see docs/PLAN.md)"
+        with:
+          fetch-depth: 0   # full history so `git pull --rebase` cannot trip on a shallow clone
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e .
+      - name: predict (late pass)
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+        run: python -m nfl_predict.predict --pass late
+      - name: commit and push the frozen prediction + odds
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/predictions data/odds
+          if git diff --cached --quiet; then echo "nothing new to publish"; exit 0; fi
+          latest=$(git diff --cached --name-only -- data/predictions | head -1 | xargs -n1 basename | sed 's/\.json$//')
+          git commit -m "publish ${latest} prediction"
+          git pull --rebase origin main
+          git push origin HEAD:main
+
+  deploy:
+    needs: predict
+    uses: ./.github/workflows/deploy-site.yml
+    permissions:
+      contents: read
+      pages: write
+      id-token: write

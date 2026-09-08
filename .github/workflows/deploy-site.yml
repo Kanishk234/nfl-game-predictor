@@ -2,6 +2,12 @@ name: deploy-site
 
 # Publishes site/ to GitHub Pages. Phase 0 deploys the placeholder page; from Phase 6 the
 # site is regenerated from data/ before this runs.
+#
+# Also callable from the predict/grade workflows (`workflow_call`). Pushes made with the
+# built-in GITHUB_TOKEN never trigger other workflows, so a data commit from a cron job would
+# not fire the `push` trigger below; the cron workflows call this directly instead. The
+# checkout pins `ref: main` so a call deploys the commit the caller just pushed, not the
+# commit the caller started from.
 
 on:
   push:
@@ -10,6 +16,7 @@ on:
       - "site/**"
       - ".github/workflows/deploy-site.yml"
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
@@ -28,6 +35,8 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

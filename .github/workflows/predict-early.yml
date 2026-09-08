@@ -12,20 +12,64 @@ name: predict-early
 # EDT (UTC-4) and EST (UTC-5)):
 #   We run           16:00 UTC Tue  =  12:00 PM EDT / 11:00 AM EST
 #   Earliest opener  a Wednesday night game, ~8:20 PM ET  =  00:20 UTC Wed
-# That leaves ~32h of slack, and it lands after Monday night's games have been graded.
+# That leaves ~32h of slack, and it lands after the Tuesday grade job (12:00 UTC) has finished.
 #
 # The cron is only the trigger. The gate is enforced in code: the pass computes the week's
-# earliest kickoff and refuses to publish if it has already passed (see data/schedule.py).
+# earliest kickoff and refuses to publish if it has already passed (see data/schedule.py). A
+# refusal fails this job loudly rather than publishing a late prediction.
+#
+# Do NOT dispatch this by hand ahead of its slot. Each (week, pass) file is immutable; a manual
+# Tuesday run of `predict-late` would burn Week N's late slot with a Tuesday prediction.
 
 on:
   schedule:
     - cron: "0 16 * * 2"
   workflow_dispatch:
 
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+# One data-writing job at a time, so two passes can never race on a push.
+concurrency:
+  group: data-writes
+  cancel-in-progress: false
+
 jobs:
   predict:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - name: placeholder
-        run: echo "Phase 0 scaffold - prediction logic lands in Phase 4 (see docs/PLAN.md)"
+        with:
+          fetch-depth: 0   # full history so `git pull --rebase` cannot trip on a shallow clone
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e .
+      - name: predict (early pass)
+        env:
+          # The only place the key exists in CI. It is masked in logs and never written to a
+          # file; see odds/fetch.py for the scrubbing on the code side.
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+        run: python -m nfl_predict.predict --pass early
+      - name: commit and push the frozen prediction + odds
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/predictions data/odds
+          if git diff --cached --quiet; then echo "nothing new to publish"; exit 0; fi
+          latest=$(git diff --cached --name-only -- data/predictions | head -1 | xargs -n1 basename | sed 's/\.json$//')
+          git commit -m "publish ${latest} prediction"
+          git pull --rebase origin main
+          git push origin HEAD:main
+
+  deploy:
+    needs: predict
+    uses: ./.github/workflows/deploy-site.yml
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
