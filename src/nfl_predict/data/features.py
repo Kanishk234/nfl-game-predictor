@@ -21,6 +21,7 @@ import nflreadpy as nfl
 import polars as pl
 
 from nfl_predict.data.schedule import GAME_DURATION
+from nfl_predict.retry import with_retries
 
 #: Elo tuning. K and carryover were chosen by walk-forward log loss over the 2012-2019 tuning
 #: seasons (see docs/reports/phase2_model_backtest.md). K sits mid-plateau (40-60 were within
@@ -34,13 +35,35 @@ ELO_SEASON_CARRYOVER = 0.5
 #: Games in the rolling form window.
 FORM_WINDOW = 8
 
-#: A per-season feed can be unavailable for three different reasons, and none of them is an
-#: error: the season has no release yet (404 -> ConnectionError), the file is unreadable
-#: (OSError), or nflreadpy refuses the season outright because its own idea of "current season"
-#: has not rolled over yet (ValueError, which is what `load_pbp` does the moment the first game
-#: of a new season is marked played but the pbp release is not up). All three mean the same
-#: thing: that season contributes nothing yet.
-_FEED_NOT_READY = (ConnectionError, OSError, ValueError)
+def _feed_not_published(exc: BaseException) -> bool:
+    """Is this "that season has no release yet", as opposed to "the download failed"?
+
+    The distinction matters enormously. A season that is not published yet contributes nothing
+    and we carry on. A download that *failed* must not be treated the same way: silently
+    skipping it drops that whole season out of the training data and the model quietly gets
+    worse with nobody the wiser. nflreadpy signals the first as a ValueError (a season it
+    refuses outright) or a ConnectionError wrapping a 404; a 500, a timeout or a reset are the
+    second kind.
+    """
+    return isinstance(exc, ValueError) or "404" in str(exc)
+
+
+def _load_season_feed(load, season: int, what: str):
+    """One season of a per-season feed, or None if that season simply is not published yet.
+
+    Transient failures are retried; if they persist the exception escapes, because a loud
+    failure is the only honest outcome — the alternative is training on a hole.
+    """
+    def attempt():
+        try:
+            return load(season)
+        except Exception as exc:
+            if _feed_not_published(exc):
+                return None
+            raise
+
+    return with_retries(attempt, what=f"{what} for {season}",
+                        retry_on=(ConnectionError, OSError, TimeoutError))
 
 #: nflreadpy's schedules keep the abbreviation a franchise used *at the time*, while its team
 #: stats use the current one. Joining the two without this mapping silently yields null EPA for
@@ -161,16 +184,12 @@ def _team_game_epa(seasons: list[int]) -> pl.DataFrame:
     """Per team-game offensive EPA. Seasons with no published stats file yet are skipped."""
     frames = []
     for season in seasons:
-        try:
-            frames.append(
-                nfl.load_team_stats(seasons=[season], summary_level="week").select(
-                    "game_id", "team", "passing_epa", "rushing_epa", "attempts", "carries"
-                )
-            )
-        except _FEED_NOT_READY:
-            # A not-yet-started season has no stats release. Not an error: those games have no
-            # results to summarise yet.
-            continue
+        got = _load_season_feed(
+            lambda s: nfl.load_team_stats(seasons=[s], summary_level="week").select(
+                "game_id", "team", "passing_epa", "rushing_epa", "attempts", "carries"),
+            season, "team stats")
+        if got is not None:
+            frames.append(got)
     if not frames:
         return pl.DataFrame(
             schema={"game_id": pl.String, "team": pl.String, "off_epa_per_play": pl.Float64}
@@ -253,14 +272,13 @@ def _qb_game_log(seasons: list[int]) -> pl.DataFrame:
     """Per QB-game passing lines. Seasons with no published stats file yet are skipped."""
     frames = []
     for season in seasons:
-        try:
-            frames.append(
-                nfl.load_player_stats(seasons=[season], summary_level="week")
-                .filter((pl.col("position") == "QB") & (pl.col("attempts") >= QB_MIN_ATTEMPTS))
-                .select("game_id", "player_id", "attempts", "passing_epa")
-            )
-        except _FEED_NOT_READY:
-            continue
+        got = _load_season_feed(
+            lambda s: nfl.load_player_stats(seasons=[s], summary_level="week")
+            .filter((pl.col("position") == "QB") & (pl.col("attempts") >= QB_MIN_ATTEMPTS))
+            .select("game_id", "player_id", "attempts", "passing_epa"),
+            season, "player stats")
+        if got is not None:
+            frames.append(got)
     if not frames:
         return pl.DataFrame(
             schema={"game_id": pl.String, "player_id": pl.String,
@@ -379,8 +397,12 @@ def _qb_draft_scores() -> pl.DataFrame:
     carries no as-of constraint.
     """
     try:
-        picks = nfl.load_draft_picks()
-    except _FEED_NOT_READY:
+        picks = with_retries(nfl.load_draft_picks, what="draft picks",
+                             retry_on=(ConnectionError, OSError, TimeoutError))
+    except (RuntimeError, ValueError):
+        # Draft position is a nice-to-have prior, not a load-bearing feature: without it every
+        # quarterback simply starts at replacement level, as they did before it existed.
+        print("draft picks unavailable; quarterbacks fall back to replacement level")
         return pl.DataFrame(schema={"player_id": pl.String, "qb_draft": pl.Float64})
     return (
         picks.filter((pl.col("position") == "QB") & pl.col("gsis_id").is_not_null())
@@ -423,12 +445,12 @@ def _team_game_pbp(seasons: list[int]) -> pl.DataFrame:
     """
     frames = []
     for season in seasons:
-        try:
-            pbp = nfl.load_pbp(seasons=[season]).select(
+        pbp = _load_season_feed(
+            lambda s: nfl.load_pbp(seasons=[s]).select(
                 "game_id", "posteam", "defteam", "play_type", "epa", "yards_gained",
-                "fumble", "interception",
-            )
-        except _FEED_NOT_READY:
+                "fumble", "interception"),
+            season, "play-by-play")
+        if pbp is None:
             continue
         plays = pbp.filter(
             pl.col("posteam").is_not_null()

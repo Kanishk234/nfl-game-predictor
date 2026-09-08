@@ -273,3 +273,36 @@ Four failure modes that a person would otherwise have had to notice:
    to seasons we have actually published for, so last season is not reported as our hole.
 
 13 new tests. Suite 125 passed; the full-season simulation still reports 128,123 checks clean.
+
+## 2026-09-08 — A red CI run exposed silent data loss
+
+CI failed on `test_no_schedule_team_code_is_missing_from_team_stats`: GitHub returned a **500**
+for one nflverse parquet. The test failure was upstream noise, but chasing it found a real bug in
+production code.
+
+**Every per-season loader caught `(ConnectionError, OSError, ValueError)` alike and skipped that
+season.** So a transient 500 on, say, 2005 silently removed 2005 from the training data — the
+model would fit on a hole and nobody would ever know. Reproduced it: `_team_game_epa([2004, 2005,
+2006])` with a 500 on 2005 returned only 2004 and 2006, no error.
+
+This is the third instance of the same failure shape in this project (after the SD/STL/OAK
+franchise-code nulls and the `load_pbp` ValueError). The pattern: an exception handler broad
+enough to swallow a real problem alongside an expected one.
+
+Fixed by separating the two meanings:
+
+- **not published yet** — a `ValueError` (a season nflreadpy refuses) or a ConnectionError
+  wrapping a **404**. That season contributes nothing; carry on. This is normal in September.
+- **the download failed** — a 500, a timeout, a reset. Retried four times with backoff, and if
+  it still fails the exception escapes and the job goes red. Training on a hole is worse than
+  not training.
+
+`_load_season_feed()` in features.py now wraps all four loaders. Draft picks degrade to
+replacement level with a printed note, since that prior is not load-bearing.
+
+The network test now **skips** rather than fails when nflverse is unavailable: it exists to catch
+a franchise rename on our side, and a red build for someone else's outage only teaches us to
+ignore red.
+
+4 new tests pinning the distinction, including one proving a recovering server still yields the
+season. Full suite (including network): 136 passed.
