@@ -37,3 +37,21 @@ Decided:
 Open:
 - CLAUDE.md and PLAN.md still say Thursday/Sunday and `thu`/`sun` pass tags; wording needs updating to early/late.
 - Elo params untuned (Phase 2). No injury/QB features yet. JAX 2002 home games missing upstream.
+
+## 2026-09-08 — Phase 2 model + backtest
+
+- `model/metrics.py`, `model/baseline.py`, `model/backtest.py`, `model/train.py`. Vegas baseline fitted per fold on training rows only.
+- Validation: tuning on walk-forward 2012–2019, reporting on weekly-replay 2021–2025 (110 retrains). Disjoint by construction; 2020 in neither.
+- **Ships logistic regression + ridge, not a GBDT.** LR 0.6190 vs best-of-60 LightGBM 0.6249 on tuning; default GBDT was worse than Elo alone. Blends didn't help. `LGBM_SPEC` kept for reproducibility.
+- **Holdout: model 64.6% / logloss 0.632 / MAE 10.07 vs Vegas 66.5% / 0.610 / 9.76.** Does not beat the market; ATS 49.0%.
+- Earned its place: Elo retune (K 20→50, carry ⅔→½, 0.6301→0.6246 elo-only); QB features (+0.007 logloss, +2.0 pts acc on holdout — bigger out of sample than in).
+- Rejected with numbers: 22 box-score features (best −0.0003), time-decay weights (worse), lagged-HFA feature (neutral both windows), margin→prob (worse).
+
+Broke / fixed:
+- polars `join_asof` with `by` returned a wrong-shaped column when no group matched; replaced with explicit join + strict filter in `qb_features.as_of`. Two leakage tests caught it.
+- 2026 team/player stats files don't exist yet upstream (season not started); loaders skip missing seasons rather than fail.
+
+Open:
+- **Model over-calls home wins in every holdout season** (56.7% predicted vs 51.6% actual in 2021). League HFA dropped post-2019. Both principled fixes were neutral on tuning seasons; adopting them for the holdout would contaminate it. Left in, documented, to be judged live in 2026 (Phase 8).
+- QB "listed starter" is the actual starter for past games — slightly optimistic vs a Tuesday projection.
+- `data/models/` and `backtest.json` are gitignored and regenerable; site (Phase 6) rebuilds them.
