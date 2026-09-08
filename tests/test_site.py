@@ -73,7 +73,9 @@ class TestPages:
         assert '<span class="spread-who">Us</span><span class="spread-val">SEA by 5.1</span>' in page
         assert '<span class="spread-who">Vegas</span><span class="spread-val">SEA by 3.0</span>' in page
         assert "no line yet" in page                       # missing line is shown as missing
-        assert 'style="--tl:#002244;--td:' in page          # picked team's colour, one per surface
+        assert 'style="--team:#' in page                    # picked team's colour on the card
+        assert "We disagree with Vegas on" in page or "We agree with Vegas" in page
+        assert '<h3 class="slot">Wednesday night</h3>' in page
         assert "All games this week" in page               # the table at the end
         assert "30 hours before the first kickoff" in page  # provenance, collapsed
         assert "abc1234" in page
@@ -91,13 +93,14 @@ class TestPages:
         assert '<span class="score">NE 17, SEA 24</span>' in page
         assert "SEA won, <span class=\"hit\">✓ we were right</span> and our side covered the spread." in page
         assert "Week 1, 2026, complete" in page
+        assert '<details class="slot-fold">' in page  # a fully played slot folds up
 
     def test_late_pass_supersedes_early_for_its_games(self):
         early = _pred(1, "early", [_row("2026_01_NE_SEA", "SEA", "NE", p=0.62), _row("2026_01_ATL_PIT", "PIT", "ATL", p=0.55)])
         late = _pred(1, "late", [_row("2026_01_ATL_PIT", "PIT", "ATL", p=0.40)], gen_offset_h=-3)
         page = S.render_site([early, late], {}, None, None, NOW)["index.html"]
         assert page.count("Falcons <small>at</small> Steelers") == 1
-        assert 'style="--tl:#A71930;--td:' in page          # ATL's colour on the card
+        assert 'id="2026_01_ATL_PIT" style="--team:#' in page
 
     def test_season_page_with_backtest(self):
         bt = {"holdout_seasons": [2021, 2022], "n_folds": 40, "n_games": 500,
@@ -123,12 +126,20 @@ class TestTeamColours:
 
     def test_black_primary_falls_back_to_the_iconic_secondary(self):
         assert S.readable_team_color("PIT", S.DARK_PANEL).upper().startswith("#FFB6")  # Steelers gold
-        assert S._contrast(S.readable_team_color("LV", S.DARK_PANEL), S.DARK_PANEL) >= 3.0  # Raiders silver
+        assert S.readable_team_color("LV", S.DARK_PANEL).upper() == "#A5ACAF"  # Raiders silver, not grey
 
     def test_every_team_reads_on_both_surfaces(self):
         for abbr in S.TEAM_COLORS:
             for surface in (S.LIGHT_PANEL, S.DARK_PANEL):
                 assert S._contrast(S.readable_team_color(abbr, surface), surface) >= 3.0, abbr
+
+
+class TestSlots:
+    def test_slot_labels(self):
+        assert S.slot_label("2026-09-10T00:20:00+00:00") == "Wednesday night"
+        assert S.slot_label("2026-09-13T17:00:00+00:00") == "Sunday 1:00 pm"
+        assert S.slot_label("2026-09-13T20:25:00+00:00") == "Sunday 4:25 pm"
+        assert S.slot_label("2026-09-15T00:15:00+00:00") == "Monday night"
 
 
 class TestBar:

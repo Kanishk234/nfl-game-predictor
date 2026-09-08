@@ -3,106 +3,103 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
 <title>Week 1, 2026</title>
 <meta name="description" content="NFL picks, win probabilities and spreads, published before kickoff and graded against the Vegas line.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;600&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
 <style>
-:root { --bg: #F4F5F1; --panel: #FFFFFF; --ink: #1E2A38; --muted: #62707E; --rule: #D9DDD6;
-         --model: #1F6FB5; --vegas: #9A6A1F; --away: #C9D2DA; --hit: #2E7D4F; --miss: #B23A3A; }
-@media (prefers-color-scheme: dark) {
-  :root { --bg: #171A1C; --panel: #1F2326; --ink: #E8EAE6; --muted: #9AA4AD; --rule: #33393E;
-           --model: #3F7FC6; --vegas: #B8891F; --away: #3A434B; --hit: #5FB37F; --miss: #E06C6C; } }
+:root { --bg: #0A0A0A; --panel: #111111; --panel2: #171717; --ink: #EDEDED; --muted: #8A8F98; --rule: #262626; --rule2: #333333;
+         --model: #3F7FC6; --vegas: #D6A21E; --away: #2A2F36; --hit: #3FB950; --miss: #F85149; }
 * { box-sizing: border-box; }
-html { color-scheme: light dark; }
-body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.5 "Source Sans 3", "Segoe UI", system-ui, sans-serif;
-        font-variant-numeric: tabular-nums; }
-main { max-width: 72rem; margin: 0 auto; padding: 1.5rem 1.25rem 5rem; }
-h1, h2, h3, dd, .num, .pick strong, .conf, .score { font-family: "Bricolage Grotesque", "Source Sans 3", system-ui, sans-serif; }
-h1 { font-size: 1.6rem; margin: 0; font-weight: 600; }
+html { color-scheme: dark; background: var(--bg); }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+        font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased; }
+main { max-width: 76rem; margin: 0 auto; padding: 1.5rem 1.25rem 5rem; }
+h1, h2, h3, dd, .num, .conf, .score { font-family: "Bricolage Grotesque", "Source Sans 3", system-ui, sans-serif; }
+h1 { font-size: 1.35rem; margin: 0; font-weight: 600; letter-spacing: -.01em; }
 h1 a { color: inherit; text-decoration: none; }
-h2 { font-size: 1.6rem; margin: 1.75rem 0 .5rem; font-weight: 600; }
-h3 { font-size: 1.2rem; margin: 0; font-weight: 600; }
+h2 { font-size: 1.7rem; margin: 1.5rem 0 .25rem; font-weight: 600; letter-spacing: -.01em; }
+h3 { font-size: 1.15rem; margin: 0; font-weight: 600; }
 p { max-width: 66ch; }
 a { color: var(--model); text-underline-offset: .15em; }
 a:focus-visible, summary:focus-visible { outline: 2px solid var(--model); outline-offset: 3px; }
-.top { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem 1.5rem; padding-bottom: .75rem; border-bottom: 1px solid var(--rule); }
-.top .lede { color: var(--muted); margin: 0; }
+.top { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem 1.5rem; padding-bottom: .9rem; border-bottom: 1px solid var(--rule); }
+.top .lede { color: var(--muted); margin: 0; font-size: .95rem; }
 .weeks { display: flex; flex-wrap: wrap; gap: .35rem; margin: .9rem 0 0; }
-.weeks a { text-decoration: none; padding: .3rem .7rem; border: 1px solid var(--rule); border-radius: 999px; color: var(--ink); font-size: .95rem; }
+.weeks a { text-decoration: none; padding: .3rem .75rem; border: 1px solid var(--rule2); border-radius: 999px; color: var(--ink); font-size: .9rem; background: var(--panel); }
 .weeks a[aria-current] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
-.how, .fine, small { color: var(--muted); font-size: .95rem; }
+.summary { font-size: 1.05rem; margin: .25rem 0 .5rem; }
+.how, .fine, small { color: var(--muted); font-size: .9rem; }
+.howto { color: var(--muted); font-size: .9rem; margin: 0 0 .5rem; } .howto summary { cursor: pointer; color: var(--model); }
 .strip { display: flex; flex-wrap: wrap; gap: .5rem 2rem; margin: 1rem 0 .25rem; padding: .9rem 1.1rem; background: var(--panel);
-          border: 1px solid var(--rule); border-radius: 8px; }
-.strip div { min-width: 6rem; } .strip dt { font-size: .85rem; color: var(--muted); }
+          border: 1px solid var(--rule); border-radius: 10px; }
+.strip div { min-width: 6rem; } .strip dt { font-size: .8rem; color: var(--muted); }
 .strip dd { margin: 0; font-size: 1.35rem; font-weight: 600; }
-.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(21rem, 1fr)); gap: 1rem; margin: 1.25rem 0 2.5rem; }
-.card { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 1rem 1.1rem 1.1rem; }
-.card header { display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; flex-wrap: wrap; }
-.card time { color: var(--muted); font-size: .9rem; }
-.card { --team: var(--tl); border-top: 4px solid var(--team); }
-.chip { --team: var(--tl); background: var(--team); } .chip.own { background: var(--team); }
-.spread-row { --favc: var(--fav); }
-@media (prefers-color-scheme: dark) { .card, .chip { --team: var(--td); } .spread-row { --favc: var(--favd); } }
+.slot { margin: 1.75rem 0 .6rem; color: var(--muted); font-weight: 500; font-size: .95rem; letter-spacing: .01em; }
+.slot-fold summary.slot { cursor: pointer; list-style: none; } .slot-fold summary.slot::before { content: "▸ "; } .slot-fold[open] summary.slot::before { content: "▾ "; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr)); gap: .9rem; }
+.card { background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; padding: 1rem 1.1rem 1.05rem; scroll-margin-top: 1rem; }
+.card:target { border-color: var(--team); box-shadow: 0 0 0 1px var(--team); }
 .card header { display: block; }
 .matchup { display: flex; align-items: center; gap: .5rem; margin: 0; }
-.matchup .vs { flex: 1; text-align: center; font-family: "Bricolage Grotesque", system-ui, sans-serif; font-weight: 600; font-size: 1.15rem; line-height: 1.2; }
+.matchup .vs { flex: 1; text-align: center; font-family: "Bricolage Grotesque", system-ui, sans-serif; font-weight: 600; font-size: 1.1rem; line-height: 1.2; }
 .matchup small { color: var(--muted); font-weight: 400; }
-.card time { display: block; text-align: center; margin-top: .35rem; }
-.logo { width: 40px; height: 40px; object-fit: contain; flex: none; }
-.logo.small { width: 22px; height: 22px; vertical-align: -6px; margin: 0 .15rem 0 .35rem; }
-.logo.big { width: 44px; height: 44px; margin: 0 .5rem 0 .6rem; }
-.our-call { display: flex; align-items: center; margin: .9rem 0 .5rem; }
-.our-call .who { color: var(--muted); font-size: .9rem; width: 4.2rem; }
-.our-call strong { font-family: "Bricolage Grotesque", system-ui, sans-serif; font-size: 1.9rem; color: var(--team); }
-.our-call .conf { font-family: "Bricolage Grotesque", system-ui, sans-serif; font-weight: 600; font-size: 1.5rem; margin-left: auto; }
-.vegas-call { margin: .5rem 0 .2rem; font-size: .95rem; color: var(--muted); }
-.vegas-call .who { display: inline-block; width: 4.2rem; } .vegas-call strong { color: var(--ink); font-size: 1.05rem; }
-.disagree { color: var(--vegas); font-weight: 600; margin-left: .35rem; }
-.howto { color: var(--muted); font-size: .95rem; margin: .25rem 0 .5rem; } .howto summary { cursor: pointer; color: var(--model); }
-.spread { margin-top: .8rem; font-size: .9rem; }
-.spread-head { display: grid; grid-template-columns: 8.6rem 1fr; color: var(--muted); margin-bottom: .25rem; }
-.spread-axis { display: flex; justify-content: space-between; }
-.spread-row { display: grid; grid-template-columns: 3rem 5.6rem 1fr; align-items: center; gap: 0; margin: .3rem 0; }
-.spread-who { color: var(--muted); } .spread-val { font-weight: 600; white-space: nowrap; }
-.spread-track { position: relative; height: 14px; background: var(--rule); border-radius: 7px; }
-.spread-track::before { content: ""; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 2px; background: var(--muted); }
-.spread-bar { position: absolute; top: 0; height: 14px; border-radius: 7px; background: var(--favc); min-width: 4px; }
-.spread-row.vegas .spread-bar { background: var(--vegas); } .spread-row.final .spread-bar { background: var(--ink); }
-.sub { font-size: 1.3rem; margin: 2rem 0 .5rem; } .empty { padding: 1rem 1.1rem; background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; }
-.more { margin: 1rem 0; } .more summary { cursor: pointer; color: var(--model); }
-.bar { display: block; width: 100%; height: auto; overflow: visible; }
+.card time { display: block; text-align: center; margin-top: .3rem; color: var(--muted); font-size: .85rem; }
+.logo { width: 40px; height: 40px; object-fit: contain; flex: none; background: #fff; border-radius: 50%; padding: 5px; }
+.logo.small { width: 24px; height: 24px; padding: 3px; vertical-align: -7px; margin: 0 .2rem 0 .35rem; }
+.logo.big { width: 46px; height: 46px; padding: 5px; margin: 0 .55rem 0 .6rem; }
+.our-call { display: flex; align-items: center; margin: .9rem 0 .55rem; }
+.our-call .who { color: var(--muted); font-size: .85rem; width: 4rem; }
+.our-call strong { font-family: "Bricolage Grotesque", system-ui, sans-serif; font-size: 1.9rem; color: var(--team); letter-spacing: -.01em; }
+.our-call .conf { font-weight: 600; font-size: 1.5rem; margin-left: auto; }
+.bar-row { display: flex; align-items: center; gap: .5rem; }
+.bar-end { color: var(--muted); font-size: .8rem; white-space: nowrap; min-width: 3.6rem; } .bar-end:last-child { text-align: right; }
+.bar { display: block; flex: 1; height: auto; overflow: visible; }
 .bar-vegas { fill: var(--vegas); }
-.bar-ends { display: flex; justify-content: space-between; margin: .3rem 0 .4rem; font-size: .9rem; color: var(--muted); }
-.spread { margin: .4rem 0 0; font-size: .95rem; }
-.final { margin: .8rem 0 0; padding-top: .7rem; border-top: 1px dashed var(--rule); }
-.score { font-weight: 600; margin-right: .5rem; } .verdict { white-space: nowrap; }
+.vegas-call { margin: .5rem 0 .2rem; font-size: .9rem; color: var(--muted); }
+.vegas-call .who { display: inline-block; width: 4rem; } .vegas-call strong { color: var(--ink); font-size: 1rem; }
+.disagree { color: var(--vegas); font-weight: 600; margin-left: .35rem; }
+.spread { margin-top: .7rem; font-size: .85rem; }
+.spread-head { display: grid; grid-template-columns: 8.4rem 1fr; color: var(--muted); margin-bottom: .2rem; }
+.spread-axis { display: flex; justify-content: space-between; }
+.spread-row { display: grid; grid-template-columns: 2.8rem 5.6rem 1fr; align-items: center; margin: .3rem 0; }
+.spread-who { color: var(--muted); } .spread-val { font-weight: 600; white-space: nowrap; color: var(--ink); }
+.spread-track { position: relative; height: 12px; background: var(--away); border-radius: 6px; }
+.spread-track::before { content: ""; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 2px; background: var(--rule2); }
+.spread-bar { position: absolute; top: 0; height: 12px; border-radius: 6px; background: var(--favc); min-width: 4px; }
+.spread-row { --favc: var(--fav); }
+.spread-row.vegas .spread-bar { background: var(--vegas); } .spread-row.final .spread-bar { background: var(--ink); }
+.final { margin: .8rem 0 0; padding-top: .7rem; border-top: 1px dashed var(--rule2); }
+.score { font-weight: 600; margin-right: .5rem; }
 .hit { color: var(--hit); font-weight: 700; } .miss { color: var(--miss); font-weight: 700; }
 .pending { color: var(--muted); }
-.table-title { margin: 2rem 0 .5rem; }
+.table-title { margin: 2.25rem 0 .5rem; }
 table { border-collapse: collapse; width: 100%; }
-.ledger { display: block; overflow-x: auto; font-size: .95rem; }
-.ledger th { text-align: left; font-weight: 600; font-size: .85rem; color: var(--muted); border-bottom: 1px solid var(--ink); padding: .4rem .6rem; white-space: nowrap; }
+.ledger { display: block; overflow-x: auto; font-size: .9rem; }
+.ledger th { text-align: left; font-weight: 600; font-size: .8rem; color: var(--muted); border-bottom: 1px solid var(--rule2); padding: .4rem .6rem; white-space: nowrap; }
 .ledger td { padding: .5rem .6rem; border-bottom: 1px solid var(--rule); white-space: nowrap; }
 .ledger .num, .compact .num { text-align: right; }
-.prov { margin: 1.5rem 0; color: var(--muted); font-size: .95rem; max-width: 72ch; }
+.prov { margin: 1.5rem 0; color: var(--muted); font-size: .9rem; max-width: 72ch; }
 .prov summary { cursor: pointer; } .prov ul { padding-left: 1.2rem; } .prov li { margin: .4rem 0; }
-.legend { font-size: .9rem; color: var(--muted); margin: .5rem 0 0; }
+.legend { font-size: .85rem; color: var(--muted); margin: .5rem 0 0; }
 .swatch { display: inline-block; width: .8em; height: .8em; border-radius: 50%; margin: 0 .35em 0 1em; vertical-align: -.05em; }
 .swatch.model { background: var(--model); } .swatch.vegas { background: var(--vegas); } .legend .swatch:first-child { margin-left: 0; }
 .chart { width: 100%; max-width: 640px; height: auto; display: block; }
-.chart .grid { stroke: var(--rule); stroke-width: 1; } .chart .ref { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 4 4; }
+.chart .grid { stroke: var(--rule2); stroke-width: 1; } .chart .ref { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 4 4; }
 .chart .tick, .chart .label { font-size: 12px; fill: var(--muted); font-family: "Source Sans 3", system-ui, sans-serif; }
 .chart .line { fill: none; stroke-width: 2; } .chart .line.model { stroke: var(--model); } .chart .line.vegas { stroke: var(--vegas); }
 .chart .dot { stroke: var(--bg); stroke-width: 2; } .chart .dot.model { fill: var(--model); } .chart .dot.vegas { fill: var(--vegas); }
 .chart .dot[fill="none"] { fill: var(--bg) !important; stroke-width: 2; } .chart .dot[fill="none"].model { stroke: var(--model); } .chart .dot[fill="none"].vegas { stroke: var(--vegas); }
 .chart .label.model { fill: var(--model); } .chart .label.vegas { fill: var(--vegas); }
-figure { margin: 1.5rem 0; } figcaption { color: var(--muted); font-size: .95rem; margin-bottom: .5rem; max-width: 62ch; }
+figure { margin: 1.5rem 0; } figcaption { color: var(--muted); font-size: .9rem; margin-bottom: .5rem; max-width: 62ch; }
 .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start; }
-.compact td, .compact th { padding: .35rem .5rem; border-bottom: 1px solid var(--rule); font-size: .95rem; }
-.compact th { text-align: left; color: var(--muted); font-weight: 600; font-size: .85rem; } .compact .total td { font-weight: 600; border-top: 1px solid var(--ink); }
+.compact td, .compact th { padding: .35rem .5rem; border-bottom: 1px solid var(--rule); font-size: .9rem; }
+.compact th { text-align: left; color: var(--muted); font-weight: 600; font-size: .8rem; } .compact .total td { font-weight: 600; border-top: 1px solid var(--rule2); }
+.sub { font-size: 1.25rem; margin: 2rem 0 .5rem; } .empty { padding: 1rem 1.1rem; background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; }
+.more { margin: 1rem 0; } .more summary { cursor: pointer; color: var(--model); }
 footer { margin-top: 3rem; }
-@media (max-width: 720px) { .two-col { grid-template-columns: 1fr; } .cards { grid-template-columns: 1fr; } body { font-size: 16px; } }
+@media (max-width: 720px) { .two-col { grid-template-columns: 1fr; } .cards { grid-template-columns: 1fr; } body { font-size: 15px; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 </head>
@@ -112,193 +109,178 @@ footer { margin-top: 3rem; }
 <p class="lede">Every NFL game picked before kickoff, written down where it cannot be changed, graded against Vegas.</p></div>
 <nav class="weeks"><a href="../index.html">This week</a><a href="../weeks/2026_01.html" aria-current="page">Week 1</a><a href="../season.html">Season</a></nav>
 <h2>Week 1, 2026</h2>
+<p class="summary">16 games. We disagree with Vegas on 3: <a href="#2026_01_BAL_IND">IND</a>, <a href="#2026_01_BUF_HOU">HOU</a>, <a href="#2026_01_NYJ_TEN">NYJ</a>.</p>
 <details class="howto"><summary>How to read a card</summary>
 <p><strong>Our pick</strong> is the model's call, in that team's colour. The bar is the win probability; the small bronze
    triangle under it is where Vegas puts it. <strong>Vegas</strong> is the betting favourite, for comparison. The spread
    rows show how much each of us expects the winner to win by: ours in the team colour, Vegas in bronze. Once a game is
    played, the score and a verdict appear at the bottom.</p></details>
 
-<div class="cards"><article class="card upcoming" style="--tl:#002244;--td:#006CD8">
+<h3 class="slot">Wednesday night</h3><div class="cards"><article class="card upcoming" id="2026_01_NE_SEA" style="--team:#0064C8">
   <header>
     <p class="matchup"><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/ne.png" alt="" width="40" height="40" loading="lazy"><span class="vs">Patriots <small>at</small> Seahawks</span><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/sea.png" alt="" width="40" height="40" loading="lazy"></p>
     <time datetime="2026-09-10T00:20:00+00:00">Wed Sep 9, 8:20 pm ET</time>
   </header>
   <p class="our-call"><span class="who">Our pick</span><img class="logo big" src="https://a.espncdn.com/i/teamlogos/nfl/500/sea.png" alt="" width="40" height="40" loading="lazy"><strong>SEA</strong><span class="conf">67%</span></p>
-  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="NE 33%, SEA 67%, Vegas has SEA at 62%"><rect x="0" y="0" width="99.0" height="14" rx="3" fill="var(--away)"/><rect x="101.0" y="0" width="199.0" height="14" rx="3" fill="var(--team)"/><polygon class="bar-vegas" points="114.5,15 109.5,22 119.5,22"/></svg>
-  <p class="bar-ends"><span>NE 33%</span><span>SEA 67%</span></p>
+  <div class="bar-row"><span class="bar-end">NE 33%</span><svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="NE 33%, SEA 67%, Vegas has SEA at 62%"><rect x="0" y="0" width="99.0" height="14" rx="3" fill="var(--away)"/><rect x="101.0" y="0" width="199.0" height="14" rx="3" fill="var(--team)"/><polygon class="bar-vegas" points="114.5,15 109.5,22 119.5,22"/></svg><span class="bar-end">SEA 67%</span></div>
   <p class="vegas-call"><span class="who">Vegas</span> <img class="logo small" src="https://a.espncdn.com/i/teamlogos/nfl/500/sea.png" alt="" width="40" height="40" loading="lazy"><strong>SEA</strong> 62%</p>
-  <div class="spread"><div class="spread-head"><span>Spread</span><span class="spread-axis"><span>NE</span><span>even</span><span>SEA</span></span></div><div class="spread-row ours" style="--fav:#002244;--favd:#006CD8"><span class="spread-who">Us</span><span class="spread-val">SEA by 5.1</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:25.4%"></span></span></div><div class="spread-row vegas" style=""><span class="spread-who">Vegas</span><span class="spread-val">SEA by 3.0</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:15.0%"></span></span></div></div>
+  <div class="spread"><div class="spread-head"><span>Spread</span><span class="spread-axis"><span>NE</span><span>even</span><span>SEA</span></span></div><div class="spread-row ours" style="--fav:#0064C8"><span class="spread-who">Us</span><span class="spread-val">SEA by 5.1</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:25.4%"></span></span></div><div class="spread-row vegas" style=""><span class="spread-who">Vegas</span><span class="spread-val">SEA by 3.0</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:15.0%"></span></span></div></div>
   
-</article><article class="card upcoming" style="--tl:#003594;--td:#0062FF">
+</article></div><h3 class="slot">Thursday night</h3><div class="cards"><article class="card upcoming" id="2026_01_SF_LA" style="--team:#0054EB">
   <header>
     <p class="matchup"><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/sf.png" alt="" width="40" height="40" loading="lazy"><span class="vs">49ers <small>at</small> Rams</span><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/lar.png" alt="" width="40" height="40" loading="lazy"></p>
     <time datetime="2026-09-11T00:35:00+00:00">Thu Sep 10, 8:35 pm ET</time>
   </header>
   <p class="our-call"><span class="who">Our pick</span><img class="logo big" src="https://a.espncdn.com/i/teamlogos/nfl/500/lar.png" alt="" width="40" height="40" loading="lazy"><strong>LA</strong><span class="conf">57%</span></p>
-  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="SF 43%, LA 57%, Vegas has LA at 64%"><rect x="0" y="0" width="130.3" height="14" rx="3" fill="var(--away)"/><rect x="132.3" y="0" width="167.7" height="14" rx="3" fill="var(--team)"/><polygon class="bar-vegas" points="108.4,15 103.4,22 113.4,22"/></svg>
-  <p class="bar-ends"><span>SF 43%</span><span>LA 57%</span></p>
+  <div class="bar-row"><span class="bar-end">SF 43%</span><svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="SF 43%, LA 57%, Vegas has LA at 64%"><rect x="0" y="0" width="130.3" height="14" rx="3" fill="var(--away)"/><rect x="132.3" y="0" width="167.7" height="14" rx="3" fill="var(--team)"/><polygon class="bar-vegas" points="108.4,15 103.4,22 113.4,22"/></svg><span class="bar-end">LA 57%</span></div>
   <p class="vegas-call"><span class="who">Vegas</span> <img class="logo small" src="https://a.espncdn.com/i/teamlogos/nfl/500/lar.png" alt="" width="40" height="40" loading="lazy"><strong>LA</strong> 64%</p>
-  <div class="spread"><div class="spread-head"><span>Spread</span><span class="spread-axis"><span>SF</span><span>even</span><span>LA</span></span></div><div class="spread-row ours" style="--fav:#003594;--favd:#0062FF"><span class="spread-who">Us</span><span class="spread-val">LA by 2.4</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:12.1%"></span></span></div><div class="spread-row vegas" style=""><span class="spread-who">Vegas</span><span class="spread-val">LA by 3.5</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:17.5%"></span></span></div></div>
+  <div class="spread"><div class="spread-head"><span>Spread</span><span class="spread-axis"><span>SF</span><span>even</span><span>LA</span></span></div><div class="spread-row ours" style="--fav:#0054EB"><span class="spread-who">Us</span><span class="spread-val">LA by 2.4</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:12.1%"></span></span></div><div class="spread-row vegas" style=""><span class="spread-who">Vegas</span><span class="spread-val">LA by 3.5</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:17.5%"></span></span></div></div>
   
-</article><article class="card upcoming" style="--tl:#B7820D;--td:#FFB612">
+</article></div><h3 class="slot">Sunday 1:00 pm</h3><div class="cards"><article class="card upcoming" id="2026_01_ATL_PIT" style="--team:#FFB612">
   <header>
     <p class="matchup"><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/atl.png" alt="" width="40" height="40" loading="lazy"><span class="vs">Falcons <small>at</small> Steelers</span><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/pit.png" alt="" width="40" height="40" loading="lazy"></p>
     <time datetime="2026-09-13T17:00:00+00:00">Sun Sep 13, 1:00 pm ET</time>
   </header>
   <p class="our-call"><span class="who">Our pick</span><img class="logo big" src="https://a.espncdn.com/i/teamlogos/nfl/500/pit.png" alt="" width="40" height="40" loading="lazy"><strong>PIT</strong><span class="conf">56%</span></p>
-  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="ATL 44%, PIT 56%, Vegas has PIT at 62%"><rect x="0" y="0" width="133.1" height="14" rx="3" fill="var(--away)"/><rect x="135.1" y="0" width="164.9" height="14" rx="3" fill="var(--team)"/><polygon class="bar-vegas" points="113.3,15 108.3,22 118.3,22"/></svg>
-  <p class="bar-ends"><span>ATL 44%</span><span>PIT 56%</span></p>
+  <div class="bar-row"><span class="bar-end">ATL 44%</span><svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="ATL 44%, PIT 56%, Vegas has PIT at 62%"><rect x="0" y="0" width="133.1" height="14" rx="3" fill="var(--away)"/><rect x="135.1" y="0" width="164.9" height="14" rx="3" fill="var(--team)"/><polygon class="bar-vegas" points="113.3,15 108.3,22 118.3,22"/></svg><span class="bar-end">PIT 56%</span></div>
   <p class="vegas-call"><span class="who">Vegas</span> <img class="logo small" src="https://a.espncdn.com/i/teamlogos/nfl/500/pit.png" alt="" width="40" height="40" loading="lazy"><strong>PIT</strong> 62%</p>
-  <div class="spread"><div class="spread-head"><span>Spread</span><span class="spread-axis"><span>ATL</span><span>even</span><span>PIT</span></span></div><div class="spread-row ours" style="--fav:#B7820D;--favd:#FFB612"><span class="spread-who">Us</span><span class="spread-val">PIT by 1.2</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:6.0%"></span></span></div><div class="spread-row vegas" style=""><span class="spread-who">Vegas</span><span class="spread-val">PIT by 3.5</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:17.5%"></span></span></div></div>
+  <div class="spread"><div class="spread-head"><span>Spread</span><span class="spread-axis"><span>ATL</span><span>even</span><span>PIT</span></span></div><div class="spread-row ours" style="--fav:#FFB612"><span class="spread-who">Us</span><span class="spread-val">PIT by 1.2</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:6.0%"></span></span></div><div class="spread-row vegas" style=""><span class="spread-who">Vegas</span><span class="spread-val">PIT by 3.5</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:17.5%"></span></span></div></div>
   
-</article><article class="card upcoming" style="--tl:#002C5F;--td:#0067DE">
+</article><article class="card upcoming" id="2026_01_BAL_IND" style="--team:#005FCD">
   <header>
     <p class="matchup"><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/bal.png" alt="" width="40" height="40" loading="lazy"><span class="vs">Ravens <small>at</small> Colts</span><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/ind.png" alt="" width="40" height="40" loading="lazy"></p>
     <time datetime="2026-09-13T17:00:00+00:00">Sun Sep 13, 1:00 pm ET</time>
   </header>
   <p class="our-call"><span class="who">Our pick</span><img class="logo big" src="https://a.espncdn.com/i/teamlogos/nfl/500/ind.png" alt="" width="40" height="40" loading="lazy"><strong>IND</strong><span class="conf">52%</span></p>
-  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="BAL 48%, IND 52%, Vegas has IND at 38%"><rect x="0" y="0" width="143.1" height="14" rx="3" fill="var(--away)"/><rect x="145.1" y="0" width="154.9" height="14" rx="3" fill="var(--team)"/><polygon class="bar-vegas" points="185.6,15 180.6,22 190.6,22"/></svg>
-  <p class="bar-ends"><span>BAL 48%</span><span>IND 52%</span></p>
+  <div class="bar-row"><span class="bar-end">BAL 48%</span><svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="BAL 48%, IND 52%, Vegas has IND at 38%"><rect x="0" y="0" width="143.1" height="14" rx="3" fill="var(--away)"/><rect x="145.1" y="0" width="154.9" height="14" rx="3" fill="var(--team)"/><polygon class="bar-vegas" points="185.6,15 180.6,22 190.6,22"/></svg><span class="bar-end">IND 52%</span></div>
   <p class="vegas-call"><span class="who">Vegas</span> <img class="logo small" src="https://a.espncdn.com/i/teamlogos/nfl/500/bal.png" alt="" width="40" height="40" loading="lazy"><strong>BAL</strong> 62% <span class="disagree">we disagree</span></p>
-  <div class="spread"><div class="spread-head"><span>Spread</span><span class="spread-axis"><span>BAL</span><span>even</span><span>IND</span></span></div><div class="spread-row ours" style="--fav:#002C5F;--favd:#0067DE"><span class="spread-who">Us</span><span class="spread-val">IND by 0.8</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:3.9%"></span></span></div><div class="spread-row vegas" style=""><span class="spread-who">Vegas</span><span class="spread-val">BAL by 3.5</span><span class="spread-track"><span class="spread-bar" style="left:32.5%;width:17.5%"></span></span></div></div>
+  <div class="spread"><div class="spread-head"><span>Spread</span><span class="spread-axis"><span>BAL</span><span>even</span><span>IND</span></span></div><div class="spread-row ours" style="--fav:#005FCD"><span class="spread-who">Us</span><span class="spread-val">IND by 0.8</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:3.9%"></span></span></div><div class="spread-row vegas" style=""><span class="spread-who">Vegas</span><span class="spread-val">BAL by 3.5</span><span class="spread-track"><span class="spread-bar" style="left:32.5%;width:17.5%"></span></span></div></div>
   
-</article><article class="card upcoming" style="--tl:#03202F;--td:#0B76AE">
+</article><article class="card upcoming" id="2026_01_BUF_HOU" style="--team:#0A6695">
   <header>
     <p class="matchup"><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/buf.png" alt="" width="40" height="40" loading="lazy"><span class="vs">Bills <small>at</small> Texans</span><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/hou.png" alt="" width="40" height="40" loading="lazy"></p>
     <time datetime="2026-09-13T17:00:00+00:00">Sun Sep 13, 1:00 pm ET</time>
   </header>
   <p class="our-call"><span class="who">Our pick</span><img class="logo big" src="https://a.espncdn.com/i/teamlogos/nfl/500/hou.png" alt="" width="40" height="40" loading="lazy"><strong>HOU</strong><span class="conf">56%</span></p>
-  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="BUF 44%, HOU 56%, Vegas has HOU at 48%"><rect x="0" y="0" width="132.9" height="14" rx="3" fill="var(--away)"/><rect x="134.9" y="0" width="165.1" height="14" rx="3" fill="var(--team)"/><polygon class="bar-vegas" points="156.5,15 151.5,22 161.5,22"/></svg>
-  <p class="bar-ends"><span>BUF 44%</span><span>HOU 56%</span></p>
+  <div class="bar-row"><span class="bar-end">BUF 44%</span><svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="BUF 44%, HOU 56%, Vegas has HOU at 48%"><rect x="0" y="0" width="132.9" height="14" rx="3" fill="var(--away)"/><rect x="134.9" y="0" width="165.1" height="14" rx="3" fill="var(--team)"/><polygon class="bar-vegas" points="156.5,15 151.5,22 161.5,22"/></svg><span class="bar-end">HOU 56%</span></div>
   <p class="vegas-call"><span class="who">Vegas</span> <img class="logo small" src="https://a.espncdn.com/i/teamlogos/nfl/500/buf.png" alt="" width="40" height="40" loading="lazy"><strong>BUF</strong> 52% <span class="disagree">we disagree</span></p>
-  <div class="spread"><div class="spread-head"><span>Spread</span><span class="spread-axis"><span>BUF</span><span>even</span><span>HOU</span></span></div><div class="spread-row ours" style="--fav:#03202F;--favd:#0B76AE"><span class="spread-who">Us</span><span class="spread-val">HOU by 1.7</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:8.5%"></span></span></div><div class="spread-row vegas" style=""><span class="spread-who">Vegas</span><span class="spread-val">BUF by 1.5</span><span class="spread-track"><span class="spread-bar" style="left:42.5%;width:7.5%"></span></span></div></div>
+  <div class="spread"><div class="spread-head"><span>Spread</span><span class="spread-axis"><span>BUF</span><span>even</span><span>HOU</span></span></div><div class="spread-row ours" style="--fav:#0A6695"><span class="spread-who">Us</span><span class="spread-val">HOU by 1.7</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:8.5%"></span></span></div><div class="spread-row vegas" style=""><span class="spread-who">Vegas</span><span class="spread-val">BUF by 1.5</span><span class="spread-track"><span class="spread-bar" style="left:42.5%;width:7.5%"></span></span></div></div>
   
-</article><article class="card upcoming" style="--tl:#0B162A;--td:#376FD3">
+</article><article class="card upcoming" id="2026_01_CHI_CAR" style="--team:#2F5FB5">
   <header>
     <p class="matchup"><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/chi.png" alt="" width="40" height="40" loading="lazy"><span class="vs">Bears <small>at</small> Panthers</span><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/car.png" alt="" width="40" height="40" loading="lazy"></p>
     <time datetime="2026-09-13T17:00:00+00:00">Sun Sep 13, 1:00 pm ET</time>
   </header>
   <p class="our-call"><span class="who">Our pick</span><img class="logo big" src="https://a.espncdn.com/i/teamlogos/nfl/500/chi.png" alt="" width="40" height="40" loading="lazy"><strong>CHI</strong><span class="conf">57%</span></p>
-  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="CHI 57%, CAR 43%, Vegas has CAR at 40%"><rect x="0" y="0" width="170.8" height="14" rx="3" fill="var(--team)"/><rect x="172.8" y="0" width="127.2" height="14" rx="3" fill="var(--away)"/><polygon class="bar-vegas" points="179.0,15 174.0,22 184.0,22"/></svg>
-  <p class="bar-ends"><span>CHI 57%</span><span>CAR 43%</span></p>
+  <div class="bar-row"><span class="bar-end">CHI 57%</span><svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="CHI 57%, CAR 43%, Vegas has CAR at 40%"><rect x="0" y="0" width="170.8" height="14" rx="3" fill="var(--team)"/><rect x="172.8" y="0" width="127.2" height="14" rx="3" fill="var(--away)"/><polygon class="bar-vegas" points="179.0,15 174.0,22 184.0,22"/></svg><span class="bar-end">CAR 43%</span></div>
   <p class="vegas-call"><span class="who">Vegas</span> <img class="logo small" src="https://a.espncdn.com/i/teamlogos/nfl/500/chi.png" alt="" width="40" height="40" loading="lazy"><strong>CHI</strong> 60%</p>
-  <div class="spread"><div class="spread-head"><span>Spread</span><span class="spread-axis"><span>CHI</span><span>even</span><span>CAR</span></span></div><div class="spread-row ours" style="--fav:#0B162A;--favd:#376FD3"><span class="spread-who">Us</span><span class="spread-val">CHI by 2.3</span><span class="spread-track"><span class="spread-bar" style="left:38.3%;width:11.7%"></span></span></div><div class="spread-row vegas" style=""><span class="spread-who">Vegas</span><span class="spread-val">CHI by 3.0</span><span class="spread-track"><span class="spread-bar" style="left:35.0%;width:15.0%"></span></span></div></div>
+  <div class="spread"><div class="spread-head"><span>Spread</span><span class="spread-axis"><span>CHI</span><span>even</span><span>CAR</span></span></div><div class="spread-row ours" style="--fav:#2F5FB5"><span class="spread-who">Us</span><span class="spread-val">CHI by 2.3</span><span class="spread-track"><span class="spread-bar" style="left:38.3%;width:11.7%"></span></span></div><div class="spread-row vegas" style=""><span class="spread-who">Vegas</span><span class="spread-val">CHI by 3.0</span><span class="spread-track"><span class="spread-bar" style="left:35.0%;width:15.0%"></span></span></div></div>
   
-</article><article class="card upcoming" style="--tl:#006778;--td:#00788C">
+</article><article class="card upcoming" id="2026_01_CLE_JAX" style="--team:#006F82">
   <header>
     <p class="matchup"><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/cle.png" alt="" width="40" height="40" loading="lazy"><span class="vs">Browns <small>at</small> Jaguars</span><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/jax.png" alt="" width="40" height="40" loading="lazy"></p>
     <time datetime="2026-09-13T17:00:00+00:00">Sun Sep 13, 1:00 pm ET</time>
   </header>
   <p class="our-call"><span class="who">Our pick</span><img class="logo big" src="https://a.espncdn.com/i/teamlogos/nfl/500/jax.png" alt="" width="40" height="40" loading="lazy"><strong>JAX</strong><span class="conf">75%</span></p>
-  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="CLE 25%, JAX 75%, Vegas has JAX at 79%"><rect x="0" y="0" width="75.2" height="14" rx="3" fill="var(--away)"/><rect x="77.2" y="0" width="222.8" height="14" rx="3" fill="var(--team)"/><polygon class="bar-vegas" points="64.1,15 59.1,22 69.1,22"/></svg>
-  <p class="bar-ends"><span>CLE 25%</span><span>JAX 75%</span></p>
+  <div class="bar-row"><span class="bar-end">CLE 25%</span><svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="CLE 25%, JAX 75%, Vegas has JAX at 79%"><rect x="0" y="0" width="75.2" height="14" rx="3" fill="var(--away)"/><rect x="77.2" y="0" width="222.8" height="14" rx="3" fill="var(--team)"/><polygon class="bar-vegas" points="64.1,15 59.1,22 69.1,22"/></svg><span class="bar-end">JAX 75%</span></div>
   <p class="vegas-call"><span class="who">Vegas</span> <img class="logo small" src="https://a.espncdn.com/i/teamlogos/nfl/500/jax.png" alt="" width="40" height="40" loading="lazy"><strong>JAX</strong> 79%</p>
-  <div class="spread"><div class="spread-head"><span>Spread</span><span class="spread-axis"><span>CLE</span><span>even</span><span>JAX</span></span></div><div class="spread-row ours" style="--fav:#006778;--favd:#00788C"><span class="spread-who">Us</span><span class="spread-val">JAX by 6.5</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:32.2%"></span></span></div><div class="spread-row vegas" style=""><span class="spread-who">Vegas</span><span class="spread-val">JAX by 8.5</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:42.5%"></span></span></div></div>
+  <div class="spread"><div class="spread-head"><span>Spread</span><span class="spread-axis"><span>CLE</span><span>even</span><span>JAX</span></span></div><div class="spread-row ours" style="--fav:#006F82"><span class="spread-who">Us</span><span class="spread-val">JAX by 6.5</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:32.2%"></span></span></div><div class="spread-row vegas" style=""><span class="spread-who">Vegas</span><span class="spread-val">JAX by 8.5</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:42.5%"></span></span></div></div>
   
-</article><article class="card upcoming" style="--tl:#0076B6;--td:#0076B6">
+</article><article class="card upcoming" id="2026_01_NO_DET" style="--team:#0076B6">
   <header>
     <p class="matchup"><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/no.png" alt="" width="40" height="40" loading="lazy"><span class="vs">Saints <small>at</small> Lions</span><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/det.png" alt="" width="40" height="40" loading="lazy"></p>
     <time datetime="2026-09-13T17:00:00+00:00">Sun Sep 13, 1:00 pm ET</time>
   </header>
   <p class="our-call"><span class="who">Our pick</span><img class="logo big" src="https://a.espncdn.com/i/teamlogos/nfl/500/det.png" alt="" width="40" height="40" loading="lazy"><strong>DET</strong><span class="conf">75%</span></p>
-  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="NO 25%, DET 75%, Vegas has DET at 73%"><rect x="0" y="0" width="74.7" height="14" rx="3" fill="var(--away)"/><rect x="76.7" y="0" width="223.3" height="14" rx="3" fill="var(--team)"/><polygon class="bar-vegas" points="79.9,15 74.9,22 84.9,22"/></svg>
-  <p class="bar-ends"><span>NO 25%</span><span>DET 75%</span></p>
+  <div class="bar-row"><span class="bar-end">NO 25%</span><svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="NO 25%, DET 75%, Vegas has DET at 73%"><rect x="0" y="0" width="74.7" height="14" rx="3" fill="var(--away)"/><rect x="76.7" y="0" width="223.3" height="14" rx="3" fill="var(--team)"/><polygon class="bar-vegas" points="79.9,15 74.9,22 84.9,22"/></svg><span class="bar-end">DET 75%</span></div>
   <p class="vegas-call"><span class="who">Vegas</span> <img class="logo small" src="https://a.espncdn.com/i/teamlogos/nfl/500/det.png" alt="" width="40" height="40" loading="lazy"><strong>DET</strong> 73%</p>
-  <div class="spread"><div class="spread-head"><span>Spread</span><span class="spread-axis"><span>NO</span><span>even</span><span>DET</span></span></div><div class="spread-row ours" style="--fav:#0076B6;--favd:#0076B6"><span class="spread-who">Us</span><span class="spread-val">DET by 8.2</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:40.8%"></span></span></div><div class="spread-row vegas" style=""><span class="spread-who">Vegas</span><span class="spread-val">DET by 7.0</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:35.0%"></span></span></div></div>
+  <div class="spread"><div class="spread-head"><span>Spread</span><span class="spread-axis"><span>NO</span><span>even</span><span>DET</span></span></div><div class="spread-row ours" style="--fav:#0076B6"><span class="spread-who">Us</span><span class="spread-val">DET by 8.2</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:40.8%"></span></span></div><div class="spread-row vegas" style=""><span class="spread-who">Vegas</span><span class="spread-val">DET by 7.0</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:35.0%"></span></span></div></div>
   
-</article><article class="card upcoming" style="--tl:#003F2D;--td:#007E5A">
+</article><article class="card upcoming" id="2026_01_NYJ_TEN" style="--team:#007553">
   <header>
     <p class="matchup"><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/nyj.png" alt="" width="40" height="40" loading="lazy"><span class="vs">Jets <small>at</small> Titans</span><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/ten.png" alt="" width="40" height="40" loading="lazy"></p>
     <time datetime="2026-09-13T17:00:00+00:00">Sun Sep 13, 1:00 pm ET</time>
   </header>
   <p class="our-call"><span class="who">Our pick</span><img class="logo big" src="https://a.espncdn.com/i/teamlogos/nfl/500/nyj.png" alt="" width="40" height="40" loading="lazy"><strong>NYJ</strong><span class="conf">61%</span></p>
-  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="NYJ 61%, TEN 39%, Vegas has TEN at 53%"><rect x="0" y="0" width="183.5" height="14" rx="3" fill="var(--team)"/><rect x="185.5" y="0" width="114.5" height="14" rx="3" fill="var(--away)"/><polygon class="bar-vegas" points="140.3,15 135.3,22 145.3,22"/></svg>
-  <p class="bar-ends"><span>NYJ 61%</span><span>TEN 39%</span></p>
+  <div class="bar-row"><span class="bar-end">NYJ 61%</span><svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="NYJ 61%, TEN 39%, Vegas has TEN at 53%"><rect x="0" y="0" width="183.5" height="14" rx="3" fill="var(--team)"/><rect x="185.5" y="0" width="114.5" height="14" rx="3" fill="var(--away)"/><polygon class="bar-vegas" points="140.3,15 135.3,22 145.3,22"/></svg><span class="bar-end">TEN 39%</span></div>
   <p class="vegas-call"><span class="who">Vegas</span> <img class="logo small" src="https://a.espncdn.com/i/teamlogos/nfl/500/ten.png" alt="" width="40" height="40" loading="lazy"><strong>TEN</strong> 53% <span class="disagree">we disagree</span></p>
-  <div class="spread"><div class="spread-head"><span>Spread</span><span class="spread-axis"><span>NYJ</span><span>even</span><span>TEN</span></span></div><div class="spread-row ours" style="--fav:#003F2D;--favd:#007E5A"><span class="spread-who">Us</span><span class="spread-val">NYJ by 3.5</span><span class="spread-track"><span class="spread-bar" style="left:32.3%;width:17.7%"></span></span></div><div class="spread-row vegas" style=""><span class="spread-who">Vegas</span><span class="spread-val">TEN by 1.5</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:7.5%"></span></span></div></div>
+  <div class="spread"><div class="spread-head"><span>Spread</span><span class="spread-axis"><span>NYJ</span><span>even</span><span>TEN</span></span></div><div class="spread-row ours" style="--fav:#007553"><span class="spread-who">Us</span><span class="spread-val">NYJ by 3.5</span><span class="spread-track"><span class="spread-bar" style="left:32.3%;width:17.7%"></span></span></div><div class="spread-row vegas" style=""><span class="spread-who">Vegas</span><span class="spread-val">TEN by 1.5</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:7.5%"></span></span></div></div>
   
-</article><article class="card upcoming" style="--tl:#FB4F14;--td:#FB4F14">
+</article><article class="card upcoming" id="2026_01_TB_CIN" style="--team:#FB4F14">
   <header>
     <p class="matchup"><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/tb.png" alt="" width="40" height="40" loading="lazy"><span class="vs">Buccaneers <small>at</small> Bengals</span><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/cin.png" alt="" width="40" height="40" loading="lazy"></p>
     <time datetime="2026-09-13T17:00:00+00:00">Sun Sep 13, 1:00 pm ET</time>
   </header>
   <p class="our-call"><span class="who">Our pick</span><img class="logo big" src="https://a.espncdn.com/i/teamlogos/nfl/500/cin.png" alt="" width="40" height="40" loading="lazy"><strong>CIN</strong><span class="conf">57%</span></p>
-  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="TB 43%, CIN 57%, Vegas has CIN at 64%"><rect x="0" y="0" width="129.6" height="14" rx="3" fill="var(--away)"/><rect x="131.6" y="0" width="168.4" height="14" rx="3" fill="var(--team)"/><polygon class="bar-vegas" points="107.7,15 102.7,22 112.7,22"/></svg>
-  <p class="bar-ends"><span>TB 43%</span><span>CIN 57%</span></p>
+  <div class="bar-row"><span class="bar-end">TB 43%</span><svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="TB 43%, CIN 57%, Vegas has CIN at 64%"><rect x="0" y="0" width="129.6" height="14" rx="3" fill="var(--away)"/><rect x="131.6" y="0" width="168.4" height="14" rx="3" fill="var(--team)"/><polygon class="bar-vegas" points="107.7,15 102.7,22 112.7,22"/></svg><span class="bar-end">CIN 57%</span></div>
   <p class="vegas-call"><span class="who">Vegas</span> <img class="logo small" src="https://a.espncdn.com/i/teamlogos/nfl/500/cin.png" alt="" width="40" height="40" loading="lazy"><strong>CIN</strong> 64%</p>
-  <div class="spread"><div class="spread-head"><span>Spread</span><span class="spread-axis"><span>TB</span><span>even</span><span>CIN</span></span></div><div class="spread-row ours" style="--fav:#FB4F14;--favd:#FB4F14"><span class="spread-who">Us</span><span class="spread-val">CIN by 1.8</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:8.9%"></span></span></div><div class="spread-row vegas" style=""><span class="spread-who">Vegas</span><span class="spread-val">CIN by 3.5</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:17.5%"></span></span></div></div>
+  <div class="spread"><div class="spread-head"><span>Spread</span><span class="spread-axis"><span>TB</span><span>even</span><span>CIN</span></span></div><div class="spread-row ours" style="--fav:#FB4F14"><span class="spread-who">Us</span><span class="spread-val">CIN by 1.8</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:8.9%"></span></span></div><div class="spread-row vegas" style=""><span class="spread-who">Vegas</span><span class="spread-val">CIN by 3.5</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:17.5%"></span></span></div></div>
   
-</article><article class="card upcoming" style="--tl:#007BC7;--td:#007BC7">
+</article></div><h3 class="slot">Sunday 4:25 pm</h3><div class="cards"><article class="card upcoming" id="2026_01_ARI_LAC" style="--team:#007BC7">
   <header>
     <p class="matchup"><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/ari.png" alt="" width="40" height="40" loading="lazy"><span class="vs">Cardinals <small>at</small> Chargers</span><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/lac.png" alt="" width="40" height="40" loading="lazy"></p>
     <time datetime="2026-09-13T20:25:00+00:00">Sun Sep 13, 4:25 pm ET</time>
   </header>
   <p class="our-call"><span class="who">Our pick</span><img class="logo big" src="https://a.espncdn.com/i/teamlogos/nfl/500/lac.png" alt="" width="40" height="40" loading="lazy"><strong>LAC</strong><span class="conf">73%</span></p>
-  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="ARI 27%, LAC 73%, Vegas has LAC at 81%"><rect x="0" y="0" width="82.1" height="14" rx="3" fill="var(--away)"/><rect x="84.1" y="0" width="215.9" height="14" rx="3" fill="var(--team)"/><polygon class="bar-vegas" points="57.7,15 52.7,22 62.7,22"/></svg>
-  <p class="bar-ends"><span>ARI 27%</span><span>LAC 73%</span></p>
+  <div class="bar-row"><span class="bar-end">ARI 27%</span><svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="ARI 27%, LAC 73%, Vegas has LAC at 81%"><rect x="0" y="0" width="82.1" height="14" rx="3" fill="var(--away)"/><rect x="84.1" y="0" width="215.9" height="14" rx="3" fill="var(--team)"/><polygon class="bar-vegas" points="57.7,15 52.7,22 62.7,22"/></svg><span class="bar-end">LAC 73%</span></div>
   <p class="vegas-call"><span class="who">Vegas</span> <img class="logo small" src="https://a.espncdn.com/i/teamlogos/nfl/500/lac.png" alt="" width="40" height="40" loading="lazy"><strong>LAC</strong> 81%</p>
-  <div class="spread"><div class="spread-head"><span>Spread</span><span class="spread-axis"><span>ARI</span><span>even</span><span>LAC</span></span></div><div class="spread-row ours" style="--fav:#007BC7;--favd:#007BC7"><span class="spread-who">Us</span><span class="spread-val">LAC by 6.8</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:34.1%"></span></span></div><div class="spread-row vegas" style=""><span class="spread-who">Vegas</span><span class="spread-val">LAC by 9.5</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:47.5%"></span></span></div></div>
+  <div class="spread"><div class="spread-head"><span>Spread</span><span class="spread-axis"><span>ARI</span><span>even</span><span>LAC</span></span></div><div class="spread-row ours" style="--fav:#007BC7"><span class="spread-who">Us</span><span class="spread-val">LAC by 6.8</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:34.1%"></span></span></div><div class="spread-row vegas" style=""><span class="spread-who">Vegas</span><span class="spread-val">LAC by 9.5</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:47.5%"></span></span></div></div>
   
-</article><article class="card upcoming" style="--tl:#4F2683;--td:#9246F2">
+</article><article class="card upcoming" id="2026_01_GB_MIN" style="--team:#7D3CD0">
   <header>
     <p class="matchup"><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/gb.png" alt="" width="40" height="40" loading="lazy"><span class="vs">Packers <small>at</small> Vikings</span><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/min.png" alt="" width="40" height="40" loading="lazy"></p>
     <time datetime="2026-09-13T20:25:00+00:00">Sun Sep 13, 4:25 pm ET</time>
   </header>
   <p class="our-call"><span class="who">Our pick</span><img class="logo big" src="https://a.espncdn.com/i/teamlogos/nfl/500/min.png" alt="" width="40" height="40" loading="lazy"><strong>MIN</strong><span class="conf">63%</span></p>
-  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="GB 37%, MIN 63%, Vegas has MIN at 52%"><rect x="0" y="0" width="109.9" height="14" rx="3" fill="var(--away)"/><rect x="111.9" y="0" width="188.1" height="14" rx="3" fill="var(--team)"/><polygon class="bar-vegas" points="143.5,15 138.5,22 148.5,22"/></svg>
-  <p class="bar-ends"><span>GB 37%</span><span>MIN 63%</span></p>
+  <div class="bar-row"><span class="bar-end">GB 37%</span><svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="GB 37%, MIN 63%, Vegas has MIN at 52%"><rect x="0" y="0" width="109.9" height="14" rx="3" fill="var(--away)"/><rect x="111.9" y="0" width="188.1" height="14" rx="3" fill="var(--team)"/><polygon class="bar-vegas" points="143.5,15 138.5,22 148.5,22"/></svg><span class="bar-end">MIN 63%</span></div>
   <p class="vegas-call"><span class="who">Vegas</span> <img class="logo small" src="https://a.espncdn.com/i/teamlogos/nfl/500/min.png" alt="" width="40" height="40" loading="lazy"><strong>MIN</strong> 52%</p>
-  <div class="spread"><div class="spread-head"><span>Spread</span><span class="spread-axis"><span>GB</span><span>even</span><span>MIN</span></span></div><div class="spread-row ours" style="--fav:#4F2683;--favd:#9246F2"><span class="spread-who">Us</span><span class="spread-val">MIN by 3.6</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:18.1%"></span></span></div><div class="spread-row vegas" style=""><span class="spread-who">Vegas</span><span class="spread-val">MIN by 1.5</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:7.5%"></span></span></div></div>
+  <div class="spread"><div class="spread-head"><span>Spread</span><span class="spread-axis"><span>GB</span><span>even</span><span>MIN</span></span></div><div class="spread-row ours" style="--fav:#7D3CD0"><span class="spread-who">Us</span><span class="spread-val">MIN by 3.6</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:18.1%"></span></span></div><div class="spread-row vegas" style=""><span class="spread-who">Vegas</span><span class="spread-val">MIN by 1.5</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:7.5%"></span></span></div></div>
   
-</article><article class="card upcoming" style="--tl:#000000;--td:#737373">
+</article><article class="card upcoming" id="2026_01_MIA_LV" style="--team:#A5ACAF">
   <header>
     <p class="matchup"><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/mia.png" alt="" width="40" height="40" loading="lazy"><span class="vs">Dolphins <small>at</small> Raiders</span><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/lv.png" alt="" width="40" height="40" loading="lazy"></p>
     <time datetime="2026-09-13T20:25:00+00:00">Sun Sep 13, 4:25 pm ET</time>
   </header>
   <p class="our-call"><span class="who">Our pick</span><img class="logo big" src="https://a.espncdn.com/i/teamlogos/nfl/500/lv.png" alt="" width="40" height="40" loading="lazy"><strong>LV</strong><span class="conf">56%</span></p>
-  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="MIA 44%, LV 56%, Vegas has LV at 62%"><rect x="0" y="0" width="130.5" height="14" rx="3" fill="var(--away)"/><rect x="132.5" y="0" width="167.5" height="14" rx="3" fill="var(--team)"/><polygon class="bar-vegas" points="114.4,15 109.4,22 119.4,22"/></svg>
-  <p class="bar-ends"><span>MIA 44%</span><span>LV 56%</span></p>
+  <div class="bar-row"><span class="bar-end">MIA 44%</span><svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="MIA 44%, LV 56%, Vegas has LV at 62%"><rect x="0" y="0" width="130.5" height="14" rx="3" fill="var(--away)"/><rect x="132.5" y="0" width="167.5" height="14" rx="3" fill="var(--team)"/><polygon class="bar-vegas" points="114.4,15 109.4,22 119.4,22"/></svg><span class="bar-end">LV 56%</span></div>
   <p class="vegas-call"><span class="who">Vegas</span> <img class="logo small" src="https://a.espncdn.com/i/teamlogos/nfl/500/lv.png" alt="" width="40" height="40" loading="lazy"><strong>LV</strong> 62%</p>
-  <div class="spread"><div class="spread-head"><span>Spread</span><span class="spread-axis"><span>MIA</span><span>even</span><span>LV</span></span></div><div class="spread-row ours" style="--fav:#000000;--favd:#737373"><span class="spread-who">Us</span><span class="spread-val">LV by 0.9</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:4.5%"></span></span></div><div class="spread-row vegas" style=""><span class="spread-who">Vegas</span><span class="spread-val">LV by 3.5</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:17.5%"></span></span></div></div>
+  <div class="spread"><div class="spread-head"><span>Spread</span><span class="spread-axis"><span>MIA</span><span>even</span><span>LV</span></span></div><div class="spread-row ours" style="--fav:#A5ACAF"><span class="spread-who">Us</span><span class="spread-val">LV by 0.9</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:4.5%"></span></span></div><div class="spread-row vegas" style=""><span class="spread-who">Vegas</span><span class="spread-val">LV by 3.5</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:17.5%"></span></span></div></div>
   
-</article><article class="card upcoming" style="--tl:#004C54;--td:#007985">
+</article><article class="card upcoming" id="2026_01_WAS_PHI" style="--team:#00707B">
   <header>
     <p class="matchup"><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/wsh.png" alt="" width="40" height="40" loading="lazy"><span class="vs">Commanders <small>at</small> Eagles</span><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/phi.png" alt="" width="40" height="40" loading="lazy"></p>
     <time datetime="2026-09-13T20:25:00+00:00">Sun Sep 13, 4:25 pm ET</time>
   </header>
   <p class="our-call"><span class="who">Our pick</span><img class="logo big" src="https://a.espncdn.com/i/teamlogos/nfl/500/phi.png" alt="" width="40" height="40" loading="lazy"><strong>PHI</strong><span class="conf">62%</span></p>
-  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="WAS 38%, PHI 62%, Vegas has PHI at 67%"><rect x="0" y="0" width="115.2" height="14" rx="3" fill="var(--away)"/><rect x="117.2" y="0" width="182.8" height="14" rx="3" fill="var(--team)"/><polygon class="bar-vegas" points="98.9,15 93.9,22 103.9,22"/></svg>
-  <p class="bar-ends"><span>WAS 38%</span><span>PHI 62%</span></p>
+  <div class="bar-row"><span class="bar-end">WAS 38%</span><svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="WAS 38%, PHI 62%, Vegas has PHI at 67%"><rect x="0" y="0" width="115.2" height="14" rx="3" fill="var(--away)"/><rect x="117.2" y="0" width="182.8" height="14" rx="3" fill="var(--team)"/><polygon class="bar-vegas" points="98.9,15 93.9,22 103.9,22"/></svg><span class="bar-end">PHI 62%</span></div>
   <p class="vegas-call"><span class="who">Vegas</span> <img class="logo small" src="https://a.espncdn.com/i/teamlogos/nfl/500/phi.png" alt="" width="40" height="40" loading="lazy"><strong>PHI</strong> 67%</p>
-  <div class="spread"><div class="spread-head"><span>Spread</span><span class="spread-axis"><span>WAS</span><span>even</span><span>PHI</span></span></div><div class="spread-row ours" style="--fav:#004C54;--favd:#007985"><span class="spread-who">Us</span><span class="spread-val">PHI by 3.3</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:16.4%"></span></span></div><div class="spread-row vegas" style=""><span class="spread-who">Vegas</span><span class="spread-val">PHI by 5.5</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:27.5%"></span></span></div></div>
+  <div class="spread"><div class="spread-head"><span>Spread</span><span class="spread-axis"><span>WAS</span><span>even</span><span>PHI</span></span></div><div class="spread-row ours" style="--fav:#00707B"><span class="spread-who">Us</span><span class="spread-val">PHI by 3.3</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:16.4%"></span></span></div><div class="spread-row vegas" style=""><span class="spread-who">Vegas</span><span class="spread-val">PHI by 5.5</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:27.5%"></span></span></div></div>
   
-</article><article class="card upcoming" style="--tl:#002244;--td:#006CD8">
+</article></div><h3 class="slot">Sunday night</h3><div class="cards"><article class="card upcoming" id="2026_01_DAL_NYG" style="--team:#0064C8">
   <header>
     <p class="matchup"><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/dal.png" alt="" width="40" height="40" loading="lazy"><span class="vs">Cowboys <small>at</small> Giants</span><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/nyg.png" alt="" width="40" height="40" loading="lazy"></p>
     <time datetime="2026-09-14T00:20:00+00:00">Sun Sep 13, 8:20 pm ET</time>
   </header>
   <p class="our-call"><span class="who">Our pick</span><img class="logo big" src="https://a.espncdn.com/i/teamlogos/nfl/500/dal.png" alt="" width="40" height="40" loading="lazy"><strong>DAL</strong><span class="conf">53%</span></p>
-  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="DAL 53%, NYG 47%, Vegas has NYG at 41%"><rect x="0" y="0" width="157.5" height="14" rx="3" fill="var(--team)"/><rect x="159.5" y="0" width="140.5" height="14" rx="3" fill="var(--away)"/><polygon class="bar-vegas" points="175.8,15 170.8,22 180.8,22"/></svg>
-  <p class="bar-ends"><span>DAL 53%</span><span>NYG 47%</span></p>
+  <div class="bar-row"><span class="bar-end">DAL 53%</span><svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="DAL 53%, NYG 47%, Vegas has NYG at 41%"><rect x="0" y="0" width="157.5" height="14" rx="3" fill="var(--team)"/><rect x="159.5" y="0" width="140.5" height="14" rx="3" fill="var(--away)"/><polygon class="bar-vegas" points="175.8,15 170.8,22 180.8,22"/></svg><span class="bar-end">NYG 47%</span></div>
   <p class="vegas-call"><span class="who">Vegas</span> <img class="logo small" src="https://a.espncdn.com/i/teamlogos/nfl/500/dal.png" alt="" width="40" height="40" loading="lazy"><strong>DAL</strong> 59%</p>
-  <div class="spread"><div class="spread-head"><span>Spread</span><span class="spread-axis"><span>DAL</span><span>even</span><span>NYG</span></span></div><div class="spread-row ours" style="--fav:#002244;--favd:#006CD8"><span class="spread-who">Us</span><span class="spread-val">DAL by 0.8</span><span class="spread-track"><span class="spread-bar" style="left:46.2%;width:3.8%"></span></span></div><div class="spread-row vegas" style=""><span class="spread-who">Vegas</span><span class="spread-val">DAL by 3.0</span><span class="spread-track"><span class="spread-bar" style="left:35.0%;width:15.0%"></span></span></div></div>
+  <div class="spread"><div class="spread-head"><span>Spread</span><span class="spread-axis"><span>DAL</span><span>even</span><span>NYG</span></span></div><div class="spread-row ours" style="--fav:#0064C8"><span class="spread-who">Us</span><span class="spread-val">DAL by 0.8</span><span class="spread-track"><span class="spread-bar" style="left:46.2%;width:3.8%"></span></span></div><div class="spread-row vegas" style=""><span class="spread-who">Vegas</span><span class="spread-val">DAL by 3.0</span><span class="spread-track"><span class="spread-bar" style="left:35.0%;width:15.0%"></span></span></div></div>
   
-</article><article class="card upcoming" style="--tl:#E31837;--td:#E31837">
+</article></div><h3 class="slot">Monday night</h3><div class="cards"><article class="card upcoming" id="2026_01_DEN_KC" style="--team:#E31837">
   <header>
     <p class="matchup"><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/den.png" alt="" width="40" height="40" loading="lazy"><span class="vs">Broncos <small>at</small> Chiefs</span><img class="logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/kc.png" alt="" width="40" height="40" loading="lazy"></p>
     <time datetime="2026-09-15T00:15:00+00:00">Mon Sep 14, 8:15 pm ET</time>
   </header>
   <p class="our-call"><span class="who">Our pick</span><img class="logo big" src="https://a.espncdn.com/i/teamlogos/nfl/500/kc.png" alt="" width="40" height="40" loading="lazy"><strong>KC</strong><span class="conf">53%</span></p>
-  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="DEN 47%, KC 53%, Vegas has KC at 57%"><rect x="0" y="0" width="141.4" height="14" rx="3" fill="var(--away)"/><rect x="143.4" y="0" width="156.6" height="14" rx="3" fill="var(--team)"/><polygon class="bar-vegas" points="129.9,15 124.9,22 134.9,22"/></svg>
-  <p class="bar-ends"><span>DEN 47%</span><span>KC 53%</span></p>
+  <div class="bar-row"><span class="bar-end">DEN 47%</span><svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="DEN 47%, KC 53%, Vegas has KC at 57%"><rect x="0" y="0" width="141.4" height="14" rx="3" fill="var(--away)"/><rect x="143.4" y="0" width="156.6" height="14" rx="3" fill="var(--team)"/><polygon class="bar-vegas" points="129.9,15 124.9,22 134.9,22"/></svg><span class="bar-end">KC 53%</span></div>
   <p class="vegas-call"><span class="who">Vegas</span> <img class="logo small" src="https://a.espncdn.com/i/teamlogos/nfl/500/kc.png" alt="" width="40" height="40" loading="lazy"><strong>KC</strong> 57%</p>
-  <div class="spread"><div class="spread-head"><span>Spread</span><span class="spread-axis"><span>DEN</span><span>even</span><span>KC</span></span></div><div class="spread-row ours" style="--fav:#E31837;--favd:#E31837"><span class="spread-who">Us</span><span class="spread-val">KC by 0.9</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:4.5%"></span></span></div><div class="spread-row vegas" style=""><span class="spread-who">Vegas</span><span class="spread-val">KC by 2.5</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:12.5%"></span></span></div></div>
+  <div class="spread"><div class="spread-head"><span>Spread</span><span class="spread-axis"><span>DEN</span><span>even</span><span>KC</span></span></div><div class="spread-row ours" style="--fav:#E31837"><span class="spread-who">Us</span><span class="spread-val">KC by 0.9</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:4.5%"></span></span></div><div class="spread-row vegas" style=""><span class="spread-who">Vegas</span><span class="spread-val">KC by 2.5</span><span class="spread-track"><span class="spread-bar" style="left:50.0%;width:12.5%"></span></span></div></div>
   
 </article></div>
 <h3 class="table-title">All games this week</h3>
 <table class="ledger"><thead><tr><th>Kickoff</th><th>Game</th><th>Pick</th><th class="num">Win prob</th><th>Our spread</th><th>Line</th><th class="num">Vegas prob</th><th>Pass</th><th>Result</th></tr></thead><tbody><tr><td>Wed Sep 9, 8:20 pm ET</td><td>NE at SEA</td><td><strong>SEA</strong></td><td class="num">67%</td><td>SEA by 5.1</td><td>SEA by 3.0</td><td class="num">62%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Thu Sep 10, 8:35 pm ET</td><td>SF at LA</td><td><strong>LA</strong></td><td class="num">57%</td><td>LA by 2.4</td><td>LA by 3.5</td><td class="num">64%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 1:00 pm ET</td><td>ATL at PIT</td><td><strong>PIT</strong></td><td class="num">56%</td><td>PIT by 1.2</td><td>PIT by 3.5</td><td class="num">62%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 1:00 pm ET</td><td>BAL at IND</td><td><strong>IND</strong></td><td class="num">52%</td><td>IND by 0.8</td><td>BAL by 3.5</td><td class="num">38%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 1:00 pm ET</td><td>BUF at HOU</td><td><strong>HOU</strong></td><td class="num">56%</td><td>HOU by 1.7</td><td>BUF by 1.5</td><td class="num">48%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 1:00 pm ET</td><td>CHI at CAR</td><td><strong>CHI</strong></td><td class="num">57%</td><td>CHI by 2.3</td><td>CHI by 3.0</td><td class="num">40%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 1:00 pm ET</td><td>CLE at JAX</td><td><strong>JAX</strong></td><td class="num">75%</td><td>JAX by 6.5</td><td>JAX by 8.5</td><td class="num">79%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 1:00 pm ET</td><td>NO at DET</td><td><strong>DET</strong></td><td class="num">75%</td><td>DET by 8.2</td><td>DET by 7.0</td><td class="num">73%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 1:00 pm ET</td><td>NYJ at TEN</td><td><strong>NYJ</strong></td><td class="num">61%</td><td>NYJ by 3.5</td><td>TEN by 1.5</td><td class="num">53%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 1:00 pm ET</td><td>TB at CIN</td><td><strong>CIN</strong></td><td class="num">57%</td><td>CIN by 1.8</td><td>CIN by 3.5</td><td class="num">64%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 4:25 pm ET</td><td>ARI at LAC</td><td><strong>LAC</strong></td><td class="num">73%</td><td>LAC by 6.8</td><td>LAC by 9.5</td><td class="num">81%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 4:25 pm ET</td><td>GB at MIN</td><td><strong>MIN</strong></td><td class="num">63%</td><td>MIN by 3.6</td><td>MIN by 1.5</td><td class="num">52%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 4:25 pm ET</td><td>MIA at LV</td><td><strong>LV</strong></td><td class="num">56%</td><td>LV by 0.9</td><td>LV by 3.5</td><td class="num">62%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 4:25 pm ET</td><td>WAS at PHI</td><td><strong>PHI</strong></td><td class="num">62%</td><td>PHI by 3.3</td><td>PHI by 5.5</td><td class="num">67%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 8:20 pm ET</td><td>DAL at NYG</td><td><strong>DAL</strong></td><td class="num">53%</td><td>DAL by 0.8</td><td>DAL by 3.0</td><td class="num">41%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Mon Sep 14, 8:15 pm ET</td><td>DEN at KC</td><td><strong>KC</strong></td><td class="num">53%</td><td>KC by 0.9</td><td>KC by 2.5</td><td class="num">57%</td><td>early</td><td><span class="pending">—</span></td></tr></tbody></table>
 <details class="prov"><summary>Where this came from</summary><ul><li><strong>Early pass</strong> published <time datetime="2026-09-08T17:20:19.312876+00:00">Tue Sep 8, 1:20 pm ET</time>, 31 hours before the first kickoff it covers, 16 games. Model trained on 6,499 games through 2025_22_SEA_NE, code <a href="https://github.com/Kanishk234/nfl-game-predictor/commit/5c78b84">5c78b84</a>. <a href="https://github.com/Kanishk234/nfl-game-predictor/blob/main/data/predictions/2026_01_early.json">prediction file</a>, <a href="https://github.com/Kanishk234/nfl-game-predictor/blob/main/data/odds/2026_01_early.json">odds snapshot</a>.</li></ul></details>
-<footer class="fine"><p>Built Tue Sep 8, 2:33 pm ET from the committed data. No JavaScript, no tracking.</p></footer>
+<footer class="fine"><p>Built Tue Sep 8, 2:44 pm ET from the committed data. No JavaScript, no tracking.</p></footer>
 </main>
 </body>
 </html>

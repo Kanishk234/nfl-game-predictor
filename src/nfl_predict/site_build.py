@@ -56,7 +56,7 @@ TEAM_COLORS = {
 }
 
 
-LIGHT_PANEL, DARK_PANEL = "#FFFFFF", "#1F2326"
+LIGHT_PANEL, DARK_PANEL = "#FFFFFF", "#111111"
 
 
 def _luminance(hex_color: str) -> float:
@@ -99,7 +99,8 @@ def readable_team_color(abbr: str, surface: str) -> str:
     grey too (Raiders silver) it is mixed toward the opposite of the surface.
     """
     primary, secondary = TEAM_COLORS.get(abbr, ("#62707E", "#62707E"))[:2]
-    base = secondary if _is_achromatic(primary) and not _is_achromatic(secondary) else primary
+    # A black primary has no hue to keep: use the secondary (Steelers gold; Raiders silver).
+    base = secondary if _is_achromatic(primary) else primary
     lighten = _luminance(surface) < 0.5
     color, k = base, 1.0
     for _ in range(40):
@@ -136,8 +137,8 @@ def team_color(abbr: str) -> str:
 
 
 def team_vars(abbr: str) -> str:
-    """Inline style carrying both surface variants; CSS picks one per colour scheme."""
-    return f"--tl:{readable_team_color(abbr, LIGHT_PANEL)};--td:{readable_team_color(abbr, DARK_PANEL)}"
+    """Inline style with the team colour that reads on the site's (dark) panel."""
+    return f"--team:{readable_team_color(abbr, DARK_PANEL)}"
 
 
 def team_nick(abbr: str) -> str:
@@ -197,6 +198,37 @@ def by_team(margin: float, home: str, away: str, nd: int = 1) -> str:
 def hours_before(seconds: int) -> str:
     h = seconds / 3600
     return f"{h:.0f} hours" if h >= 2 else f"{seconds // 60} minutes"
+
+
+def slot_label(iso: str) -> str:
+    """'Sunday 1:00 pm', 'Thursday night'... the way people think about an NFL week."""
+    d = datetime.fromisoformat(iso).astimezone(ET)
+    day = d.strftime("%A")
+    if d.hour >= 19:
+        return f"{day} night"
+    hour = d.hour % 12 or 12
+    return f"{day} {hour}:{d:%M} {'am' if d.hour < 12 else 'pm'}"
+
+
+def group_by_slot(rows: list[tuple[str, dict]]) -> list[tuple[str, list[tuple[str, dict]]]]:
+    groups: list[tuple[str, list]] = []
+    for pn, p in rows:
+        label = slot_label(p["kickoff_utc"])
+        if not groups or groups[-1][0] != label:
+            groups.append((label, []))
+        groups[-1][1].append((pn, p))
+    return groups
+
+
+def disagreements(rows: list[tuple[str, dict]]) -> list[dict]:
+    out = []
+    for _, p in rows:
+        v = p.get("vegas")
+        if v and v.get("p_home_moneyline") is not None:
+            v_fav = p["home_team"] if v["p_home_moneyline"] >= 0.5 else p["away_team"]
+            if v_fav != p["pick"]:
+                out.append(p)
+    return out
 
 
 def official_rows(passes: list[dict]) -> list[tuple[str, dict]]:
@@ -319,7 +351,7 @@ def spread_rows(ours: float, line: float | None, actual: float | None, home: str
 
 
 def team_vars_pair(abbr: str) -> str:
-    return f"{readable_team_color(abbr, LIGHT_PANEL)};--favd:{readable_team_color(abbr, DARK_PANEL)}"
+    return readable_team_color(abbr, DARK_PANEL)
 
 
 def plain_call(p: dict) -> str:
@@ -363,14 +395,13 @@ def game_card(pass_name: str, p: dict, g: dict | None) -> str:
     else:
         outcome, actual, status = "", None, "upcoming"
 
-    return f'''<article class="card {status}" style="{team_vars(pick)}">
+    return f'''<article class="card {status}" id="{e(p["game_id"])}" style="{team_vars(pick)}">
   <header>
     <p class="matchup">{logo(away)}<span class="vs">{e(team_nick(away))} <small>at</small> {e(team_nick(home))}</span>{logo(home)}</p>
     <time datetime="{e(p["kickoff_utc"])}">{e(fmt_et(p["kickoff_utc"]))}</time>
   </header>
   <p class="our-call"><span class="who">Our pick</span>{logo(pick, "logo big")}<strong>{e(pick)}</strong><span class="conf">{pct(p_pick(p))}</span></p>
-  {prob_bar(p_home, v["p_home_moneyline"] if v else None, home, away)}
-  <p class="bar-ends"><span>{e(away)} {pct(1 - p_home)}</span><span>{e(home)} {pct(p_home)}</span></p>
+  <div class="bar-row"><span class="bar-end">{e(away)} {pct(1 - p_home)}</span>{prob_bar(p_home, v["p_home_moneyline"] if v else None, home, away)}<span class="bar-end">{e(home)} {pct(p_home)}</span></div>
   {vegas_row}
   {spread_rows(p["pred_margin"], v["spread_line"] if v else None, actual, home, away)}
   {outcome}
@@ -438,15 +469,30 @@ def week_body(season: int, week: int, passes: list[dict], result: dict | None) -
     rows = official_rows(passes)
     graded = {g["game_id"]: g for g in (result or {}).get("games", [])}
     status = "" if not result else (", complete" if result["complete"] else f', {result["n_graded"]} of {result["n_games"]} played')
-    cards = "".join(game_card(pn, p, graded.get(p["game_id"])) for pn, p in rows)
+    def slot_html(label: str, items: list) -> str:
+        cards = "".join(game_card(pn, p, graded.get(p["game_id"])) for pn, p in items)
+        all_played = all(p["game_id"] in graded for _, p in items)
+        # Slots that are fully played fold up, so later in the week the page opens on what is
+        # still to come; a reader can always expand them.
+        if all_played:
+            return (f'<details class="slot-fold"><summary class="slot">{e(label)} <small>({len(items)} played, tap to show)</small></summary>'
+                    f'<div class="cards">{cards}</div></details>')
+        return f'<h3 class="slot">{e(label)}</h3><div class="cards">{cards}</div>'
+
+    groups = "".join(slot_html(label, items) for label, items in group_by_slot(rows))
+    diff = disagreements(rows)
+    diff_txt = (f'We disagree with Vegas on {len(diff)}: '
+                + ", ".join(f'<a href="#{e(p["game_id"])}">{e(p["pick"])}</a>' for p in diff) + "."
+                if diff else "We agree with Vegas on every game.")
     return f'''<h2>Week {week}, {season}{e(status)}</h2>
+<p class="summary">{len(rows)} games. {diff_txt}</p>
 <details class="howto"><summary>How to read a card</summary>
 <p><strong>Our pick</strong> is the model's call, in that team's colour. The bar is the win probability; the small bronze
    triangle under it is where Vegas puts it. <strong>Vegas</strong> is the betting favourite, for comparison. The spread
    rows show how much each of us expects the winner to win by: ours in the team colour, Vegas in bronze. Once a game is
    played, the score and a verdict appear at the bottom.</p></details>
 {summary_strip(result["summary"] if result else None, "Official predictions only: the latest pass published before each game's kickoff.")}
-<div class="cards">{cards}</div>
+{groups}
 <h3 class="table-title">All games this week</h3>
 {week_table(rows, graded)}
 {provenance(passes)}'''
@@ -514,101 +560,97 @@ def about_section() -> str:
 
 
 CSS = f"""
-:root {{ --bg: #F4F5F1; --panel: #FFFFFF; --ink: #1E2A38; --muted: #62707E; --rule: #D9DDD6;
-         --model: {MODEL_LIGHT}; --vegas: {VEGAS_LIGHT}; --away: #C9D2DA; --hit: #2E7D4F; --miss: #B23A3A; }}
-@media (prefers-color-scheme: dark) {{
-  :root {{ --bg: #171A1C; --panel: #1F2326; --ink: #E8EAE6; --muted: #9AA4AD; --rule: #33393E;
-           --model: {MODEL_DARK}; --vegas: {VEGAS_DARK}; --away: #3A434B; --hit: #5FB37F; --miss: #E06C6C; }} }}
+:root {{ --bg: #0A0A0A; --panel: #111111; --panel2: #171717; --ink: #EDEDED; --muted: #8A8F98; --rule: #262626; --rule2: #333333;
+         --model: {MODEL_DARK}; --vegas: #D6A21E; --away: #2A2F36; --hit: #3FB950; --miss: #F85149; }}
 * {{ box-sizing: border-box; }}
-html {{ color-scheme: light dark; }}
-body {{ margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.5 "Source Sans 3", "Segoe UI", system-ui, sans-serif;
-        font-variant-numeric: tabular-nums; }}
-main {{ max-width: 72rem; margin: 0 auto; padding: 1.5rem 1.25rem 5rem; }}
-h1, h2, h3, dd, .num, .pick strong, .conf, .score {{ font-family: "Bricolage Grotesque", "Source Sans 3", system-ui, sans-serif; }}
-h1 {{ font-size: 1.6rem; margin: 0; font-weight: 600; }}
+html {{ color-scheme: dark; background: var(--bg); }}
+body {{ margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+        font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased; }}
+main {{ max-width: 76rem; margin: 0 auto; padding: 1.5rem 1.25rem 5rem; }}
+h1, h2, h3, dd, .num, .conf, .score {{ font-family: "Bricolage Grotesque", "Source Sans 3", system-ui, sans-serif; }}
+h1 {{ font-size: 1.35rem; margin: 0; font-weight: 600; letter-spacing: -.01em; }}
 h1 a {{ color: inherit; text-decoration: none; }}
-h2 {{ font-size: 1.6rem; margin: 1.75rem 0 .5rem; font-weight: 600; }}
-h3 {{ font-size: 1.2rem; margin: 0; font-weight: 600; }}
+h2 {{ font-size: 1.7rem; margin: 1.5rem 0 .25rem; font-weight: 600; letter-spacing: -.01em; }}
+h3 {{ font-size: 1.15rem; margin: 0; font-weight: 600; }}
 p {{ max-width: 66ch; }}
 a {{ color: var(--model); text-underline-offset: .15em; }}
 a:focus-visible, summary:focus-visible {{ outline: 2px solid var(--model); outline-offset: 3px; }}
-.top {{ display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem 1.5rem; padding-bottom: .75rem; border-bottom: 1px solid var(--rule); }}
-.top .lede {{ color: var(--muted); margin: 0; }}
+.top {{ display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem 1.5rem; padding-bottom: .9rem; border-bottom: 1px solid var(--rule); }}
+.top .lede {{ color: var(--muted); margin: 0; font-size: .95rem; }}
 .weeks {{ display: flex; flex-wrap: wrap; gap: .35rem; margin: .9rem 0 0; }}
-.weeks a {{ text-decoration: none; padding: .3rem .7rem; border: 1px solid var(--rule); border-radius: 999px; color: var(--ink); font-size: .95rem; }}
+.weeks a {{ text-decoration: none; padding: .3rem .75rem; border: 1px solid var(--rule2); border-radius: 999px; color: var(--ink); font-size: .9rem; background: var(--panel); }}
 .weeks a[aria-current] {{ background: var(--ink); color: var(--bg); border-color: var(--ink); }}
-.how, .fine, small {{ color: var(--muted); font-size: .95rem; }}
+.summary {{ font-size: 1.05rem; margin: .25rem 0 .5rem; }}
+.how, .fine, small {{ color: var(--muted); font-size: .9rem; }}
+.howto {{ color: var(--muted); font-size: .9rem; margin: 0 0 .5rem; }} .howto summary {{ cursor: pointer; color: var(--model); }}
 .strip {{ display: flex; flex-wrap: wrap; gap: .5rem 2rem; margin: 1rem 0 .25rem; padding: .9rem 1.1rem; background: var(--panel);
-          border: 1px solid var(--rule); border-radius: 8px; }}
-.strip div {{ min-width: 6rem; }} .strip dt {{ font-size: .85rem; color: var(--muted); }}
+          border: 1px solid var(--rule); border-radius: 10px; }}
+.strip div {{ min-width: 6rem; }} .strip dt {{ font-size: .8rem; color: var(--muted); }}
 .strip dd {{ margin: 0; font-size: 1.35rem; font-weight: 600; }}
-.cards {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(21rem, 1fr)); gap: 1rem; margin: 1.25rem 0 2.5rem; }}
-.card {{ background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 1rem 1.1rem 1.1rem; }}
-.card header {{ display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; flex-wrap: wrap; }}
-.card time {{ color: var(--muted); font-size: .9rem; }}
-.card {{ --team: var(--tl); border-top: 4px solid var(--team); }}
-.chip {{ --team: var(--tl); background: var(--team); }} .chip.own {{ background: var(--team); }}
-.spread-row {{ --favc: var(--fav); }}
-@media (prefers-color-scheme: dark) {{ .card, .chip {{ --team: var(--td); }} .spread-row {{ --favc: var(--favd); }} }}
+.slot {{ margin: 1.75rem 0 .6rem; color: var(--muted); font-weight: 500; font-size: .95rem; letter-spacing: .01em; }}
+.slot-fold summary.slot {{ cursor: pointer; list-style: none; }} .slot-fold summary.slot::before {{ content: "▸ "; }} .slot-fold[open] summary.slot::before {{ content: "▾ "; }}
+.cards {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr)); gap: .9rem; }}
+.card {{ background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; padding: 1rem 1.1rem 1.05rem; scroll-margin-top: 1rem; }}
+.card:target {{ border-color: var(--team); box-shadow: 0 0 0 1px var(--team); }}
 .card header {{ display: block; }}
 .matchup {{ display: flex; align-items: center; gap: .5rem; margin: 0; }}
-.matchup .vs {{ flex: 1; text-align: center; font-family: "Bricolage Grotesque", system-ui, sans-serif; font-weight: 600; font-size: 1.15rem; line-height: 1.2; }}
+.matchup .vs {{ flex: 1; text-align: center; font-family: "Bricolage Grotesque", system-ui, sans-serif; font-weight: 600; font-size: 1.1rem; line-height: 1.2; }}
 .matchup small {{ color: var(--muted); font-weight: 400; }}
-.card time {{ display: block; text-align: center; margin-top: .35rem; }}
-.logo {{ width: 40px; height: 40px; object-fit: contain; flex: none; }}
-.logo.small {{ width: 22px; height: 22px; vertical-align: -6px; margin: 0 .15rem 0 .35rem; }}
-.logo.big {{ width: 44px; height: 44px; margin: 0 .5rem 0 .6rem; }}
-.our-call {{ display: flex; align-items: center; margin: .9rem 0 .5rem; }}
-.our-call .who {{ color: var(--muted); font-size: .9rem; width: 4.2rem; }}
-.our-call strong {{ font-family: "Bricolage Grotesque", system-ui, sans-serif; font-size: 1.9rem; color: var(--team); }}
-.our-call .conf {{ font-family: "Bricolage Grotesque", system-ui, sans-serif; font-weight: 600; font-size: 1.5rem; margin-left: auto; }}
-.vegas-call {{ margin: .5rem 0 .2rem; font-size: .95rem; color: var(--muted); }}
-.vegas-call .who {{ display: inline-block; width: 4.2rem; }} .vegas-call strong {{ color: var(--ink); font-size: 1.05rem; }}
-.disagree {{ color: var(--vegas); font-weight: 600; margin-left: .35rem; }}
-.howto {{ color: var(--muted); font-size: .95rem; margin: .25rem 0 .5rem; }} .howto summary {{ cursor: pointer; color: var(--model); }}
-.spread {{ margin-top: .8rem; font-size: .9rem; }}
-.spread-head {{ display: grid; grid-template-columns: 8.6rem 1fr; color: var(--muted); margin-bottom: .25rem; }}
-.spread-axis {{ display: flex; justify-content: space-between; }}
-.spread-row {{ display: grid; grid-template-columns: 3rem 5.6rem 1fr; align-items: center; gap: 0; margin: .3rem 0; }}
-.spread-who {{ color: var(--muted); }} .spread-val {{ font-weight: 600; white-space: nowrap; }}
-.spread-track {{ position: relative; height: 14px; background: var(--rule); border-radius: 7px; }}
-.spread-track::before {{ content: ""; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 2px; background: var(--muted); }}
-.spread-bar {{ position: absolute; top: 0; height: 14px; border-radius: 7px; background: var(--favc); min-width: 4px; }}
-.spread-row.vegas .spread-bar {{ background: var(--vegas); }} .spread-row.final .spread-bar {{ background: var(--ink); }}
-.sub {{ font-size: 1.3rem; margin: 2rem 0 .5rem; }} .empty {{ padding: 1rem 1.1rem; background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; }}
-.more {{ margin: 1rem 0; }} .more summary {{ cursor: pointer; color: var(--model); }}
-.bar {{ display: block; width: 100%; height: auto; overflow: visible; }}
+.card time {{ display: block; text-align: center; margin-top: .3rem; color: var(--muted); font-size: .85rem; }}
+.logo {{ width: 40px; height: 40px; object-fit: contain; flex: none; background: #fff; border-radius: 50%; padding: 5px; }}
+.logo.small {{ width: 24px; height: 24px; padding: 3px; vertical-align: -7px; margin: 0 .2rem 0 .35rem; }}
+.logo.big {{ width: 46px; height: 46px; padding: 5px; margin: 0 .55rem 0 .6rem; }}
+.our-call {{ display: flex; align-items: center; margin: .9rem 0 .55rem; }}
+.our-call .who {{ color: var(--muted); font-size: .85rem; width: 4rem; }}
+.our-call strong {{ font-family: "Bricolage Grotesque", system-ui, sans-serif; font-size: 1.9rem; color: var(--team); letter-spacing: -.01em; }}
+.our-call .conf {{ font-weight: 600; font-size: 1.5rem; margin-left: auto; }}
+.bar-row {{ display: flex; align-items: center; gap: .5rem; }}
+.bar-end {{ color: var(--muted); font-size: .8rem; white-space: nowrap; min-width: 3.6rem; }} .bar-end:last-child {{ text-align: right; }}
+.bar {{ display: block; flex: 1; height: auto; overflow: visible; }}
 .bar-vegas {{ fill: var(--vegas); }}
-.bar-ends {{ display: flex; justify-content: space-between; margin: .3rem 0 .4rem; font-size: .9rem; color: var(--muted); }}
-.spread {{ margin: .4rem 0 0; font-size: .95rem; }}
-.final {{ margin: .8rem 0 0; padding-top: .7rem; border-top: 1px dashed var(--rule); }}
-.score {{ font-weight: 600; margin-right: .5rem; }} .verdict {{ white-space: nowrap; }}
+.vegas-call {{ margin: .5rem 0 .2rem; font-size: .9rem; color: var(--muted); }}
+.vegas-call .who {{ display: inline-block; width: 4rem; }} .vegas-call strong {{ color: var(--ink); font-size: 1rem; }}
+.disagree {{ color: var(--vegas); font-weight: 600; margin-left: .35rem; }}
+.spread {{ margin-top: .7rem; font-size: .85rem; }}
+.spread-head {{ display: grid; grid-template-columns: 8.4rem 1fr; color: var(--muted); margin-bottom: .2rem; }}
+.spread-axis {{ display: flex; justify-content: space-between; }}
+.spread-row {{ display: grid; grid-template-columns: 2.8rem 5.6rem 1fr; align-items: center; margin: .3rem 0; }}
+.spread-who {{ color: var(--muted); }} .spread-val {{ font-weight: 600; white-space: nowrap; color: var(--ink); }}
+.spread-track {{ position: relative; height: 12px; background: var(--away); border-radius: 6px; }}
+.spread-track::before {{ content: ""; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 2px; background: var(--rule2); }}
+.spread-bar {{ position: absolute; top: 0; height: 12px; border-radius: 6px; background: var(--favc); min-width: 4px; }}
+.spread-row {{ --favc: var(--fav); }}
+.spread-row.vegas .spread-bar {{ background: var(--vegas); }} .spread-row.final .spread-bar {{ background: var(--ink); }}
+.final {{ margin: .8rem 0 0; padding-top: .7rem; border-top: 1px dashed var(--rule2); }}
+.score {{ font-weight: 600; margin-right: .5rem; }}
 .hit {{ color: var(--hit); font-weight: 700; }} .miss {{ color: var(--miss); font-weight: 700; }}
 .pending {{ color: var(--muted); }}
-.table-title {{ margin: 2rem 0 .5rem; }}
+.table-title {{ margin: 2.25rem 0 .5rem; }}
 table {{ border-collapse: collapse; width: 100%; }}
-.ledger {{ display: block; overflow-x: auto; font-size: .95rem; }}
-.ledger th {{ text-align: left; font-weight: 600; font-size: .85rem; color: var(--muted); border-bottom: 1px solid var(--ink); padding: .4rem .6rem; white-space: nowrap; }}
+.ledger {{ display: block; overflow-x: auto; font-size: .9rem; }}
+.ledger th {{ text-align: left; font-weight: 600; font-size: .8rem; color: var(--muted); border-bottom: 1px solid var(--rule2); padding: .4rem .6rem; white-space: nowrap; }}
 .ledger td {{ padding: .5rem .6rem; border-bottom: 1px solid var(--rule); white-space: nowrap; }}
 .ledger .num, .compact .num {{ text-align: right; }}
-.prov {{ margin: 1.5rem 0; color: var(--muted); font-size: .95rem; max-width: 72ch; }}
+.prov {{ margin: 1.5rem 0; color: var(--muted); font-size: .9rem; max-width: 72ch; }}
 .prov summary {{ cursor: pointer; }} .prov ul {{ padding-left: 1.2rem; }} .prov li {{ margin: .4rem 0; }}
-.legend {{ font-size: .9rem; color: var(--muted); margin: .5rem 0 0; }}
+.legend {{ font-size: .85rem; color: var(--muted); margin: .5rem 0 0; }}
 .swatch {{ display: inline-block; width: .8em; height: .8em; border-radius: 50%; margin: 0 .35em 0 1em; vertical-align: -.05em; }}
 .swatch.model {{ background: var(--model); }} .swatch.vegas {{ background: var(--vegas); }} .legend .swatch:first-child {{ margin-left: 0; }}
 .chart {{ width: 100%; max-width: 640px; height: auto; display: block; }}
-.chart .grid {{ stroke: var(--rule); stroke-width: 1; }} .chart .ref {{ stroke: var(--muted); stroke-width: 1; stroke-dasharray: 4 4; }}
+.chart .grid {{ stroke: var(--rule2); stroke-width: 1; }} .chart .ref {{ stroke: var(--muted); stroke-width: 1; stroke-dasharray: 4 4; }}
 .chart .tick, .chart .label {{ font-size: 12px; fill: var(--muted); font-family: "Source Sans 3", system-ui, sans-serif; }}
 .chart .line {{ fill: none; stroke-width: 2; }} .chart .line.model {{ stroke: var(--model); }} .chart .line.vegas {{ stroke: var(--vegas); }}
 .chart .dot {{ stroke: var(--bg); stroke-width: 2; }} .chart .dot.model {{ fill: var(--model); }} .chart .dot.vegas {{ fill: var(--vegas); }}
 .chart .dot[fill="none"] {{ fill: var(--bg) !important; stroke-width: 2; }} .chart .dot[fill="none"].model {{ stroke: var(--model); }} .chart .dot[fill="none"].vegas {{ stroke: var(--vegas); }}
 .chart .label.model {{ fill: var(--model); }} .chart .label.vegas {{ fill: var(--vegas); }}
-figure {{ margin: 1.5rem 0; }} figcaption {{ color: var(--muted); font-size: .95rem; margin-bottom: .5rem; max-width: 62ch; }}
+figure {{ margin: 1.5rem 0; }} figcaption {{ color: var(--muted); font-size: .9rem; margin-bottom: .5rem; max-width: 62ch; }}
 .two-col {{ display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start; }}
-.compact td, .compact th {{ padding: .35rem .5rem; border-bottom: 1px solid var(--rule); font-size: .95rem; }}
-.compact th {{ text-align: left; color: var(--muted); font-weight: 600; font-size: .85rem; }} .compact .total td {{ font-weight: 600; border-top: 1px solid var(--ink); }}
+.compact td, .compact th {{ padding: .35rem .5rem; border-bottom: 1px solid var(--rule); font-size: .9rem; }}
+.compact th {{ text-align: left; color: var(--muted); font-weight: 600; font-size: .8rem; }} .compact .total td {{ font-weight: 600; border-top: 1px solid var(--rule2); }}
+.sub {{ font-size: 1.25rem; margin: 2rem 0 .5rem; }} .empty {{ padding: 1rem 1.1rem; background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; }}
+.more {{ margin: 1rem 0; }} .more summary {{ cursor: pointer; color: var(--model); }}
 footer {{ margin-top: 3rem; }}
-@media (max-width: 720px) {{ .two-col {{ grid-template-columns: 1fr; }} .cards {{ grid-template-columns: 1fr; }} body {{ font-size: 16px; }} }}
+@media (max-width: 720px) {{ .two-col {{ grid-template-columns: 1fr; }} .cards {{ grid-template-columns: 1fr; }} body {{ font-size: 15px; }} }}
 @media (prefers-reduced-motion: reduce) {{ * {{ transition: none !important; }} }}
 """
 
@@ -619,6 +661,7 @@ def page(title: str, body: str, weeks: list[tuple[int, int]], current: tuple[int
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
 <title>{e(title)}</title>
 <meta name="description" content="NFL picks, win probabilities and spreads, published before kickoff and graded against the Vegas line.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
