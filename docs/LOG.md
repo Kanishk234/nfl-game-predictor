@@ -129,3 +129,17 @@ Open:
 Open:
 - Dispatch `grade` by hand once to exercise the chain safely. Never dispatch predict-* early (immutable slots).
 - Phase 6 site_build must be added to the workflows when it exists.
+
+## 2026-09-08 — Phase 6 static site
+
+- `site_build.py`: Python renders `site/index.html` from data/ — ledger with per-game spread gauge (ours vs line vs final), provenance per pass, season-to-date strip + weekly accuracy + calibration (when enough games), collapsed past weeks, 2021-25 backtest section, verification section. Zero JS, inline SVG.
+- `data/backtest.json` now committed (moved out of gitignored processed/).
+- Chart colours validated with the dataviz validator, light and dark; dark pair re-stepped to pass.
+- Wired `site_build` + `git add site` into all three cron workflows.
+- 9 site tests; suite 81 passed offline. Real build: 16 rows, balanced HTML, no script/http/apiKey.
+
+Broke / fixed:
+- `strftime("%-d")` is glibc-only; crashed on Windows. Dates formatted by hand.
+
+Open:
+- Visual check in a browser (none available in this session). Phone layout + gauge legibility.
