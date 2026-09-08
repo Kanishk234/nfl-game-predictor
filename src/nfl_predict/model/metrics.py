@@ -86,7 +86,8 @@ def win_prob_metrics(prob: np.ndarray, y: np.ndarray) -> WinProbMetrics:
     auc = float(roc_auc_score(y, prob)) if 0 < y.mean() < 1 else float("nan")
     return WinProbMetrics(
         n=len(y),
-        accuracy=float(((prob > 0.5) == (y == 1)).mean()),
+        # Tie at exactly 0.5 goes to the home side, matching `pick` in predict.py and the grader.
+        accuracy=float(((prob >= 0.5) == (y == 1)).mean()),
         brier=float(np.mean((prob - y) ** 2)),
         log_loss=float(-np.mean(y * np.log(prob) + (1 - y) * np.log(1 - prob))),
         auc=auc,
