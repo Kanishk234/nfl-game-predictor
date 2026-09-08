@@ -74,7 +74,6 @@ class TestPages:
         assert '<span class="spread-who">Vegas</span><span class="spread-val">SEA by 3.0</span>' in page
         assert "no line yet" in page                       # missing line is shown as missing
         assert 'style="--team:#' in page                    # picked team's colour on the card
-        assert "We disagree with Vegas on" in page or "We agree with Vegas" in page
         assert '<h3 class="slot">Wednesday night</h3>' in page
         assert "All games this week" in page               # the table at the end
         assert "30 hours before the first kickoff" in page  # provenance, collapsed

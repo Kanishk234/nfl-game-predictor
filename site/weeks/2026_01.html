@@ -38,8 +38,8 @@ a:focus-visible, summary:focus-visible { outline: 2px solid var(--model); outlin
 .strip dd { margin: 0; font-size: 1.35rem; font-weight: 600; }
 .slot { margin: 1.75rem 0 .6rem; color: var(--muted); font-weight: 500; font-size: .95rem; letter-spacing: .01em; }
 .slot-fold summary.slot { cursor: pointer; list-style: none; } .slot-fold summary.slot::before { content: "▸ "; } .slot-fold[open] summary.slot::before { content: "▾ "; }
-.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr)); gap: .9rem; }
-.card { background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; padding: 1rem 1.1rem 1.05rem; scroll-margin-top: 1rem; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(20rem, 100%), 1fr)); gap: .9rem; }
+.card { background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; padding: 1rem 1.1rem 1.05rem; scroll-margin-top: 1rem; min-width: 0; overflow: hidden; }
 .card:target { border-color: var(--team); box-shadow: 0 0 0 1px var(--team); }
 .card header { display: block; }
 .matchup { display: flex; align-items: center; gap: .5rem; margin: 0; }
@@ -49,13 +49,13 @@ a:focus-visible, summary:focus-visible { outline: 2px solid var(--model); outlin
 .logo { width: 40px; height: 40px; object-fit: contain; flex: none; background: #fff; border-radius: 50%; padding: 5px; }
 .logo.small { width: 24px; height: 24px; padding: 3px; vertical-align: -7px; margin: 0 .2rem 0 .35rem; }
 .logo.big { width: 46px; height: 46px; padding: 5px; margin: 0 .55rem 0 .6rem; }
-.our-call { display: flex; align-items: center; margin: .9rem 0 .55rem; }
+.our-call { display: flex; align-items: center; margin: .9rem 0 .55rem; min-width: 0; }
 .our-call .who { color: var(--muted); font-size: .85rem; width: 4rem; }
 .our-call strong { font-family: "Bricolage Grotesque", system-ui, sans-serif; font-size: 1.9rem; color: var(--team); letter-spacing: -.01em; }
 .our-call .conf { font-weight: 600; font-size: 1.5rem; margin-left: auto; }
-.bar-row { display: flex; align-items: center; gap: .5rem; }
+.bar-row { display: flex; align-items: center; gap: .5rem; min-width: 0; }
 .bar-end { color: var(--muted); font-size: .8rem; white-space: nowrap; min-width: 3.6rem; } .bar-end:last-child { text-align: right; }
-.bar { display: block; flex: 1; height: auto; overflow: visible; }
+.bar { display: block; flex: 1 1 0; min-width: 0; width: 100%; height: auto; overflow: visible; }
 .bar-vegas { fill: var(--vegas); }
 .vegas-call { margin: .5rem 0 .2rem; font-size: .9rem; color: var(--muted); }
 .vegas-call .who { display: inline-block; width: 4rem; } .vegas-call strong { color: var(--ink); font-size: 1rem; }
@@ -63,8 +63,8 @@ a:focus-visible, summary:focus-visible { outline: 2px solid var(--model); outlin
 .spread { margin-top: .7rem; font-size: .85rem; }
 .spread-head { display: grid; grid-template-columns: 8.4rem 1fr; color: var(--muted); margin-bottom: .2rem; }
 .spread-axis { display: flex; justify-content: space-between; }
-.spread-row { display: grid; grid-template-columns: 2.8rem 5.6rem 1fr; align-items: center; margin: .3rem 0; }
-.spread-who { color: var(--muted); } .spread-val { font-weight: 600; white-space: nowrap; color: var(--ink); }
+.spread-row { display: grid; grid-template-columns: 2.8rem minmax(5.4rem, auto) 1fr; align-items: center; margin: .3rem 0; min-width: 0; }
+.spread-who { color: var(--muted); } .spread-val { font-weight: 600; color: var(--ink); }
 .spread-track { position: relative; height: 12px; background: var(--away); border-radius: 6px; }
 .spread-track::before { content: ""; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 2px; background: var(--rule2); }
 .spread-bar { position: absolute; top: 0; height: 12px; border-radius: 6px; background: var(--favc); min-width: 4px; }
@@ -109,7 +109,6 @@ footer { margin-top: 3rem; }
 <p class="lede">Every NFL game picked before kickoff, written down where it cannot be changed, graded against Vegas.</p></div>
 <nav class="weeks"><a href="../index.html">This week</a><a href="../weeks/2026_01.html" aria-current="page">Week 1</a><a href="../season.html">Season</a></nav>
 <h2>Week 1, 2026</h2>
-<p class="summary">16 games. We disagree with Vegas on 3: <a href="#2026_01_BAL_IND">IND</a>, <a href="#2026_01_BUF_HOU">HOU</a>, <a href="#2026_01_NYJ_TEN">NYJ</a>.</p>
 <details class="howto"><summary>How to read a card</summary>
 <p><strong>Our pick</strong> is the model's call, in that team's colour. The bar is the win probability; the small bronze
    triangle under it is where Vegas puts it. <strong>Vegas</strong> is the betting favourite, for comparison. The spread
@@ -280,7 +279,7 @@ footer { margin-top: 3rem; }
 <h3 class="table-title">All games this week</h3>
 <table class="ledger"><thead><tr><th>Kickoff</th><th>Game</th><th>Pick</th><th class="num">Win prob</th><th>Our spread</th><th>Line</th><th class="num">Vegas prob</th><th>Pass</th><th>Result</th></tr></thead><tbody><tr><td>Wed Sep 9, 8:20 pm ET</td><td>NE at SEA</td><td><strong>SEA</strong></td><td class="num">67%</td><td>SEA by 5.1</td><td>SEA by 3.0</td><td class="num">62%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Thu Sep 10, 8:35 pm ET</td><td>SF at LA</td><td><strong>LA</strong></td><td class="num">57%</td><td>LA by 2.4</td><td>LA by 3.5</td><td class="num">64%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 1:00 pm ET</td><td>ATL at PIT</td><td><strong>PIT</strong></td><td class="num">56%</td><td>PIT by 1.2</td><td>PIT by 3.5</td><td class="num">62%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 1:00 pm ET</td><td>BAL at IND</td><td><strong>IND</strong></td><td class="num">52%</td><td>IND by 0.8</td><td>BAL by 3.5</td><td class="num">38%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 1:00 pm ET</td><td>BUF at HOU</td><td><strong>HOU</strong></td><td class="num">56%</td><td>HOU by 1.7</td><td>BUF by 1.5</td><td class="num">48%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 1:00 pm ET</td><td>CHI at CAR</td><td><strong>CHI</strong></td><td class="num">57%</td><td>CHI by 2.3</td><td>CHI by 3.0</td><td class="num">40%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 1:00 pm ET</td><td>CLE at JAX</td><td><strong>JAX</strong></td><td class="num">75%</td><td>JAX by 6.5</td><td>JAX by 8.5</td><td class="num">79%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 1:00 pm ET</td><td>NO at DET</td><td><strong>DET</strong></td><td class="num">75%</td><td>DET by 8.2</td><td>DET by 7.0</td><td class="num">73%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 1:00 pm ET</td><td>NYJ at TEN</td><td><strong>NYJ</strong></td><td class="num">61%</td><td>NYJ by 3.5</td><td>TEN by 1.5</td><td class="num">53%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 1:00 pm ET</td><td>TB at CIN</td><td><strong>CIN</strong></td><td class="num">57%</td><td>CIN by 1.8</td><td>CIN by 3.5</td><td class="num">64%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 4:25 pm ET</td><td>ARI at LAC</td><td><strong>LAC</strong></td><td class="num">73%</td><td>LAC by 6.8</td><td>LAC by 9.5</td><td class="num">81%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 4:25 pm ET</td><td>GB at MIN</td><td><strong>MIN</strong></td><td class="num">63%</td><td>MIN by 3.6</td><td>MIN by 1.5</td><td class="num">52%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 4:25 pm ET</td><td>MIA at LV</td><td><strong>LV</strong></td><td class="num">56%</td><td>LV by 0.9</td><td>LV by 3.5</td><td class="num">62%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 4:25 pm ET</td><td>WAS at PHI</td><td><strong>PHI</strong></td><td class="num">62%</td><td>PHI by 3.3</td><td>PHI by 5.5</td><td class="num">67%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 8:20 pm ET</td><td>DAL at NYG</td><td><strong>DAL</strong></td><td class="num">53%</td><td>DAL by 0.8</td><td>DAL by 3.0</td><td class="num">41%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Mon Sep 14, 8:15 pm ET</td><td>DEN at KC</td><td><strong>KC</strong></td><td class="num">53%</td><td>KC by 0.9</td><td>KC by 2.5</td><td class="num">57%</td><td>early</td><td><span class="pending">—</span></td></tr></tbody></table>
 <details class="prov"><summary>Where this came from</summary><ul><li><strong>Early pass</strong> published <time datetime="2026-09-08T17:20:19.312876+00:00">Tue Sep 8, 1:20 pm ET</time>, 31 hours before the first kickoff it covers, 16 games. Model trained on 6,499 games through 2025_22_SEA_NE, code <a href="https://github.com/Kanishk234/nfl-game-predictor/commit/5c78b84">5c78b84</a>. <a href="https://github.com/Kanishk234/nfl-game-predictor/blob/main/data/predictions/2026_01_early.json">prediction file</a>, <a href="https://github.com/Kanishk234/nfl-game-predictor/blob/main/data/odds/2026_01_early.json">odds snapshot</a>.</li></ul></details>
-<footer class="fine"><p>Built Tue Sep 8, 2:44 pm ET from the committed data. No JavaScript, no tracking.</p></footer>
+<footer class="fine"><p>Built Tue Sep 8, 5:07 pm ET from the committed data. No JavaScript, no tracking.</p></footer>
 </main>
 </body>
 </html>
