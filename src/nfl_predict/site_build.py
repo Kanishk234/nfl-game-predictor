@@ -78,24 +78,56 @@ def _mix(hex_color: str, toward: str, amount: float) -> str:
     return "#" + "".join(f"{round(x + (y - x) * amount):02X}" for x, y in zip(c, d))
 
 
-def readable_team_color(abbr: str, surface: str) -> str:
-    """The team colour that actually shows on this surface.
+def _is_achromatic(hex_color: str) -> bool:
+    c = [int(hex_color[i:i + 2], 16) for i in (1, 3, 5)]
+    return max(c) - min(c) < 20
 
-    Navy, black and near-black primaries vanish on a dark background, and a few pale
-    secondaries vanish on white. Prefer the primary, fall back to the secondary if it reads
-    better, and if neither reaches 3:1 pull the better one toward the opposite of the surface
-    until it does. 3:1 is the WCAG floor for graphical objects.
+
+def _scale(hex_color: str, k: float) -> str:
+    """Multiply each channel: keeps hue and saturation, unlike mixing toward white/black."""
+    c = [int(hex_color[i:i + 2], 16) for i in (1, 3, 5)]
+    return "#" + "".join(f"{min(255, max(0, round(x * k))):02X}" for x in c)
+
+
+def readable_team_color(abbr: str, surface: str) -> str:
+    """The team colour that shows on this surface, keeping the team's hue.
+
+    Prefer the primary. If it does not reach 3:1 (the WCAG floor for graphics), brighten or
+    darken it by scaling its channels, which keeps the hue and saturation: Rams navy becomes a
+    vivid lighter blue on a dark panel, not yellow and not grey. Only when the primary is black
+    or grey, with no hue to keep, does the secondary take over (Steelers gold), and if that is
+    grey too (Raiders silver) it is mixed toward the opposite of the surface.
     """
     primary, secondary = TEAM_COLORS.get(abbr, ("#62707E", "#62707E"))[:2]
-    best = max((primary, secondary), key=lambda c: _contrast(c, surface))
-    if _contrast(primary, surface) >= 3.0:
-        best = primary
-    opposite = "#FFFFFF" if _luminance(surface) < 0.5 else "#000000"
+    base = secondary if _is_achromatic(primary) and not _is_achromatic(secondary) else primary
+    lighten = _luminance(surface) < 0.5
+    color, k = base, 1.0
+    for _ in range(40):
+        if _contrast(color, surface) >= 3.0:
+            return color
+        k *= 1.08 if lighten else 0.92
+        nxt = _scale(base, k)
+        if nxt == color:  # channels saturated or zero: scaling cannot move it further
+            break
+        color = nxt
+    opposite = "#FFFFFF" if lighten else "#000000"
     amount = 0.0
-    while _contrast(best, surface) < 3.0 and amount < 1.0:
-        amount += 0.1
-        best = _mix(max((primary, secondary), key=lambda c: _contrast(c, surface)), opposite, amount)
-    return best
+    while _contrast(color, surface) < 3.0 and amount < 1.0:
+        amount += 0.05
+        color = _mix(base, opposite, amount)
+    return color
+
+
+#: ESPN's team logo CDN, the source nflverse uses. Two codes differ from ours.
+_LOGO_CODE = {"LA": "lar", "WAS": "wsh"}
+
+
+def logo_url(abbr: str) -> str:
+    return f"https://a.espncdn.com/i/teamlogos/nfl/500/{_LOGO_CODE.get(abbr, abbr.lower())}.png"
+
+
+def logo(abbr: str, cls: str = "logo") -> str:
+    return f'<img class="{cls}" src="{logo_url(abbr)}" alt="" width="40" height="40" loading="lazy">'
 
 
 def team_color(abbr: str) -> str:
@@ -265,7 +297,7 @@ def spread_rows(ours: float, line: float | None, actual: float | None, home: str
     """Two (three, once played) aligned rows: a fixed text column on the left, a bar on the
     right whose length is the margin and whose colour is the favoured team's. Text is never
     positioned by value, so labels cannot collide."""
-    half = 14.0
+    half = 10.0
     rows = [("Us", ours, "ours")]
     if line is not None:
         rows.append(("Vegas", line, "vegas"))
@@ -278,7 +310,7 @@ def spread_rows(ours: float, line: float | None, actual: float | None, home: str
         width = abs(v_c) / half * 50
         left = 50 if v_c >= 0 else 50 - width
         fav = home if v >= 0 else away
-        style = f"--fav:{team_vars_pair(fav)}" if cls != "final" else ""
+        style = f"--fav:{team_vars_pair(fav)}" if cls == "ours" else ""
         out.append(f'<div class="spread-row {cls}" style="{e(style)}"><span class="spread-who">{who}</span>'
                    f'<span class="spread-val">{e(by_team(v, home, away))}</span>'
                    f'<span class="spread-track"><span class="spread-bar" style="left:{left:.1f}%;width:{width:.1f}%"></span></span></div>')
@@ -312,11 +344,12 @@ def game_card(pass_name: str, p: dict, g: dict | None) -> str:
     if v and v["p_home_moneyline"] is not None:
         v_fav = home if v["p_home_moneyline"] >= 0.5 else away
         v_conf = v["p_home_moneyline"] if v_fav == home else 1 - v["p_home_moneyline"]
-        vegas_row = (f'<div class="call vegas"><span class="who">Vegas favorite</span>'
-                     f'<span class="chip" style="{team_vars(v_fav)}"></span><strong>{e(v_fav)}</strong>'
-                     f'<span class="conf">{pct(v_conf)}</span><span class="towin">to win</span></div>')
+        agree = v_fav == pick
+        vegas_row = (f'<p class="vegas-call"><span class="who">Vegas</span> {logo(v_fav, "logo small")}'
+                     f'<strong>{e(v_fav)}</strong> {pct(v_conf)}'
+                     + ("" if agree else ' <span class="disagree">we disagree</span>') + '</p>')
     else:
-        vegas_row = '<div class="call vegas"><span class="who">Vegas favorite</span><span class="none">no line yet</span></div>'
+        vegas_row = '<p class="vegas-call"><span class="who">Vegas</span> no line yet</p>'
 
     if g:
         ok = g["model"]["correct"]
@@ -331,15 +364,14 @@ def game_card(pass_name: str, p: dict, g: dict | None) -> str:
         outcome, actual, status = "", None, "upcoming"
 
     return f'''<article class="card {status}" style="{team_vars(pick)}">
-  <header><h3>{e(team_nick(away))} at {e(team_nick(home))}</h3><time datetime="{e(p["kickoff_utc"])}">{e(fmt_et(p["kickoff_utc"]))}</time></header>
-  <div class="calls">
-    <div class="call ours"><span class="who">Our pick</span><span class="chip own"></span>
-      <strong>{e(pick)}</strong><span class="conf">{pct(p_pick(p))}</span><span class="towin">to win</span></div>
-    {vegas_row}
-  </div>
+  <header>
+    <p class="matchup">{logo(away)}<span class="vs">{e(team_nick(away))} <small>at</small> {e(team_nick(home))}</span>{logo(home)}</p>
+    <time datetime="{e(p["kickoff_utc"])}">{e(fmt_et(p["kickoff_utc"]))}</time>
+  </header>
+  <p class="our-call"><span class="who">Our pick</span>{logo(pick, "logo big")}<strong>{e(pick)}</strong><span class="conf">{pct(p_pick(p))}</span></p>
   {prob_bar(p_home, v["p_home_moneyline"] if v else None, home, away)}
   <p class="bar-ends"><span>{e(away)} {pct(1 - p_home)}</span><span>{e(home)} {pct(p_home)}</span></p>
-  <p class="plain">{e(plain_call(p))}</p>
+  {vegas_row}
   {spread_rows(p["pred_margin"], v["spread_line"] if v else None, actual, home, away)}
   {outcome}
 </article>'''
@@ -408,9 +440,11 @@ def week_body(season: int, week: int, passes: list[dict], result: dict | None) -
     status = "" if not result else (", complete" if result["complete"] else f', {result["n_graded"]} of {result["n_games"]} played')
     cards = "".join(game_card(pn, p, graded.get(p["game_id"])) for pn, p in rows)
     return f'''<h2>Week {week}, {season}{e(status)}</h2>
-<p class="how">One card per game. <strong>Our pick</strong> is the model's call; <strong>Vegas favorite</strong> is the betting
-   market's, for comparison. The bar is the win probability, coloured for the team we pick; the small triangle under it is
-   where Vegas puts it. The line at the bottom is the point spread: how much each of us expects the winner to win by.</p>
+<details class="howto"><summary>How to read a card</summary>
+<p><strong>Our pick</strong> is the model's call, in that team's colour. The bar is the win probability; the small bronze
+   triangle under it is where Vegas puts it. <strong>Vegas</strong> is the betting favourite, for comparison. The spread
+   rows show how much each of us expects the winner to win by: ours in the team colour, Vegas in bronze. Once a game is
+   played, the score and a verdict appear at the bottom.</p></details>
 {summary_strip(result["summary"] if result else None, "Official predictions only: the latest pass published before each game's kickoff.")}
 <div class="cards">{cards}</div>
 <h3 class="table-title">All games this week</h3>
@@ -516,24 +550,31 @@ a:focus-visible, summary:focus-visible {{ outline: 2px solid var(--model); outli
 .chip {{ --team: var(--tl); background: var(--team); }} .chip.own {{ background: var(--team); }}
 .spread-row {{ --favc: var(--fav); }}
 @media (prefers-color-scheme: dark) {{ .card, .chip {{ --team: var(--td); }} .spread-row {{ --favc: var(--favd); }} }}
-.calls {{ margin: .8rem 0 .7rem; display: grid; gap: .35rem; }}
-.call {{ display: grid; grid-template-columns: 7.2rem 1rem auto auto 1fr; align-items: center; gap: .5rem; }}
-.call .who {{ color: var(--muted); font-size: .9rem; }}
-.call .chip {{ width: .8rem; height: .8rem; border-radius: 50%; display: inline-block; }}
-.call strong {{ font-family: "Bricolage Grotesque", system-ui, sans-serif; font-size: 1.35rem; }}
-.call .conf {{ font-family: "Bricolage Grotesque", system-ui, sans-serif; font-weight: 600; font-size: 1.15rem; }}
-.call.vegas strong {{ font-size: 1.1rem; }} .call.vegas .conf {{ font-size: 1rem; font-weight: 500; color: var(--muted); }}
-.call .towin, .call .none {{ color: var(--muted); font-size: .9rem; }}
-.plain {{ margin: .5rem 0 .2rem; font-size: 1rem; }}
-.spread {{ margin-top: .7rem; font-size: .9rem; }}
+.card header {{ display: block; }}
+.matchup {{ display: flex; align-items: center; gap: .5rem; margin: 0; }}
+.matchup .vs {{ flex: 1; text-align: center; font-family: "Bricolage Grotesque", system-ui, sans-serif; font-weight: 600; font-size: 1.15rem; line-height: 1.2; }}
+.matchup small {{ color: var(--muted); font-weight: 400; }}
+.card time {{ display: block; text-align: center; margin-top: .35rem; }}
+.logo {{ width: 40px; height: 40px; object-fit: contain; flex: none; }}
+.logo.small {{ width: 22px; height: 22px; vertical-align: -6px; margin: 0 .15rem 0 .35rem; }}
+.logo.big {{ width: 44px; height: 44px; margin: 0 .5rem 0 .6rem; }}
+.our-call {{ display: flex; align-items: center; margin: .9rem 0 .5rem; }}
+.our-call .who {{ color: var(--muted); font-size: .9rem; width: 4.2rem; }}
+.our-call strong {{ font-family: "Bricolage Grotesque", system-ui, sans-serif; font-size: 1.9rem; color: var(--team); }}
+.our-call .conf {{ font-family: "Bricolage Grotesque", system-ui, sans-serif; font-weight: 600; font-size: 1.5rem; margin-left: auto; }}
+.vegas-call {{ margin: .5rem 0 .2rem; font-size: .95rem; color: var(--muted); }}
+.vegas-call .who {{ display: inline-block; width: 4.2rem; }} .vegas-call strong {{ color: var(--ink); font-size: 1.05rem; }}
+.disagree {{ color: var(--vegas); font-weight: 600; margin-left: .35rem; }}
+.howto {{ color: var(--muted); font-size: .95rem; margin: .25rem 0 .5rem; }} .howto summary {{ cursor: pointer; color: var(--model); }}
+.spread {{ margin-top: .8rem; font-size: .9rem; }}
 .spread-head {{ display: grid; grid-template-columns: 8.6rem 1fr; color: var(--muted); margin-bottom: .25rem; }}
 .spread-axis {{ display: flex; justify-content: space-between; }}
 .spread-row {{ display: grid; grid-template-columns: 3rem 5.6rem 1fr; align-items: center; gap: 0; margin: .3rem 0; }}
 .spread-who {{ color: var(--muted); }} .spread-val {{ font-weight: 600; white-space: nowrap; }}
-.spread-track {{ position: relative; height: 10px; background: var(--rule); border-radius: 5px; }}
-.spread-track::before {{ content: ""; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: var(--muted); }}
-.spread-bar {{ position: absolute; top: 0; height: 10px; border-radius: 5px; background: var(--favc); }}
-.spread-row.vegas .spread-bar {{ opacity: .55; }} .spread-row.final .spread-bar {{ background: var(--ink); }}
+.spread-track {{ position: relative; height: 14px; background: var(--rule); border-radius: 7px; }}
+.spread-track::before {{ content: ""; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 2px; background: var(--muted); }}
+.spread-bar {{ position: absolute; top: 0; height: 14px; border-radius: 7px; background: var(--favc); min-width: 4px; }}
+.spread-row.vegas .spread-bar {{ background: var(--vegas); }} .spread-row.final .spread-bar {{ background: var(--ink); }}
 .sub {{ font-size: 1.3rem; margin: 2rem 0 .5rem; }} .empty {{ padding: 1rem 1.1rem; background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; }}
 .more {{ margin: 1rem 0; }} .more summary {{ cursor: pointer; color: var(--model); }}
 .bar {{ display: block; width: 100%; height: auto; overflow: visible; }}

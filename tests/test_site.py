@@ -66,10 +66,10 @@ class TestPages:
         preds = [_pred(1, "early", [_row("2026_01_NE_SEA", "SEA", "NE", p=0.67, m=5.1, line=3.0, pv=0.618),
                                     _row("2026_01_SF_LA", "LA", "SF", line=None)])]
         page = S.render_site(preds, {}, None, None, NOW)["index.html"]
-        assert "<h3>Patriots at Seahawks</h3>" in page
+        assert 'Patriots <small>at</small> Seahawks' in page
         assert '<span class="who">Our pick</span>' in page and "<strong>SEA</strong>" in page and "67%" in page
-        assert '<span class="who">Vegas favorite</span>' in page and "62%" in page
-        assert "SEA should win by about 5. Vegas has SEA by 3." in page
+        assert '<span class="who">Vegas</span>' in page and "62%" in page
+        assert "teamlogos/nfl/500/sea.png" in page and "teamlogos/nfl/500/ne.png" in page
         assert '<span class="spread-who">Us</span><span class="spread-val">SEA by 5.1</span>' in page
         assert '<span class="spread-who">Vegas</span><span class="spread-val">SEA by 3.0</span>' in page
         assert "no line yet" in page                       # missing line is shown as missing
@@ -82,7 +82,7 @@ class TestPages:
         preds = [_pred(1, "early", [_row("2026_01_NE_SEA", "SEA", "NE", p=0.40, m=-2.0)])]
         page = S.render_site(preds, {}, None, None, NOW)["index.html"]
         assert "<strong>NE</strong><span class=\"conf\">60%</span>" in page
-        assert "NE should win by about 2." in page
+        assert "we disagree" in page  # Vegas (58% SEA) and we (NE) differ
 
     def test_graded_card_shows_score_winner_and_verdict(self):
         preds = [_pred(1, "early", [_row("2026_01_NE_SEA", "SEA", "NE")])]
@@ -96,7 +96,7 @@ class TestPages:
         early = _pred(1, "early", [_row("2026_01_NE_SEA", "SEA", "NE", p=0.62), _row("2026_01_ATL_PIT", "PIT", "ATL", p=0.55)])
         late = _pred(1, "late", [_row("2026_01_ATL_PIT", "PIT", "ATL", p=0.40)], gen_offset_h=-3)
         page = S.render_site([early, late], {}, None, None, NOW)["index.html"]
-        assert page.count("<h3>Falcons at Steelers</h3>") == 1
+        assert page.count("Falcons <small>at</small> Steelers") == 1
         assert 'style="--tl:#A71930;--td:' in page          # ATL's colour on the card
 
     def test_season_page_with_backtest(self):
@@ -114,13 +114,16 @@ class TestPages:
 
 
 class TestTeamColours:
-    def test_dark_primary_is_swapped_or_lightened_on_dark_surface(self):
-        # Seahawks navy is fine on white, invisible on the dark panel: the green takes over.
-        assert S.readable_team_color("SEA", S.LIGHT_PANEL) == "#002244"
-        assert S.readable_team_color("SEA", S.DARK_PANEL) == "#69BE28"
-        # Raiders: black and silver. Silver reads on dark; on white neither is strong but black passes.
-        assert S._contrast(S.readable_team_color("LV", S.DARK_PANEL), S.DARK_PANEL) >= 3.0
-        assert S._contrast(S.readable_team_color("LV", S.LIGHT_PANEL), S.LIGHT_PANEL) >= 3.0
+    def test_hue_is_kept_when_lightening(self):
+        # Rams navy on white stays as is; on the dark panel it becomes a lighter blue, not yellow.
+        assert S.readable_team_color("LA", S.LIGHT_PANEL) == "#003594"
+        dark = S.readable_team_color("LA", S.DARK_PANEL)
+        r, g, b = (int(dark[i:i + 2], 16) for i in (1, 3, 5))
+        assert b > r and b > g and S._contrast(dark, S.DARK_PANEL) >= 3.0
+
+    def test_black_primary_falls_back_to_the_iconic_secondary(self):
+        assert S.readable_team_color("PIT", S.DARK_PANEL).upper().startswith("#FFB6")  # Steelers gold
+        assert S._contrast(S.readable_team_color("LV", S.DARK_PANEL), S.DARK_PANEL) >= 3.0  # Raiders silver
 
     def test_every_team_reads_on_both_surfaces(self):
         for abbr in S.TEAM_COLORS:
