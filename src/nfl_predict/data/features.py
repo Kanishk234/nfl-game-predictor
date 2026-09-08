@@ -47,13 +47,43 @@ def canonical_team(column: str = "team") -> pl.Expr:
     return pl.col(column).replace(TEAM_CODE_ALIASES)
 
 
+def latest_state_before_kickoff(
+    targets: pl.DataFrame, state: pl.DataFrame, cols: list[str], as_of_name: str
+) -> pl.DataFrame:
+    """For each (game_id, team) in `targets`, the latest row of `state` for that team whose
+    `known_at` is strictly before the game's kickoff.
+
+    `state` is one row per team per completed game, describing the team *after* that game and
+    stamped with when that became knowable. This is the single as-of mechanism for every
+    team-level feature, and it works identically for games already played (reproducing a
+    shift-by-one rolling window exactly) and for games not yet played (the team's current
+    state). Rows with no prior state come back null, which the gate treats as "drew on nothing".
+    """
+    known = pl.col("known_at") < pl.col("kickoff_utc")
+    return (
+        targets.join(state, on="team", how="left")
+        .sort("known_at", nulls_last=False)
+        .group_by("game_id", "team", "kickoff_utc", maintain_order=True)
+        .agg(*[pl.col(c).filter(known).last() for c in cols], pl.col("known_at").filter(known).last())
+        .rename({"known_at": as_of_name})
+    )
+
+
+def _team_sides(games: pl.DataFrame) -> pl.DataFrame:
+    """One row per team per game, played or not."""
+    return pl.concat([
+        games.select("game_id", "kickoff_utc", pl.col("home_team").alias("team")),
+        games.select("game_id", "kickoff_utc", pl.col("away_team").alias("team")),
+    ])
+
+
 def elo_ratings(games: pl.DataFrame) -> pl.DataFrame:
     """Pre-game Elo for both teams, plus the as-of time of the latest result baked in.
 
     Walks games in kickoff order, but defers each result's rating update until that game has
     actually finished, so simultaneous kickoffs cannot see each other.
     """
-    played = games.filter(pl.col("is_played")).sort("kickoff_utc", "game_id")
+    ordered = games.sort("kickoff_utc", "game_id")
 
     ratings: dict[str, float] = {}
     last_season: dict[str, int] = {}
@@ -70,7 +100,7 @@ def elo_ratings(games: pl.DataFrame) -> pl.DataFrame:
             r = ELO_START + (r - ELO_START) * ELO_SEASON_CARRYOVER
         return r
 
-    for g in played.iter_rows(named=True):
+    for g in ordered.iter_rows(named=True):
         kickoff = g["kickoff_utc"]
 
         # Apply every update that had concluded *strictly before* this kickoff. Strictness
@@ -100,6 +130,9 @@ def elo_ratings(games: pl.DataFrame) -> pl.DataFrame:
                 "elo_as_of_utc": absorbed_through,
             }
         )
+
+        if not g["is_played"]:
+            continue  # an upcoming game gets a pre-game rating but contributes no update
 
         margin = g["home_score"] - g["away_score"]
         expected_home = 1.0 / (1.0 + 10 ** (-(home_elo + ELO_HOME_ADVANTAGE - away_elo) / 400.0))
@@ -150,69 +183,45 @@ def _team_game_epa(seasons: list[int]) -> pl.DataFrame:
 def rolling_form(games: pl.DataFrame, window: int = FORM_WINDOW) -> pl.DataFrame:
     """Rolling offensive/defensive EPA and scoring margin over each team's last `window` games.
 
-    Strictly backward-looking: every value is shifted by one game, so a team's row for a game
-    never includes that game. The as-of time is the completion of the team's previous game.
+    Built as a per-team *post-game* state (the rolling mean including that game, knowable at
+    its completion) and looked up as-of each kickoff, so a team's row for a game never includes
+    that game, and games not yet played get the team's current form.
     """
     played = games.filter(pl.col("is_played"))
     epa = _team_game_epa(sorted(played["season"].unique().to_list()))
 
-    # One row per team per game.
-    long = pl.concat(
-        [
-            played.select(
-                "game_id",
-                "kickoff_utc",
-                "season",
-                pl.col("home_team").alias("team"),
-                pl.col("away_team").alias("opponent"),
-                pl.col("home_score").alias("points_for"),
-                pl.col("away_score").alias("points_against"),
-            ),
-            played.select(
-                "game_id",
-                "kickoff_utc",
-                "season",
-                pl.col("away_team").alias("team"),
-                pl.col("home_team").alias("opponent"),
-                pl.col("away_score").alias("points_for"),
-                pl.col("home_score").alias("points_against"),
-            ),
-        ]
-    ).with_columns(canonical_team().alias("team_canonical"))
-
+    long = pl.concat([
+        played.select(
+            "game_id", "kickoff_utc",
+            pl.col("home_team").alias("team"), pl.col("away_team").alias("opponent"),
+            pl.col("home_score").alias("points_for"), pl.col("away_score").alias("points_against"),
+        ),
+        played.select(
+            "game_id", "kickoff_utc",
+            pl.col("away_team").alias("team"), pl.col("home_team").alias("opponent"),
+            pl.col("away_score").alias("points_for"), pl.col("home_score").alias("points_against"),
+        ),
+    ]).with_columns(canonical_team().alias("team_canonical"))
     long = long.join(
         epa.rename({"team": "team_canonical"}), on=["game_id", "team_canonical"], how="left"
     )
-
     # Defensive EPA allowed is the opponent's offensive EPA in that same game.
     long = long.join(
-        long.select(
-            "game_id",
-            pl.col("team").alias("opponent"),
-            pl.col("off_epa_per_play").alias("def_epa_per_play"),
-        ),
-        on=["game_id", "opponent"],
-        how="left",
+        long.select("game_id", pl.col("team").alias("opponent"),
+                    pl.col("off_epa_per_play").alias("def_epa_per_play")),
+        on=["game_id", "opponent"], how="left",
     ).sort("team", "kickoff_utc")
 
-    prior_completion = pl.col("kickoff_utc").shift(1).over("team") + GAME_DURATION
-    return long.with_columns(
-        pl.col("off_epa_per_play")
-        .shift(1)
-        .rolling_mean(window, min_samples=1)
-        .over("team")
-        .alias("off_epa_form"),
-        pl.col("def_epa_per_play")
-        .shift(1)
-        .rolling_mean(window, min_samples=1)
-        .over("team")
-        .alias("def_epa_form"),
-        (pl.col("points_for") - pl.col("points_against"))
-        .shift(1)
-        .rolling_mean(window, min_samples=1)
-        .over("team")
-        .alias("margin_form"),
-        prior_completion.alias("form_as_of_utc"),
+    state = long.select(
+        "team",
+        (pl.col("kickoff_utc") + GAME_DURATION).alias("known_at"),
+        pl.col("off_epa_per_play").rolling_mean(window, min_samples=1).over("team").alias("off_epa_form"),
+        pl.col("def_epa_per_play").rolling_mean(window, min_samples=1).over("team").alias("def_epa_form"),
+        (pl.col("points_for") - pl.col("points_against")).rolling_mean(window, min_samples=1)
+        .over("team").alias("margin_form"),
+    )
+    return latest_state_before_kickoff(
+        _team_sides(games), state, ["off_epa_form", "def_epa_form", "margin_form"], "form_as_of_utc"
     ).select("game_id", "team", "off_epa_form", "def_epa_form", "margin_form", "form_as_of_utc")
 
 
@@ -439,19 +448,20 @@ def _team_game_pbp(seasons: list[int]) -> pl.DataFrame:
 
 
 def pbp_form(games: pl.DataFrame, window: int = PBP_WINDOW) -> pl.DataFrame:
-    """Rolling play-by-play form per team, strictly backward-looking like `rolling_form`."""
+    """Rolling play-by-play form per team, as-of each kickoff like `rolling_form`."""
     played = games.filter(pl.col("is_played"))
     pbp = _team_game_pbp(sorted(played["season"].unique().to_list()))
-    long = pl.concat([
-        played.select("game_id", "kickoff_utc", pl.col("home_team").alias("team")),
-        played.select("game_id", "kickoff_utc", pl.col("away_team").alias("team")),
-    ]).with_columns(canonical_team().alias("team_canonical"))
+    long = _team_sides(played).with_columns(canonical_team().alias("team_canonical"))
     long = long.join(
         pbp.rename({"team": "team_canonical"}), on=["game_id", "team_canonical"], how="left"
     ).sort("team", "kickoff_utc")
     stats = ["epa_noto", "expl_rate", "def_epa_noto", "def_expl_rate"]
-    return long.with_columns(
-        *[pl.col(c).shift(1).rolling_mean(window, min_samples=1).over("team").alias(f"{c}_form")
-          for c in stats],
-        (pl.col("kickoff_utc").shift(1).over("team") + GAME_DURATION).alias("pbp_as_of_utc"),
-    ).select("game_id", "team", *[f"{c}_form" for c in stats], "pbp_as_of_utc")
+    state = long.select(
+        "team",
+        (pl.col("kickoff_utc") + GAME_DURATION).alias("known_at"),
+        *[pl.col(c).rolling_mean(window, min_samples=1).over("team").alias(f"{c}_form") for c in stats],
+    )
+    forms = [f"{c}_form" for c in stats]
+    return latest_state_before_kickoff(_team_sides(games), state, forms, "pbp_as_of_utc").select(
+        "game_id", "team", *forms, "pbp_as_of_utc"
+    )
