@@ -351,3 +351,35 @@ def qb_features(games: pl.DataFrame) -> pl.DataFrame:
          - pl.col("away_qb_starts").cast(pl.Float64).log1p()).alias("qb_exp_diff"),
         pl.max_horizontal("home_qb_as_of_utc", "away_qb_as_of_utc").alias("qb_as_of_utc"),
     )
+
+
+def _qb_draft_scores() -> pl.DataFrame:
+    """Draft position per QB as a 0-1 score (1 = first overall, 0 = undrafted or unknown).
+
+    A rookie has no rating history, so `qb_features` treats a first-overall pick and an
+    undrafted free agent identically until they have thrown a few hundred passes. The market
+    does not. Draft position is a prior on quality that is fixed years before any game, so it
+    carries no as-of constraint.
+    """
+    try:
+        picks = nfl.load_draft_picks()
+    except (ConnectionError, OSError):
+        return pl.DataFrame(schema={"player_id": pl.String, "qb_draft": pl.Float64})
+    return (
+        picks.filter((pl.col("position") == "QB") & pl.col("gsis_id").is_not_null())
+        .select(pl.col("gsis_id").alias("player_id"), ((257 - pl.col("pick")) / 256).alias("qb_draft"))
+        .unique(subset="player_id", keep="first")
+    )
+
+
+def qb_draft_features(games: pl.DataFrame) -> pl.DataFrame:
+    draft = _qb_draft_scores()
+    return games.select("game_id", "home_qb_id", "away_qb_id").join(
+        draft.rename({"player_id": "home_qb_id", "qb_draft": "home_qb_draft"}), on="home_qb_id", how="left"
+    ).join(
+        draft.rename({"player_id": "away_qb_id", "qb_draft": "away_qb_draft"}), on="away_qb_id", how="left"
+    ).select(
+        "game_id",
+        pl.col("home_qb_draft").fill_null(0.0),
+        pl.col("away_qb_draft").fill_null(0.0),
+    )

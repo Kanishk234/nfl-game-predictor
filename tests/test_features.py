@@ -28,3 +28,19 @@ def test_no_schedule_team_code_is_missing_from_team_stats():
     )
     unmapped = {t for t in scheduled if TEAM_CODE_ALIASES.get(t, t) not in stats_teams}
     assert not unmapped, f"team codes with no stats counterpart: {sorted(unmapped)}"
+
+
+def test_qb_draft_score_maps_first_overall_to_one_and_undrafted_to_zero(monkeypatch):
+    from datetime import UTC, datetime
+
+    from nfl_predict.data import features as F
+
+    monkeypatch.setattr(F, "_qb_draft_scores", lambda: pl.DataFrame(
+        {"player_id": ["FIRST", "LATE"], "qb_draft": [1.0, 1 / 256]}))
+    games = pl.DataFrame({
+        "game_id": ["g1"], "home_qb_id": ["FIRST"], "away_qb_id": ["UDFA"],
+        "kickoff_utc": [datetime(2025, 9, 7, tzinfo=UTC)],
+    })
+    row = F.qb_draft_features(games).row(0, named=True)
+    assert row["home_qb_draft"] == 1.0
+    assert row["away_qb_draft"] == 0.0

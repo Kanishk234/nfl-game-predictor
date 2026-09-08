@@ -20,7 +20,7 @@ from pathlib import Path
 
 import polars as pl
 
-from nfl_predict.data.features import elo_ratings, qb_features, rolling_form
+from nfl_predict.data.features import elo_ratings, qb_draft_features, qb_features, rolling_form
 from nfl_predict.data.games import load_games
 
 PROCESSED_PATH = Path("data/processed/games.parquet")
@@ -47,6 +47,8 @@ FEATURE_COLUMNS = [
     "qb_exp_diff",
     "home_qb_rating",
     "away_qb_rating",
+    "home_qb_draft",
+    "away_qb_draft",
     "rest_diff",
     "home_rest",
     "away_rest",
@@ -69,6 +71,7 @@ def build_frame() -> pl.DataFrame:
     elo = elo_ratings(games)
     form = rolling_form(games)
     qb = qb_features(games)
+    draft = qb_draft_features(games)
 
     home_form = form.rename(
         {
@@ -94,6 +97,7 @@ def build_frame() -> pl.DataFrame:
         .join(home_form, on=["game_id", "home_team"], how="left")
         .join(away_form, on=["game_id", "away_team"], how="left")
         .join(qb, on="game_id", how="left")
+        .join(draft, on="game_id", how="left")
         .with_columns(
             (pl.col("home_off_epa_form") - pl.col("away_off_epa_form")).alias("off_epa_form_diff"),
             (pl.col("home_def_epa_form") - pl.col("away_def_epa_form")).alias("def_epa_form_diff"),
