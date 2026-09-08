@@ -218,13 +218,17 @@ def rolling_form(games: pl.DataFrame, window: int = FORM_WINDOW) -> pl.DataFrame
 
 #: Quarterback rating: shrunk rolling passing EPA per attempt over the QB's last QB_WINDOW
 #: qualifying games (>= QB_MIN_ATTEMPTS attempts, so mop-up duty does not count as a start).
-QB_WINDOW = 16
+#: The window is long on purpose: walk-forward log loss on the tuning seasons improved
+#: monotonically from 8 games (worse than none) through 16 to a plateau at 48+, and 64 sits in
+#: the middle of that plateau. A QB's quality is a slow-moving quantity; short windows track noise.
+QB_WINDOW = 64
 QB_MIN_ATTEMPTS = 10
 #: Shrinkage prior: a QB with no history is treated as QB_PRIOR_ATTEMPTS attempts at replacement
 #: level, and that prior fades as real attempts accumulate. Replacement level is a fixed constant
 #: (roughly the 25th percentile of starters' per-attempt EPA) rather than something computed from
 #: the data, so it cannot smuggle in information from future seasons.
-QB_PRIOR_ATTEMPTS = 200
+#: 50-200 were within 0.0005 of each other on the tuning seasons; 100 is the middle.
+QB_PRIOR_ATTEMPTS = 100
 QB_REPLACEMENT_EPA = -0.05
 
 
