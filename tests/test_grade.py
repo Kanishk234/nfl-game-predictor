@@ -111,8 +111,7 @@ class TestIdempotency:
         first = json.loads((tmp_path / "results" / "history.json").read_text())
         G.run(2026)
         second = json.loads((tmp_path / "results" / "history.json").read_text())
-        first.pop("rebuilt_at_utc"); second.pop("rebuilt_at_utc")
-        assert first == second
+        assert first == second  # byte-identical: a no-op run must not produce a commit
         assert len(first["seasons"]["2026"]["weeks"]) == 1
         assert first["seasons"]["2026"]["summary"]["n"] == 3
 

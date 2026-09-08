@@ -192,7 +192,10 @@ def rebuild_history() -> dict:
                     np.array([g["home_win"] for g in with_v], float),
                 )
         by_season[str(s)] = entry
-    return {"rebuilt_at_utc": datetime.now().astimezone().isoformat(), "seasons": by_season}
+    # No "rebuilt at" timestamp on purpose: the file is committed, so the commit is the
+    # timestamp, and identical content must produce no diff (otherwise every no-op run of the
+    # grade job would push a junk commit).
+    return {"seasons": by_season}
 
 
 def run(season: int | None = None, week: int | None = None) -> list[Path]:
