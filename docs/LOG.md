@@ -149,3 +149,10 @@ Open:
 - Two reviewers: the single-page ledger was cluttered and hard to read. Rebuilt: a card per game (pick in words, probability bar with Vegas marker, spreads in team terms, result + verdict once played), compact week table at the end, one page per week with a week strip, season page separate. Provenance collapsed.
 - Multi-page output regenerated every run: `index.html` (current week), `weeks/<s>_<ww>.html`, `season.html`. Nothing manual for a new week.
 - 10 site tests; all pages parse. Live site fetched and confirmed rendering Week 1 before the redesign.
+
+## 2026-09-08 — Site, second review round
+
+- Feedback: Season tab unreadable; ours-vs-Vegas unclear on cards; wanted team colours, plainer text, and a visual for the spread.
+- Cards now: explicit "Our pick" / "Vegas favorite" rows with team-colour chips; probability bar filled in the picked team's colour; one-sentence plain-English call ("SEA should win by about 5. Vegas has SEA by 3."); a labelled spread number line (Us above, Vegas below, final margin as a bar once played); team nicknames in headers; team-colour top border.
+- Season page rewritten as "Track record" in plain English; the backtest is a two-sentence dry-run summary with details collapsed.
+- Team colours hardcoded from nflverse (32 teams) so the build needs no network.

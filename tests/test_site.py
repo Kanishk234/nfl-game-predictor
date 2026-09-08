@@ -66,11 +66,13 @@ class TestPages:
         preds = [_pred(1, "early", [_row("2026_01_NE_SEA", "SEA", "NE", p=0.67, m=5.1, line=3.0, pv=0.618),
                                     _row("2026_01_SF_LA", "LA", "SF", line=None)])]
         page = S.render_site(preds, {}, None, None, NOW)["index.html"]
-        assert "<h3>NE at SEA</h3>" in page
-        assert "<strong>SEA</strong> to win" in page and "67%" in page
-        assert "We say SEA by 5.1; the line is SEA by 3.0." in page
-        assert "Vegas has SEA at 62%" in page
+        assert "<h3>Patriots at Seahawks</h3>" in page
+        assert '<span class="who">Our pick</span>' in page and "<strong>SEA</strong>" in page and "67%" in page
+        assert '<span class="who">Vegas favorite</span>' in page and "62%" in page
+        assert "SEA should win by about 5. Vegas has SEA by 3." in page
+        assert "Us: SEA by 5.1" in page and "Vegas: SEA by 3.0" in page   # the labelled spread scale
         assert "no line yet" in page                       # missing line is shown as missing
+        assert 'fill="#002244"' in page                    # the bar wears the picked team's colour
         assert "All games this week" in page               # the table at the end
         assert "30 hours before the first kickoff" in page  # provenance, collapsed
         assert "abc1234" in page
@@ -78,22 +80,23 @@ class TestPages:
     def test_away_pick_shows_away_confidence(self):
         preds = [_pred(1, "early", [_row("2026_01_NE_SEA", "SEA", "NE", p=0.40, m=-2.0)])]
         page = S.render_site(preds, {}, None, None, NOW)["index.html"]
-        assert "<strong>NE</strong> to win <span class=\"conf\">60%</span>" in page
-        assert "We say NE by 2.0" in page
+        assert "<strong>NE</strong><span class=\"conf\">60%</span>" in page
+        assert "NE should win by about 2." in page
 
     def test_graded_card_shows_score_winner_and_verdict(self):
         preds = [_pred(1, "early", [_row("2026_01_NE_SEA", "SEA", "NE")])]
         results = {(2026, 1): _result(1, [_graded("2026_01_NE_SEA", "SEA", "NE", "SEA", 1)])}
         page = S.render_site(preds, results, None, None, NOW)["index.html"]
         assert '<span class="score">NE 17, SEA 24</span>' in page
-        assert "✓ right" in page and "covered the spread" in page and "Week 1, 2026, complete" in page
+        assert "SEA won, <span class=\"hit\">✓ we were right</span> and our side covered the spread." in page
+        assert "Week 1, 2026, complete" in page
 
     def test_late_pass_supersedes_early_for_its_games(self):
         early = _pred(1, "early", [_row("2026_01_NE_SEA", "SEA", "NE", p=0.62), _row("2026_01_ATL_PIT", "PIT", "ATL", p=0.55)])
         late = _pred(1, "late", [_row("2026_01_ATL_PIT", "PIT", "ATL", p=0.40)], gen_offset_h=-3)
         page = S.render_site([early, late], {}, None, None, NOW)["index.html"]
-        assert page.count("<h3>ATL at PIT</h3>") == 1
-        assert "<strong>ATL</strong> to win" in page  # the late pass's pick
+        assert page.count("<h3>Falcons at Steelers</h3>") == 1
+        assert 'style="background:#A71930"></span>\n      <strong>ATL</strong>' in page  # ATL, in ATL's colour
 
     def test_season_page_with_backtest(self):
         bt = {"holdout_seasons": [2021, 2022], "n_folds": 40, "n_games": 500,
@@ -104,7 +107,8 @@ class TestPages:
               "calibration": {"model": [{"bin_low": 0.5, "bin_high": 0.6, "n": 50, "mean_predicted": 0.55, "observed": 0.52}],
                               "vegas": [{"bin_low": 0.5, "bin_high": 0.6, "n": 5, "mean_predicted": 0.55, "observed": 0.6}]}}
         page = S.render_site([], {}, None, bt, NOW)["season.html"]
-        assert "The model does not beat Vegas" in page and "Before going live: 2021, 2022" in page
+        assert "picked the winner 64.6% of the\n     time; Vegas picked 66.5%." in page and "The dry run: 2021 to 2022" in page
+        assert "Nothing graded yet" in page
         assert 'fill="none"' in page  # the n=5 bin is hollow
 
 

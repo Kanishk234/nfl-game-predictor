@@ -40,10 +40,26 @@ a:focus-visible, summary:focus-visible { outline: 2px solid var(--model); outlin
 .card { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 1rem 1.1rem 1.1rem; }
 .card header { display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; flex-wrap: wrap; }
 .card time { color: var(--muted); font-size: .9rem; }
-.pick { margin: .7rem 0 .5rem; font-size: 1.05rem; }
-.pick strong { font-size: 1.6rem; margin-right: .2rem; } .conf { font-size: 1.25rem; font-weight: 600; margin-left: .25rem; }
+.card { border-top: 4px solid var(--team); }
+.calls { margin: .8rem 0 .7rem; display: grid; gap: .35rem; }
+.call { display: grid; grid-template-columns: 7.2rem 1rem auto auto 1fr; align-items: center; gap: .5rem; }
+.call .who { color: var(--muted); font-size: .9rem; }
+.call .chip { width: .8rem; height: .8rem; border-radius: 50%; display: inline-block; }
+.call strong { font-family: "Bricolage Grotesque", system-ui, sans-serif; font-size: 1.35rem; }
+.call .conf { font-family: "Bricolage Grotesque", system-ui, sans-serif; font-weight: 600; font-size: 1.15rem; }
+.call.vegas strong { font-size: 1.1rem; } .call.vegas .conf { font-size: 1rem; font-weight: 500; color: var(--muted); }
+.call .towin, .call .none { color: var(--muted); font-size: .9rem; }
+.plain { margin: .5rem 0 .2rem; font-size: 1rem; }
+.scale { display: block; width: 100%; height: auto; margin-top: .2rem; }
+.scale-axis { stroke: var(--rule); stroke-width: 2; } .scale-zero { stroke: var(--muted); stroke-width: 1; }
+.scale-end, .scale-tick, .scale-label { font-size: 11px; fill: var(--muted); font-family: "Source Sans 3", system-ui, sans-serif; }
+.scale-label { fill: var(--ink); font-weight: 600; } .scale-label.vegas { fill: var(--vegas); }
+.scale-ours { fill: var(--team); stroke: var(--panel); stroke-width: 2; } .scale-vegas { fill: var(--vegas); stroke: var(--panel); stroke-width: 2; }
+.scale-actual { fill: var(--ink); opacity: .55; }
+.sub { font-size: 1.3rem; margin: 2rem 0 .5rem; } .empty { padding: 1rem 1.1rem; background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; }
+.more { margin: 1rem 0; } .more summary { cursor: pointer; color: var(--model); }
 .bar { display: block; width: 100%; height: auto; overflow: visible; }
-.bar-away { fill: var(--away); } .bar-home { fill: var(--model); } .bar-vegas { fill: var(--vegas); }
+.bar-vegas { fill: var(--vegas); }
 .bar-ends { display: flex; justify-content: space-between; margin: .3rem 0 .4rem; font-size: .9rem; color: var(--muted); }
 .spread { margin: .4rem 0 0; font-size: .95rem; }
 .final { margin: .8rem 0 0; padding-top: .7rem; border-top: 1px dashed var(--rule); }
@@ -83,126 +99,207 @@ footer { margin-top: 3rem; }
 <p class="lede">Every NFL game picked before kickoff, written down where it cannot be changed, graded against Vegas.</p></div>
 <nav class="weeks"><a href="index.html">This week</a><a href="weeks/2026_01.html" aria-current="page">Week 1</a><a href="season.html">Season</a></nav>
 <h2>Week 1, 2026</h2>
-<p class="how">One card per game: who we pick, how confident we are, and where the Vegas line sits. The bar splits the win
-   probability between the two teams; the small triangle under it is Vegas's number for comparison.</p>
+<p class="how">One card per game. <strong>Our pick</strong> is the model's call; <strong>Vegas favorite</strong> is the betting
+   market's, for comparison. The bar is the win probability, coloured for the team we pick; the small triangle under it is
+   where Vegas puts it. The line at the bottom is the point spread: how much each of us expects the winner to win by.</p>
 
-<div class="cards"><article class="card upcoming">
-  <header><h3>NE at SEA</h3><time datetime="2026-09-10T00:20:00+00:00">Wed Sep 9, 8:20 pm ET</time></header>
-  <p class="pick"><strong>SEA</strong> to win <span class="conf">67%</span></p>
-  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="NE 33%, SEA 67%, Vegas has SEA at 62%"><rect class="bar-away" x="0" y="0" width="99.0" height="14" rx="3"/><rect class="bar-home" x="101.0" y="0" width="199.0" height="14" rx="3"/><polygon class="bar-vegas" points="114.5,15 109.5,22 119.5,22"/></svg>
+<div class="cards"><article class="card upcoming" style="--team:#002244">
+  <header><h3>Patriots at Seahawks</h3><time datetime="2026-09-10T00:20:00+00:00">Wed Sep 9, 8:20 pm ET</time></header>
+  <div class="calls">
+    <div class="call ours"><span class="who">Our pick</span><span class="chip" style="background:#002244"></span>
+      <strong>SEA</strong><span class="conf">67%</span><span class="towin">to win</span></div>
+    <div class="call vegas"><span class="who">Vegas favorite</span><span class="chip" style="background:#002244"></span><strong>SEA</strong><span class="conf">62%</span><span class="towin">to win</span></div>
+  </div>
+  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="NE 33%, SEA 67%, Vegas has SEA at 62%"><rect x="0" y="0" width="99.0" height="14" rx="3" fill="var(--away)"/><rect x="101.0" y="0" width="199.0" height="14" rx="3" fill="#002244"/><polygon class="bar-vegas" points="114.5,15 109.5,22 119.5,22"/></svg>
   <p class="bar-ends"><span>NE 33%</span><span>SEA 67%</span></p>
-  <p class="spread">We say SEA by 5.1; the line is SEA by 3.0. Vegas has SEA at 62%.</p>
+  <p class="plain">SEA should win by about 5. Vegas has SEA by 3.</p>
+  <svg class="scale" viewBox="0 0 300 64" role="img" aria-label="our margin SEA by 5.1, Vegas line SEA by 3.0"><line class="scale-axis" x1="34" y1="36" x2="266" y2="36"/><line class="scale-zero" x1="150.0" y1="30" x2="150.0" y2="42"/><text class="scale-end" x="28" y="40" text-anchor="end">NE</text><text class="scale-end" x="272" y="40">SEA</text><text class="scale-tick" x="150.0" y="62" text-anchor="middle">even</text><circle class="scale-ours" cx="192.2" cy="36" r="5.5"/><text class="scale-label" x="192.2" y="24" text-anchor="middle">Us: SEA by 5.1</text><polygon class="scale-vegas" points="174.9,30 180.9,36 174.9,42 168.9,36"/><text class="scale-label vegas" x="174.9" y="56" text-anchor="middle">Vegas: SEA by 3.0</text></svg>
   
-</article><article class="card upcoming">
-  <header><h3>SF at LA</h3><time datetime="2026-09-11T00:35:00+00:00">Thu Sep 10, 8:35 pm ET</time></header>
-  <p class="pick"><strong>LA</strong> to win <span class="conf">57%</span></p>
-  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="SF 43%, LA 57%, Vegas has LA at 64%"><rect class="bar-away" x="0" y="0" width="130.3" height="14" rx="3"/><rect class="bar-home" x="132.3" y="0" width="167.7" height="14" rx="3"/><polygon class="bar-vegas" points="108.4,15 103.4,22 113.4,22"/></svg>
+</article><article class="card upcoming" style="--team:#003594">
+  <header><h3>49ers at Rams</h3><time datetime="2026-09-11T00:35:00+00:00">Thu Sep 10, 8:35 pm ET</time></header>
+  <div class="calls">
+    <div class="call ours"><span class="who">Our pick</span><span class="chip" style="background:#003594"></span>
+      <strong>LA</strong><span class="conf">57%</span><span class="towin">to win</span></div>
+    <div class="call vegas"><span class="who">Vegas favorite</span><span class="chip" style="background:#003594"></span><strong>LA</strong><span class="conf">64%</span><span class="towin">to win</span></div>
+  </div>
+  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="SF 43%, LA 57%, Vegas has LA at 64%"><rect x="0" y="0" width="130.3" height="14" rx="3" fill="var(--away)"/><rect x="132.3" y="0" width="167.7" height="14" rx="3" fill="#003594"/><polygon class="bar-vegas" points="108.4,15 103.4,22 113.4,22"/></svg>
   <p class="bar-ends"><span>SF 43%</span><span>LA 57%</span></p>
-  <p class="spread">We say LA by 2.4; the line is LA by 3.5. Vegas has LA at 64%.</p>
+  <p class="plain">LA should win by about 2. Vegas has LA by 3.5.</p>
+  <svg class="scale" viewBox="0 0 300 64" role="img" aria-label="our margin LA by 2.4, Vegas line LA by 3.5"><line class="scale-axis" x1="34" y1="36" x2="266" y2="36"/><line class="scale-zero" x1="150.0" y1="30" x2="150.0" y2="42"/><text class="scale-end" x="28" y="40" text-anchor="end">SF</text><text class="scale-end" x="272" y="40">LA</text><text class="scale-tick" x="150.0" y="62" text-anchor="middle">even</text><circle class="scale-ours" cx="170.1" cy="36" r="5.5"/><text class="scale-label" x="170.1" y="24" text-anchor="middle">Us: LA by 2.4</text><polygon class="scale-vegas" points="179.0,30 185.0,36 179.0,42 173.0,36"/><text class="scale-label vegas" x="179.0" y="56" text-anchor="middle">Vegas: LA by 3.5</text></svg>
   
-</article><article class="card upcoming">
-  <header><h3>ATL at PIT</h3><time datetime="2026-09-13T17:00:00+00:00">Sun Sep 13, 1:00 pm ET</time></header>
-  <p class="pick"><strong>PIT</strong> to win <span class="conf">56%</span></p>
-  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="ATL 44%, PIT 56%, Vegas has PIT at 62%"><rect class="bar-away" x="0" y="0" width="133.1" height="14" rx="3"/><rect class="bar-home" x="135.1" y="0" width="164.9" height="14" rx="3"/><polygon class="bar-vegas" points="113.3,15 108.3,22 118.3,22"/></svg>
+</article><article class="card upcoming" style="--team:#000000">
+  <header><h3>Falcons at Steelers</h3><time datetime="2026-09-13T17:00:00+00:00">Sun Sep 13, 1:00 pm ET</time></header>
+  <div class="calls">
+    <div class="call ours"><span class="who">Our pick</span><span class="chip" style="background:#000000"></span>
+      <strong>PIT</strong><span class="conf">56%</span><span class="towin">to win</span></div>
+    <div class="call vegas"><span class="who">Vegas favorite</span><span class="chip" style="background:#000000"></span><strong>PIT</strong><span class="conf">62%</span><span class="towin">to win</span></div>
+  </div>
+  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="ATL 44%, PIT 56%, Vegas has PIT at 62%"><rect x="0" y="0" width="133.1" height="14" rx="3" fill="var(--away)"/><rect x="135.1" y="0" width="164.9" height="14" rx="3" fill="#000000"/><polygon class="bar-vegas" points="113.3,15 108.3,22 118.3,22"/></svg>
   <p class="bar-ends"><span>ATL 44%</span><span>PIT 56%</span></p>
-  <p class="spread">We say PIT by 1.2; the line is PIT by 3.5. Vegas has PIT at 62%.</p>
+  <p class="plain">PIT should win by about 1. Vegas has PIT by 3.5.</p>
+  <svg class="scale" viewBox="0 0 300 64" role="img" aria-label="our margin PIT by 1.2, Vegas line PIT by 3.5"><line class="scale-axis" x1="34" y1="36" x2="266" y2="36"/><line class="scale-zero" x1="150.0" y1="30" x2="150.0" y2="42"/><text class="scale-end" x="28" y="40" text-anchor="end">ATL</text><text class="scale-end" x="272" y="40">PIT</text><text class="scale-tick" x="150.0" y="62" text-anchor="middle">even</text><circle class="scale-ours" cx="160.0" cy="36" r="5.5"/><text class="scale-label" x="160.0" y="24" text-anchor="middle">Us: PIT by 1.2</text><polygon class="scale-vegas" points="179.0,30 185.0,36 179.0,42 173.0,36"/><text class="scale-label vegas" x="179.0" y="56" text-anchor="middle">Vegas: PIT by 3.5</text></svg>
   
-</article><article class="card upcoming">
-  <header><h3>BAL at IND</h3><time datetime="2026-09-13T17:00:00+00:00">Sun Sep 13, 1:00 pm ET</time></header>
-  <p class="pick"><strong>IND</strong> to win <span class="conf">52%</span></p>
-  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="BAL 48%, IND 52%, Vegas has IND at 38%"><rect class="bar-away" x="0" y="0" width="143.1" height="14" rx="3"/><rect class="bar-home" x="145.1" y="0" width="154.9" height="14" rx="3"/><polygon class="bar-vegas" points="185.6,15 180.6,22 190.6,22"/></svg>
+</article><article class="card upcoming" style="--team:#002C5F">
+  <header><h3>Ravens at Colts</h3><time datetime="2026-09-13T17:00:00+00:00">Sun Sep 13, 1:00 pm ET</time></header>
+  <div class="calls">
+    <div class="call ours"><span class="who">Our pick</span><span class="chip" style="background:#002C5F"></span>
+      <strong>IND</strong><span class="conf">52%</span><span class="towin">to win</span></div>
+    <div class="call vegas"><span class="who">Vegas favorite</span><span class="chip" style="background:#241773"></span><strong>BAL</strong><span class="conf">62%</span><span class="towin">to win</span></div>
+  </div>
+  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="BAL 48%, IND 52%, Vegas has IND at 38%"><rect x="0" y="0" width="143.1" height="14" rx="3" fill="var(--away)"/><rect x="145.1" y="0" width="154.9" height="14" rx="3" fill="#002C5F"/><polygon class="bar-vegas" points="185.6,15 180.6,22 190.6,22"/></svg>
   <p class="bar-ends"><span>BAL 48%</span><span>IND 52%</span></p>
-  <p class="spread">We say IND by 0.8; the line is BAL by 3.5. Vegas has IND at 38%.</p>
+  <p class="plain">Too close to call, IND by a hair. Vegas has BAL by 3.5.</p>
+  <svg class="scale" viewBox="0 0 300 64" role="img" aria-label="our margin IND by 0.8, Vegas line BAL by 3.5"><line class="scale-axis" x1="34" y1="36" x2="266" y2="36"/><line class="scale-zero" x1="150.0" y1="30" x2="150.0" y2="42"/><text class="scale-end" x="28" y="40" text-anchor="end">BAL</text><text class="scale-end" x="272" y="40">IND</text><text class="scale-tick" x="150.0" y="62" text-anchor="middle">even</text><circle class="scale-ours" cx="156.4" cy="36" r="5.5"/><text class="scale-label" x="156.4" y="24" text-anchor="middle">Us: IND by 0.8</text><polygon class="scale-vegas" points="121.0,30 127.0,36 121.0,42 115.0,36"/><text class="scale-label vegas" x="121.0" y="56" text-anchor="middle">Vegas: BAL by 3.5</text></svg>
   
-</article><article class="card upcoming">
-  <header><h3>BUF at HOU</h3><time datetime="2026-09-13T17:00:00+00:00">Sun Sep 13, 1:00 pm ET</time></header>
-  <p class="pick"><strong>HOU</strong> to win <span class="conf">56%</span></p>
-  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="BUF 44%, HOU 56%, Vegas has HOU at 48%"><rect class="bar-away" x="0" y="0" width="132.9" height="14" rx="3"/><rect class="bar-home" x="134.9" y="0" width="165.1" height="14" rx="3"/><polygon class="bar-vegas" points="156.5,15 151.5,22 161.5,22"/></svg>
+</article><article class="card upcoming" style="--team:#03202F">
+  <header><h3>Bills at Texans</h3><time datetime="2026-09-13T17:00:00+00:00">Sun Sep 13, 1:00 pm ET</time></header>
+  <div class="calls">
+    <div class="call ours"><span class="who">Our pick</span><span class="chip" style="background:#03202F"></span>
+      <strong>HOU</strong><span class="conf">56%</span><span class="towin">to win</span></div>
+    <div class="call vegas"><span class="who">Vegas favorite</span><span class="chip" style="background:#00338D"></span><strong>BUF</strong><span class="conf">52%</span><span class="towin">to win</span></div>
+  </div>
+  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="BUF 44%, HOU 56%, Vegas has HOU at 48%"><rect x="0" y="0" width="132.9" height="14" rx="3" fill="var(--away)"/><rect x="134.9" y="0" width="165.1" height="14" rx="3" fill="#03202F"/><polygon class="bar-vegas" points="156.5,15 151.5,22 161.5,22"/></svg>
   <p class="bar-ends"><span>BUF 44%</span><span>HOU 56%</span></p>
-  <p class="spread">We say HOU by 1.7; the line is BUF by 1.5. Vegas has HOU at 48%.</p>
+  <p class="plain">HOU should win by about 2. Vegas has BUF by 1.5.</p>
+  <svg class="scale" viewBox="0 0 300 64" role="img" aria-label="our margin HOU by 1.7, Vegas line BUF by 1.5"><line class="scale-axis" x1="34" y1="36" x2="266" y2="36"/><line class="scale-zero" x1="150.0" y1="30" x2="150.0" y2="42"/><text class="scale-end" x="28" y="40" text-anchor="end">BUF</text><text class="scale-end" x="272" y="40">HOU</text><text class="scale-tick" x="150.0" y="62" text-anchor="middle">even</text><circle class="scale-ours" cx="164.1" cy="36" r="5.5"/><text class="scale-label" x="164.1" y="24" text-anchor="middle">Us: HOU by 1.7</text><polygon class="scale-vegas" points="137.6,30 143.6,36 137.6,42 131.6,36"/><text class="scale-label vegas" x="137.6" y="56" text-anchor="middle">Vegas: BUF by 1.5</text></svg>
   
-</article><article class="card upcoming">
-  <header><h3>CHI at CAR</h3><time datetime="2026-09-13T17:00:00+00:00">Sun Sep 13, 1:00 pm ET</time></header>
-  <p class="pick"><strong>CHI</strong> to win <span class="conf">57%</span></p>
-  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="CHI 57%, CAR 43%, Vegas has CAR at 40%"><rect class="bar-away" x="0" y="0" width="170.8" height="14" rx="3"/><rect class="bar-home" x="172.8" y="0" width="127.2" height="14" rx="3"/><polygon class="bar-vegas" points="179.0,15 174.0,22 184.0,22"/></svg>
+</article><article class="card upcoming" style="--team:#0B162A">
+  <header><h3>Bears at Panthers</h3><time datetime="2026-09-13T17:00:00+00:00">Sun Sep 13, 1:00 pm ET</time></header>
+  <div class="calls">
+    <div class="call ours"><span class="who">Our pick</span><span class="chip" style="background:#0B162A"></span>
+      <strong>CHI</strong><span class="conf">57%</span><span class="towin">to win</span></div>
+    <div class="call vegas"><span class="who">Vegas favorite</span><span class="chip" style="background:#0B162A"></span><strong>CHI</strong><span class="conf">60%</span><span class="towin">to win</span></div>
+  </div>
+  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="CHI 57%, CAR 43%, Vegas has CAR at 40%"><rect x="0" y="0" width="170.8" height="14" rx="3" fill="#0B162A"/><rect x="172.8" y="0" width="127.2" height="14" rx="3" fill="var(--away)"/><polygon class="bar-vegas" points="179.0,15 174.0,22 184.0,22"/></svg>
   <p class="bar-ends"><span>CHI 57%</span><span>CAR 43%</span></p>
-  <p class="spread">We say CHI by 2.3; the line is CHI by 3.0. Vegas has CAR at 40%.</p>
+  <p class="plain">CHI should win by about 2. Vegas has CHI by 3.</p>
+  <svg class="scale" viewBox="0 0 300 64" role="img" aria-label="our margin CHI by 2.3, Vegas line CHI by 3.0"><line class="scale-axis" x1="34" y1="36" x2="266" y2="36"/><line class="scale-zero" x1="150.0" y1="30" x2="150.0" y2="42"/><text class="scale-end" x="28" y="40" text-anchor="end">CHI</text><text class="scale-end" x="272" y="40">CAR</text><text class="scale-tick" x="150.0" y="62" text-anchor="middle">even</text><circle class="scale-ours" cx="130.6" cy="36" r="5.5"/><text class="scale-label" x="130.6" y="24" text-anchor="middle">Us: CHI by 2.3</text><polygon class="scale-vegas" points="125.1,30 131.1,36 125.1,42 119.1,36"/><text class="scale-label vegas" x="125.1" y="56" text-anchor="middle">Vegas: CHI by 3.0</text></svg>
   
-</article><article class="card upcoming">
-  <header><h3>CLE at JAX</h3><time datetime="2026-09-13T17:00:00+00:00">Sun Sep 13, 1:00 pm ET</time></header>
-  <p class="pick"><strong>JAX</strong> to win <span class="conf">75%</span></p>
-  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="CLE 25%, JAX 75%, Vegas has JAX at 79%"><rect class="bar-away" x="0" y="0" width="75.2" height="14" rx="3"/><rect class="bar-home" x="77.2" y="0" width="222.8" height="14" rx="3"/><polygon class="bar-vegas" points="64.1,15 59.1,22 69.1,22"/></svg>
+</article><article class="card upcoming" style="--team:#006778">
+  <header><h3>Browns at Jaguars</h3><time datetime="2026-09-13T17:00:00+00:00">Sun Sep 13, 1:00 pm ET</time></header>
+  <div class="calls">
+    <div class="call ours"><span class="who">Our pick</span><span class="chip" style="background:#006778"></span>
+      <strong>JAX</strong><span class="conf">75%</span><span class="towin">to win</span></div>
+    <div class="call vegas"><span class="who">Vegas favorite</span><span class="chip" style="background:#006778"></span><strong>JAX</strong><span class="conf">79%</span><span class="towin">to win</span></div>
+  </div>
+  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="CLE 25%, JAX 75%, Vegas has JAX at 79%"><rect x="0" y="0" width="75.2" height="14" rx="3" fill="var(--away)"/><rect x="77.2" y="0" width="222.8" height="14" rx="3" fill="#006778"/><polygon class="bar-vegas" points="64.1,15 59.1,22 69.1,22"/></svg>
   <p class="bar-ends"><span>CLE 25%</span><span>JAX 75%</span></p>
-  <p class="spread">We say JAX by 6.5; the line is JAX by 8.5. Vegas has JAX at 79%.</p>
+  <p class="plain">JAX should win by about 6. Vegas has JAX by 8.5.</p>
+  <svg class="scale" viewBox="0 0 300 64" role="img" aria-label="our margin JAX by 6.5, Vegas line JAX by 8.5"><line class="scale-axis" x1="34" y1="36" x2="266" y2="36"/><line class="scale-zero" x1="150.0" y1="30" x2="150.0" y2="42"/><text class="scale-end" x="28" y="40" text-anchor="end">CLE</text><text class="scale-end" x="272" y="40">JAX</text><text class="scale-tick" x="150.0" y="62" text-anchor="middle">even</text><circle class="scale-ours" cx="203.4" cy="36" r="5.5"/><text class="scale-label" x="203.4" y="24" text-anchor="middle">Us: JAX by 6.5</text><polygon class="scale-vegas" points="220.4,30 226.4,36 220.4,42 214.4,36"/><text class="scale-label vegas" x="220.4" y="56" text-anchor="middle">Vegas: JAX by 8.5</text></svg>
   
-</article><article class="card upcoming">
-  <header><h3>NO at DET</h3><time datetime="2026-09-13T17:00:00+00:00">Sun Sep 13, 1:00 pm ET</time></header>
-  <p class="pick"><strong>DET</strong> to win <span class="conf">75%</span></p>
-  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="NO 25%, DET 75%, Vegas has DET at 73%"><rect class="bar-away" x="0" y="0" width="74.7" height="14" rx="3"/><rect class="bar-home" x="76.7" y="0" width="223.3" height="14" rx="3"/><polygon class="bar-vegas" points="79.9,15 74.9,22 84.9,22"/></svg>
+</article><article class="card upcoming" style="--team:#0076B6">
+  <header><h3>Saints at Lions</h3><time datetime="2026-09-13T17:00:00+00:00">Sun Sep 13, 1:00 pm ET</time></header>
+  <div class="calls">
+    <div class="call ours"><span class="who">Our pick</span><span class="chip" style="background:#0076B6"></span>
+      <strong>DET</strong><span class="conf">75%</span><span class="towin">to win</span></div>
+    <div class="call vegas"><span class="who">Vegas favorite</span><span class="chip" style="background:#0076B6"></span><strong>DET</strong><span class="conf">73%</span><span class="towin">to win</span></div>
+  </div>
+  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="NO 25%, DET 75%, Vegas has DET at 73%"><rect x="0" y="0" width="74.7" height="14" rx="3" fill="var(--away)"/><rect x="76.7" y="0" width="223.3" height="14" rx="3" fill="#0076B6"/><polygon class="bar-vegas" points="79.9,15 74.9,22 84.9,22"/></svg>
   <p class="bar-ends"><span>NO 25%</span><span>DET 75%</span></p>
-  <p class="spread">We say DET by 8.2; the line is DET by 7.0. Vegas has DET at 73%.</p>
+  <p class="plain">DET should win by about 8. Vegas has DET by 7.</p>
+  <svg class="scale" viewBox="0 0 300 64" role="img" aria-label="our margin DET by 8.2, Vegas line DET by 7.0"><line class="scale-axis" x1="34" y1="36" x2="266" y2="36"/><line class="scale-zero" x1="150.0" y1="30" x2="150.0" y2="42"/><text class="scale-end" x="28" y="40" text-anchor="end">NO</text><text class="scale-end" x="272" y="40">DET</text><text class="scale-tick" x="150.0" y="62" text-anchor="middle">even</text><circle class="scale-ours" cx="217.6" cy="36" r="5.5"/><text class="scale-label" x="217.6" y="24" text-anchor="middle">Us: DET by 8.2</text><polygon class="scale-vegas" points="208.0,30 214.0,36 208.0,42 202.0,36"/><text class="scale-label vegas" x="208.0" y="56" text-anchor="middle">Vegas: DET by 7.0</text></svg>
   
-</article><article class="card upcoming">
-  <header><h3>NYJ at TEN</h3><time datetime="2026-09-13T17:00:00+00:00">Sun Sep 13, 1:00 pm ET</time></header>
-  <p class="pick"><strong>NYJ</strong> to win <span class="conf">61%</span></p>
-  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="NYJ 61%, TEN 39%, Vegas has TEN at 53%"><rect class="bar-away" x="0" y="0" width="183.5" height="14" rx="3"/><rect class="bar-home" x="185.5" y="0" width="114.5" height="14" rx="3"/><polygon class="bar-vegas" points="140.3,15 135.3,22 145.3,22"/></svg>
+</article><article class="card upcoming" style="--team:#003F2D">
+  <header><h3>Jets at Titans</h3><time datetime="2026-09-13T17:00:00+00:00">Sun Sep 13, 1:00 pm ET</time></header>
+  <div class="calls">
+    <div class="call ours"><span class="who">Our pick</span><span class="chip" style="background:#003F2D"></span>
+      <strong>NYJ</strong><span class="conf">61%</span><span class="towin">to win</span></div>
+    <div class="call vegas"><span class="who">Vegas favorite</span><span class="chip" style="background:#4495D2"></span><strong>TEN</strong><span class="conf">53%</span><span class="towin">to win</span></div>
+  </div>
+  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="NYJ 61%, TEN 39%, Vegas has TEN at 53%"><rect x="0" y="0" width="183.5" height="14" rx="3" fill="#003F2D"/><rect x="185.5" y="0" width="114.5" height="14" rx="3" fill="var(--away)"/><polygon class="bar-vegas" points="140.3,15 135.3,22 145.3,22"/></svg>
   <p class="bar-ends"><span>NYJ 61%</span><span>TEN 39%</span></p>
-  <p class="spread">We say NYJ by 3.5; the line is TEN by 1.5. Vegas has TEN at 53%.</p>
+  <p class="plain">NYJ should win by about 4. Vegas has TEN by 1.5.</p>
+  <svg class="scale" viewBox="0 0 300 64" role="img" aria-label="our margin NYJ by 3.5, Vegas line TEN by 1.5"><line class="scale-axis" x1="34" y1="36" x2="266" y2="36"/><line class="scale-zero" x1="150.0" y1="30" x2="150.0" y2="42"/><text class="scale-end" x="28" y="40" text-anchor="end">NYJ</text><text class="scale-end" x="272" y="40">TEN</text><text class="scale-tick" x="150.0" y="62" text-anchor="middle">even</text><circle class="scale-ours" cx="120.7" cy="36" r="5.5"/><text class="scale-label" x="120.7" y="24" text-anchor="middle">Us: NYJ by 3.5</text><polygon class="scale-vegas" points="162.4,30 168.4,36 162.4,42 156.4,36"/><text class="scale-label vegas" x="162.4" y="56" text-anchor="middle">Vegas: TEN by 1.5</text></svg>
   
-</article><article class="card upcoming">
-  <header><h3>TB at CIN</h3><time datetime="2026-09-13T17:00:00+00:00">Sun Sep 13, 1:00 pm ET</time></header>
-  <p class="pick"><strong>CIN</strong> to win <span class="conf">57%</span></p>
-  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="TB 43%, CIN 57%, Vegas has CIN at 64%"><rect class="bar-away" x="0" y="0" width="129.6" height="14" rx="3"/><rect class="bar-home" x="131.6" y="0" width="168.4" height="14" rx="3"/><polygon class="bar-vegas" points="107.7,15 102.7,22 112.7,22"/></svg>
+</article><article class="card upcoming" style="--team:#FB4F14">
+  <header><h3>Buccaneers at Bengals</h3><time datetime="2026-09-13T17:00:00+00:00">Sun Sep 13, 1:00 pm ET</time></header>
+  <div class="calls">
+    <div class="call ours"><span class="who">Our pick</span><span class="chip" style="background:#FB4F14"></span>
+      <strong>CIN</strong><span class="conf">57%</span><span class="towin">to win</span></div>
+    <div class="call vegas"><span class="who">Vegas favorite</span><span class="chip" style="background:#FB4F14"></span><strong>CIN</strong><span class="conf">64%</span><span class="towin">to win</span></div>
+  </div>
+  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="TB 43%, CIN 57%, Vegas has CIN at 64%"><rect x="0" y="0" width="129.6" height="14" rx="3" fill="var(--away)"/><rect x="131.6" y="0" width="168.4" height="14" rx="3" fill="#FB4F14"/><polygon class="bar-vegas" points="107.7,15 102.7,22 112.7,22"/></svg>
   <p class="bar-ends"><span>TB 43%</span><span>CIN 57%</span></p>
-  <p class="spread">We say CIN by 1.8; the line is CIN by 3.5. Vegas has CIN at 64%.</p>
+  <p class="plain">CIN should win by about 2. Vegas has CIN by 3.5.</p>
+  <svg class="scale" viewBox="0 0 300 64" role="img" aria-label="our margin CIN by 1.8, Vegas line CIN by 3.5"><line class="scale-axis" x1="34" y1="36" x2="266" y2="36"/><line class="scale-zero" x1="150.0" y1="30" x2="150.0" y2="42"/><text class="scale-end" x="28" y="40" text-anchor="end">TB</text><text class="scale-end" x="272" y="40">CIN</text><text class="scale-tick" x="150.0" y="62" text-anchor="middle">even</text><circle class="scale-ours" cx="164.8" cy="36" r="5.5"/><text class="scale-label" x="164.8" y="24" text-anchor="middle">Us: CIN by 1.8</text><polygon class="scale-vegas" points="179.0,30 185.0,36 179.0,42 173.0,36"/><text class="scale-label vegas" x="179.0" y="56" text-anchor="middle">Vegas: CIN by 3.5</text></svg>
   
-</article><article class="card upcoming">
-  <header><h3>ARI at LAC</h3><time datetime="2026-09-13T20:25:00+00:00">Sun Sep 13, 4:25 pm ET</time></header>
-  <p class="pick"><strong>LAC</strong> to win <span class="conf">73%</span></p>
-  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="ARI 27%, LAC 73%, Vegas has LAC at 81%"><rect class="bar-away" x="0" y="0" width="82.1" height="14" rx="3"/><rect class="bar-home" x="84.1" y="0" width="215.9" height="14" rx="3"/><polygon class="bar-vegas" points="57.7,15 52.7,22 62.7,22"/></svg>
+</article><article class="card upcoming" style="--team:#007BC7">
+  <header><h3>Cardinals at Chargers</h3><time datetime="2026-09-13T20:25:00+00:00">Sun Sep 13, 4:25 pm ET</time></header>
+  <div class="calls">
+    <div class="call ours"><span class="who">Our pick</span><span class="chip" style="background:#007BC7"></span>
+      <strong>LAC</strong><span class="conf">73%</span><span class="towin">to win</span></div>
+    <div class="call vegas"><span class="who">Vegas favorite</span><span class="chip" style="background:#007BC7"></span><strong>LAC</strong><span class="conf">81%</span><span class="towin">to win</span></div>
+  </div>
+  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="ARI 27%, LAC 73%, Vegas has LAC at 81%"><rect x="0" y="0" width="82.1" height="14" rx="3" fill="var(--away)"/><rect x="84.1" y="0" width="215.9" height="14" rx="3" fill="#007BC7"/><polygon class="bar-vegas" points="57.7,15 52.7,22 62.7,22"/></svg>
   <p class="bar-ends"><span>ARI 27%</span><span>LAC 73%</span></p>
-  <p class="spread">We say LAC by 6.8; the line is LAC by 9.5. Vegas has LAC at 81%.</p>
+  <p class="plain">LAC should win by about 7. Vegas has LAC by 9.5.</p>
+  <svg class="scale" viewBox="0 0 300 64" role="img" aria-label="our margin LAC by 6.8, Vegas line LAC by 9.5"><line class="scale-axis" x1="34" y1="36" x2="266" y2="36"/><line class="scale-zero" x1="150.0" y1="30" x2="150.0" y2="42"/><text class="scale-end" x="28" y="40" text-anchor="end">ARI</text><text class="scale-end" x="272" y="40">LAC</text><text class="scale-tick" x="150.0" y="62" text-anchor="middle">even</text><circle class="scale-ours" cx="206.5" cy="36" r="5.5"/><text class="scale-label" x="206.5" y="24" text-anchor="middle">Us: LAC by 6.8</text><polygon class="scale-vegas" points="228.7,30 234.7,36 228.7,42 222.7,36"/><text class="scale-label vegas" x="228.7" y="56" text-anchor="middle">Vegas: LAC by 9.5</text></svg>
   
-</article><article class="card upcoming">
-  <header><h3>GB at MIN</h3><time datetime="2026-09-13T20:25:00+00:00">Sun Sep 13, 4:25 pm ET</time></header>
-  <p class="pick"><strong>MIN</strong> to win <span class="conf">63%</span></p>
-  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="GB 37%, MIN 63%, Vegas has MIN at 52%"><rect class="bar-away" x="0" y="0" width="109.9" height="14" rx="3"/><rect class="bar-home" x="111.9" y="0" width="188.1" height="14" rx="3"/><polygon class="bar-vegas" points="143.5,15 138.5,22 148.5,22"/></svg>
+</article><article class="card upcoming" style="--team:#4F2683">
+  <header><h3>Packers at Vikings</h3><time datetime="2026-09-13T20:25:00+00:00">Sun Sep 13, 4:25 pm ET</time></header>
+  <div class="calls">
+    <div class="call ours"><span class="who">Our pick</span><span class="chip" style="background:#4F2683"></span>
+      <strong>MIN</strong><span class="conf">63%</span><span class="towin">to win</span></div>
+    <div class="call vegas"><span class="who">Vegas favorite</span><span class="chip" style="background:#4F2683"></span><strong>MIN</strong><span class="conf">52%</span><span class="towin">to win</span></div>
+  </div>
+  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="GB 37%, MIN 63%, Vegas has MIN at 52%"><rect x="0" y="0" width="109.9" height="14" rx="3" fill="var(--away)"/><rect x="111.9" y="0" width="188.1" height="14" rx="3" fill="#4F2683"/><polygon class="bar-vegas" points="143.5,15 138.5,22 148.5,22"/></svg>
   <p class="bar-ends"><span>GB 37%</span><span>MIN 63%</span></p>
-  <p class="spread">We say MIN by 3.6; the line is MIN by 1.5. Vegas has MIN at 52%.</p>
+  <p class="plain">MIN should win by about 4. Vegas has MIN by 1.5.</p>
+  <svg class="scale" viewBox="0 0 300 64" role="img" aria-label="our margin MIN by 3.6, Vegas line MIN by 1.5"><line class="scale-axis" x1="34" y1="36" x2="266" y2="36"/><line class="scale-zero" x1="150.0" y1="30" x2="150.0" y2="42"/><text class="scale-end" x="28" y="40" text-anchor="end">GB</text><text class="scale-end" x="272" y="40">MIN</text><text class="scale-tick" x="150.0" y="62" text-anchor="middle">even</text><circle class="scale-ours" cx="180.0" cy="36" r="5.5"/><text class="scale-label" x="180.0" y="24" text-anchor="middle">Us: MIN by 3.6</text><polygon class="scale-vegas" points="162.4,30 168.4,36 162.4,42 156.4,36"/><text class="scale-label vegas" x="162.4" y="56" text-anchor="middle">Vegas: MIN by 1.5</text></svg>
   
-</article><article class="card upcoming">
-  <header><h3>MIA at LV</h3><time datetime="2026-09-13T20:25:00+00:00">Sun Sep 13, 4:25 pm ET</time></header>
-  <p class="pick"><strong>LV</strong> to win <span class="conf">56%</span></p>
-  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="MIA 44%, LV 56%, Vegas has LV at 62%"><rect class="bar-away" x="0" y="0" width="130.5" height="14" rx="3"/><rect class="bar-home" x="132.5" y="0" width="167.5" height="14" rx="3"/><polygon class="bar-vegas" points="114.4,15 109.4,22 119.4,22"/></svg>
+</article><article class="card upcoming" style="--team:#000000">
+  <header><h3>Dolphins at Raiders</h3><time datetime="2026-09-13T20:25:00+00:00">Sun Sep 13, 4:25 pm ET</time></header>
+  <div class="calls">
+    <div class="call ours"><span class="who">Our pick</span><span class="chip" style="background:#000000"></span>
+      <strong>LV</strong><span class="conf">56%</span><span class="towin">to win</span></div>
+    <div class="call vegas"><span class="who">Vegas favorite</span><span class="chip" style="background:#000000"></span><strong>LV</strong><span class="conf">62%</span><span class="towin">to win</span></div>
+  </div>
+  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="MIA 44%, LV 56%, Vegas has LV at 62%"><rect x="0" y="0" width="130.5" height="14" rx="3" fill="var(--away)"/><rect x="132.5" y="0" width="167.5" height="14" rx="3" fill="#000000"/><polygon class="bar-vegas" points="114.4,15 109.4,22 119.4,22"/></svg>
   <p class="bar-ends"><span>MIA 44%</span><span>LV 56%</span></p>
-  <p class="spread">We say LV by 0.9; the line is LV by 3.5. Vegas has LV at 62%.</p>
+  <p class="plain">Too close to call, LV by a hair. Vegas has LV by 3.5.</p>
+  <svg class="scale" viewBox="0 0 300 64" role="img" aria-label="our margin LV by 0.9, Vegas line LV by 3.5"><line class="scale-axis" x1="34" y1="36" x2="266" y2="36"/><line class="scale-zero" x1="150.0" y1="30" x2="150.0" y2="42"/><text class="scale-end" x="28" y="40" text-anchor="end">MIA</text><text class="scale-end" x="272" y="40">LV</text><text class="scale-tick" x="150.0" y="62" text-anchor="middle">even</text><circle class="scale-ours" cx="157.5" cy="36" r="5.5"/><text class="scale-label" x="157.5" y="24" text-anchor="middle">Us: LV by 0.9</text><polygon class="scale-vegas" points="179.0,30 185.0,36 179.0,42 173.0,36"/><text class="scale-label vegas" x="179.0" y="56" text-anchor="middle">Vegas: LV by 3.5</text></svg>
   
-</article><article class="card upcoming">
-  <header><h3>WAS at PHI</h3><time datetime="2026-09-13T20:25:00+00:00">Sun Sep 13, 4:25 pm ET</time></header>
-  <p class="pick"><strong>PHI</strong> to win <span class="conf">62%</span></p>
-  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="WAS 38%, PHI 62%, Vegas has PHI at 67%"><rect class="bar-away" x="0" y="0" width="115.2" height="14" rx="3"/><rect class="bar-home" x="117.2" y="0" width="182.8" height="14" rx="3"/><polygon class="bar-vegas" points="98.9,15 93.9,22 103.9,22"/></svg>
+</article><article class="card upcoming" style="--team:#004C54">
+  <header><h3>Commanders at Eagles</h3><time datetime="2026-09-13T20:25:00+00:00">Sun Sep 13, 4:25 pm ET</time></header>
+  <div class="calls">
+    <div class="call ours"><span class="who">Our pick</span><span class="chip" style="background:#004C54"></span>
+      <strong>PHI</strong><span class="conf">62%</span><span class="towin">to win</span></div>
+    <div class="call vegas"><span class="who">Vegas favorite</span><span class="chip" style="background:#004C54"></span><strong>PHI</strong><span class="conf">67%</span><span class="towin">to win</span></div>
+  </div>
+  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="WAS 38%, PHI 62%, Vegas has PHI at 67%"><rect x="0" y="0" width="115.2" height="14" rx="3" fill="var(--away)"/><rect x="117.2" y="0" width="182.8" height="14" rx="3" fill="#004C54"/><polygon class="bar-vegas" points="98.9,15 93.9,22 103.9,22"/></svg>
   <p class="bar-ends"><span>WAS 38%</span><span>PHI 62%</span></p>
-  <p class="spread">We say PHI by 3.3; the line is PHI by 5.5. Vegas has PHI at 67%.</p>
+  <p class="plain">PHI should win by about 3. Vegas has PHI by 5.5.</p>
+  <svg class="scale" viewBox="0 0 300 64" role="img" aria-label="our margin PHI by 3.3, Vegas line PHI by 5.5"><line class="scale-axis" x1="34" y1="36" x2="266" y2="36"/><line class="scale-zero" x1="150.0" y1="30" x2="150.0" y2="42"/><text class="scale-end" x="28" y="40" text-anchor="end">WAS</text><text class="scale-end" x="272" y="40">PHI</text><text class="scale-tick" x="150.0" y="62" text-anchor="middle">even</text><circle class="scale-ours" cx="177.2" cy="36" r="5.5"/><text class="scale-label" x="177.2" y="24" text-anchor="middle">Us: PHI by 3.3</text><polygon class="scale-vegas" points="195.6,30 201.6,36 195.6,42 189.6,36"/><text class="scale-label vegas" x="195.6" y="56" text-anchor="middle">Vegas: PHI by 5.5</text></svg>
   
-</article><article class="card upcoming">
-  <header><h3>DAL at NYG</h3><time datetime="2026-09-14T00:20:00+00:00">Sun Sep 13, 8:20 pm ET</time></header>
-  <p class="pick"><strong>DAL</strong> to win <span class="conf">53%</span></p>
-  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="DAL 53%, NYG 47%, Vegas has NYG at 41%"><rect class="bar-away" x="0" y="0" width="157.5" height="14" rx="3"/><rect class="bar-home" x="159.5" y="0" width="140.5" height="14" rx="3"/><polygon class="bar-vegas" points="175.8,15 170.8,22 180.8,22"/></svg>
+</article><article class="card upcoming" style="--team:#002244">
+  <header><h3>Cowboys at Giants</h3><time datetime="2026-09-14T00:20:00+00:00">Sun Sep 13, 8:20 pm ET</time></header>
+  <div class="calls">
+    <div class="call ours"><span class="who">Our pick</span><span class="chip" style="background:#002244"></span>
+      <strong>DAL</strong><span class="conf">53%</span><span class="towin">to win</span></div>
+    <div class="call vegas"><span class="who">Vegas favorite</span><span class="chip" style="background:#002244"></span><strong>DAL</strong><span class="conf">59%</span><span class="towin">to win</span></div>
+  </div>
+  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="DAL 53%, NYG 47%, Vegas has NYG at 41%"><rect x="0" y="0" width="157.5" height="14" rx="3" fill="#002244"/><rect x="159.5" y="0" width="140.5" height="14" rx="3" fill="var(--away)"/><polygon class="bar-vegas" points="175.8,15 170.8,22 180.8,22"/></svg>
   <p class="bar-ends"><span>DAL 53%</span><span>NYG 47%</span></p>
-  <p class="spread">We say DAL by 0.8; the line is DAL by 3.0. Vegas has NYG at 41%.</p>
+  <p class="plain">Too close to call, DAL by a hair. Vegas has DAL by 3.</p>
+  <svg class="scale" viewBox="0 0 300 64" role="img" aria-label="our margin DAL by 0.8, Vegas line DAL by 3.0"><line class="scale-axis" x1="34" y1="36" x2="266" y2="36"/><line class="scale-zero" x1="150.0" y1="30" x2="150.0" y2="42"/><text class="scale-end" x="28" y="40" text-anchor="end">DAL</text><text class="scale-end" x="272" y="40">NYG</text><text class="scale-tick" x="150.0" y="62" text-anchor="middle">even</text><circle class="scale-ours" cx="143.8" cy="36" r="5.5"/><text class="scale-label" x="143.8" y="24" text-anchor="middle">Us: DAL by 0.8</text><polygon class="scale-vegas" points="125.1,30 131.1,36 125.1,42 119.1,36"/><text class="scale-label vegas" x="125.1" y="56" text-anchor="middle">Vegas: DAL by 3.0</text></svg>
   
-</article><article class="card upcoming">
-  <header><h3>DEN at KC</h3><time datetime="2026-09-15T00:15:00+00:00">Mon Sep 14, 8:15 pm ET</time></header>
-  <p class="pick"><strong>KC</strong> to win <span class="conf">53%</span></p>
-  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="DEN 47%, KC 53%, Vegas has KC at 57%"><rect class="bar-away" x="0" y="0" width="141.4" height="14" rx="3"/><rect class="bar-home" x="143.4" y="0" width="156.6" height="14" rx="3"/><polygon class="bar-vegas" points="129.9,15 124.9,22 134.9,22"/></svg>
+</article><article class="card upcoming" style="--team:#E31837">
+  <header><h3>Broncos at Chiefs</h3><time datetime="2026-09-15T00:15:00+00:00">Mon Sep 14, 8:15 pm ET</time></header>
+  <div class="calls">
+    <div class="call ours"><span class="who">Our pick</span><span class="chip" style="background:#E31837"></span>
+      <strong>KC</strong><span class="conf">53%</span><span class="towin">to win</span></div>
+    <div class="call vegas"><span class="who">Vegas favorite</span><span class="chip" style="background:#E31837"></span><strong>KC</strong><span class="conf">57%</span><span class="towin">to win</span></div>
+  </div>
+  <svg class="bar" viewBox="0 -1 300 24" role="img" aria-label="DEN 47%, KC 53%, Vegas has KC at 57%"><rect x="0" y="0" width="141.4" height="14" rx="3" fill="var(--away)"/><rect x="143.4" y="0" width="156.6" height="14" rx="3" fill="#E31837"/><polygon class="bar-vegas" points="129.9,15 124.9,22 134.9,22"/></svg>
   <p class="bar-ends"><span>DEN 47%</span><span>KC 53%</span></p>
-  <p class="spread">We say KC by 0.9; the line is KC by 2.5. Vegas has KC at 57%.</p>
+  <p class="plain">Too close to call, KC by a hair. Vegas has KC by 2.5.</p>
+  <svg class="scale" viewBox="0 0 300 64" role="img" aria-label="our margin KC by 0.9, Vegas line KC by 2.5"><line class="scale-axis" x1="34" y1="36" x2="266" y2="36"/><line class="scale-zero" x1="150.0" y1="30" x2="150.0" y2="42"/><text class="scale-end" x="28" y="40" text-anchor="end">DEN</text><text class="scale-end" x="272" y="40">KC</text><text class="scale-tick" x="150.0" y="62" text-anchor="middle">even</text><circle class="scale-ours" cx="157.4" cy="36" r="5.5"/><text class="scale-label" x="157.4" y="24" text-anchor="middle">Us: KC by 0.9</text><polygon class="scale-vegas" points="170.7,30 176.7,36 170.7,42 164.7,36"/><text class="scale-label vegas" x="170.7" y="56" text-anchor="middle">Vegas: KC by 2.5</text></svg>
   
 </article></div>
 <h3 class="table-title">All games this week</h3>
 <table class="ledger"><thead><tr><th>Kickoff</th><th>Game</th><th>Pick</th><th class="num">Win prob</th><th>Our spread</th><th>Line</th><th class="num">Vegas prob</th><th>Pass</th><th>Result</th></tr></thead><tbody><tr><td>Wed Sep 9, 8:20 pm ET</td><td>NE at SEA</td><td><strong>SEA</strong></td><td class="num">67%</td><td>SEA by 5.1</td><td>SEA by 3.0</td><td class="num">62%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Thu Sep 10, 8:35 pm ET</td><td>SF at LA</td><td><strong>LA</strong></td><td class="num">57%</td><td>LA by 2.4</td><td>LA by 3.5</td><td class="num">64%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 1:00 pm ET</td><td>ATL at PIT</td><td><strong>PIT</strong></td><td class="num">56%</td><td>PIT by 1.2</td><td>PIT by 3.5</td><td class="num">62%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 1:00 pm ET</td><td>BAL at IND</td><td><strong>IND</strong></td><td class="num">52%</td><td>IND by 0.8</td><td>BAL by 3.5</td><td class="num">38%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 1:00 pm ET</td><td>BUF at HOU</td><td><strong>HOU</strong></td><td class="num">56%</td><td>HOU by 1.7</td><td>BUF by 1.5</td><td class="num">48%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 1:00 pm ET</td><td>CHI at CAR</td><td><strong>CHI</strong></td><td class="num">57%</td><td>CHI by 2.3</td><td>CHI by 3.0</td><td class="num">40%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 1:00 pm ET</td><td>CLE at JAX</td><td><strong>JAX</strong></td><td class="num">75%</td><td>JAX by 6.5</td><td>JAX by 8.5</td><td class="num">79%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 1:00 pm ET</td><td>NO at DET</td><td><strong>DET</strong></td><td class="num">75%</td><td>DET by 8.2</td><td>DET by 7.0</td><td class="num">73%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 1:00 pm ET</td><td>NYJ at TEN</td><td><strong>NYJ</strong></td><td class="num">61%</td><td>NYJ by 3.5</td><td>TEN by 1.5</td><td class="num">53%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 1:00 pm ET</td><td>TB at CIN</td><td><strong>CIN</strong></td><td class="num">57%</td><td>CIN by 1.8</td><td>CIN by 3.5</td><td class="num">64%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 4:25 pm ET</td><td>ARI at LAC</td><td><strong>LAC</strong></td><td class="num">73%</td><td>LAC by 6.8</td><td>LAC by 9.5</td><td class="num">81%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 4:25 pm ET</td><td>GB at MIN</td><td><strong>MIN</strong></td><td class="num">63%</td><td>MIN by 3.6</td><td>MIN by 1.5</td><td class="num">52%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 4:25 pm ET</td><td>MIA at LV</td><td><strong>LV</strong></td><td class="num">56%</td><td>LV by 0.9</td><td>LV by 3.5</td><td class="num">62%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 4:25 pm ET</td><td>WAS at PHI</td><td><strong>PHI</strong></td><td class="num">62%</td><td>PHI by 3.3</td><td>PHI by 5.5</td><td class="num">67%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Sun Sep 13, 8:20 pm ET</td><td>DAL at NYG</td><td><strong>DAL</strong></td><td class="num">53%</td><td>DAL by 0.8</td><td>DAL by 3.0</td><td class="num">41%</td><td>early</td><td><span class="pending">—</span></td></tr><tr><td>Mon Sep 14, 8:15 pm ET</td><td>DEN at KC</td><td><strong>KC</strong></td><td class="num">53%</td><td>KC by 0.9</td><td>KC by 2.5</td><td class="num">57%</td><td>early</td><td><span class="pending">—</span></td></tr></tbody></table>
 <details class="prov"><summary>Where this came from</summary><ul><li><strong>Early pass</strong> published <time datetime="2026-09-08T17:20:19.312876+00:00">Tue Sep 8, 1:20 pm ET</time>, 31 hours before the first kickoff it covers, 16 games. Model trained on 6,499 games through 2025_22_SEA_NE, code <a href="https://github.com/Kanishk234/nfl-game-predictor/commit/5c78b84">5c78b84</a>. <a href="https://github.com/Kanishk234/nfl-game-predictor/blob/main/data/predictions/2026_01_early.json">prediction file</a>, <a href="https://github.com/Kanishk234/nfl-game-predictor/blob/main/data/odds/2026_01_early.json">odds snapshot</a>.</li></ul></details>
-<footer class="fine"><p>Built Tue Sep 8, 1:57 pm ET from the committed data. No JavaScript, no tracking.</p></footer>
+<footer class="fine"><p>Built Tue Sep 8, 2:08 pm ET from the committed data. No JavaScript, no tracking.</p></footer>
 </main>
 </body>
 </html>

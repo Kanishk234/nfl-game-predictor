@@ -34,6 +34,36 @@ ET = ZoneInfo("America/New_York")
 MODEL_LIGHT, VEGAS_LIGHT = "#1F6FB5", "#9A6A1F"
 MODEL_DARK, VEGAS_DARK = "#3F7FC6", "#B8891F"
 
+#: Primary colour, secondary colour, full name. From nflverse's teams table; fixed facts, so
+#: hardcoded rather than downloaded at build time.
+TEAM_COLORS = {
+    "ARI": ("#97233F", "#000000", "Arizona Cardinals"), "ATL": ("#A71930", "#000000", "Atlanta Falcons"),
+    "BAL": ("#241773", "#9E7C0C", "Baltimore Ravens"), "BUF": ("#00338D", "#C60C30", "Buffalo Bills"),
+    "CAR": ("#0085CA", "#000000", "Carolina Panthers"), "CHI": ("#0B162A", "#E64100", "Chicago Bears"),
+    "CIN": ("#FB4F14", "#000000", "Cincinnati Bengals"), "CLE": ("#FF3C00", "#311D00", "Cleveland Browns"),
+    "DAL": ("#002244", "#B0B7BC", "Dallas Cowboys"), "DEN": ("#002244", "#FB4F14", "Denver Broncos"),
+    "DET": ("#0076B6", "#B0B7BC", "Detroit Lions"), "GB": ("#203731", "#FFB612", "Green Bay Packers"),
+    "HOU": ("#03202F", "#A71930", "Houston Texans"), "IND": ("#002C5F", "#A5ACAF", "Indianapolis Colts"),
+    "JAX": ("#006778", "#000000", "Jacksonville Jaguars"), "KC": ("#E31837", "#FFB612", "Kansas City Chiefs"),
+    "LA": ("#003594", "#FFD100", "Los Angeles Rams"), "LAC": ("#007BC7", "#FFC20E", "Los Angeles Chargers"),
+    "LV": ("#000000", "#A5ACAF", "Las Vegas Raiders"), "MIA": ("#008E97", "#F58220", "Miami Dolphins"),
+    "MIN": ("#4F2683", "#FFC62F", "Minnesota Vikings"), "NE": ("#002244", "#C60C30", "New England Patriots"),
+    "NO": ("#D3BC8D", "#000000", "New Orleans Saints"), "NYG": ("#0B2265", "#A71930", "New York Giants"),
+    "NYJ": ("#003F2D", "#000000", "New York Jets"), "PHI": ("#004C54", "#A5ACAF", "Philadelphia Eagles"),
+    "PIT": ("#000000", "#FFB612", "Pittsburgh Steelers"), "SEA": ("#002244", "#69BE28", "Seattle Seahawks"),
+    "SF": ("#AA0000", "#B3995D", "San Francisco 49ers"), "TB": ("#A71930", "#322F2B", "Tampa Bay Buccaneers"),
+    "TEN": ("#4495D2", "#D50A0A", "Tennessee Titans"), "WAS": ("#5A1414", "#FFB612", "Washington Commanders"),
+}
+
+
+def team_color(abbr: str) -> str:
+    return TEAM_COLORS.get(abbr, ("#62707E",))[0]
+
+
+def team_nick(abbr: str) -> str:
+    """'Seahawks' from 'Seattle Seahawks'; falls back to the abbreviation."""
+    return TEAM_COLORS[abbr][2].rsplit(" ", 1)[-1] if abbr in TEAM_COLORS else abbr
+
 
 # ----------------------------------------------------------------------------- data loading
 
@@ -111,13 +141,17 @@ def p_pick(p: dict) -> float:
 # ----------------------------------------------------------------------------- svg pieces
 
 def prob_bar(p_home: float, p_vegas: float | None, home: str, away: str) -> str:
-    """Away share on the left, home share on the right, with a marker where Vegas puts it."""
+    """Away share on the left, home share on the right. The picked team's share is drawn in that
+    team's colour; the other side is neutral. A small triangle marks where Vegas puts it."""
     w, h = 300, 14
     split = w * (1 - p_home)
+    pick_home = p_home >= 0.5
+    away_fill = "var(--away)" if pick_home else team_color(away)
+    home_fill = team_color(home) if pick_home else "var(--away)"
     parts = [f'<svg class="bar" viewBox="0 -1 {w} {h + 10}" role="img" aria-label="{e(away)} {pct(1 - p_home)}, {e(home)} {pct(p_home)}'
              + (f", Vegas has {e(home)} at {pct(p_vegas)}" if p_vegas is not None else "") + '">',
-             f'<rect class="bar-away" x="0" y="0" width="{split:.1f}" height="{h}" rx="3"/>',
-             f'<rect class="bar-home" x="{split + 2:.1f}" y="0" width="{w - split - 2:.1f}" height="{h}" rx="3"/>']
+             f'<rect x="0" y="0" width="{split:.1f}" height="{h}" rx="3" fill="{away_fill}"/>',
+             f'<rect x="{split + 2:.1f}" y="0" width="{w - split - 2:.1f}" height="{h}" rx="3" fill="{home_fill}"/>']
     if p_vegas is not None:
         vx = w * (1 - p_vegas)
         parts.append(f'<polygon class="bar-vegas" points="{vx:.1f},{h + 1} {vx - 5:.1f},{h + 8} {vx + 5:.1f},{h + 8}"/>')
@@ -179,31 +213,88 @@ def legend_two() -> str:
 
 # ----------------------------------------------------------------------------- game cards
 
+def spread_scale(ours: float, line: float | None, actual: float | None, home: str, away: str) -> str:
+    """A labelled number line: away side on the left, home side on the right, 'even' in the
+    middle. Our margin is a round marker labelled above the axis, the Vegas line a diamond
+    labelled below, so the two can never overprint. The final margin, once known, is a bar."""
+    w, h, pad, half = 300, 64, 34, 14.0
+    axis_y = 36
+    def x(v: float) -> float:
+        v = max(-half, min(half, v))
+        return pad + (v + half) / (2 * half) * (w - 2 * pad)
+    def words(v: float) -> str:
+        return by_team(v, home, away)
+    parts = [f'<svg class="scale" viewBox="0 0 {w} {h}" role="img" aria-label="our margin {e(words(ours))}'
+             + (f', Vegas line {e(words(line))}' if line is not None else "") + (f', final {e(words(actual))}' if actual is not None else "") + '">',
+             f'<line class="scale-axis" x1="{pad}" y1="{axis_y}" x2="{w - pad}" y2="{axis_y}"/>',
+             f'<line class="scale-zero" x1="{x(0):.1f}" y1="{axis_y - 6}" x2="{x(0):.1f}" y2="{axis_y + 6}"/>',
+             f'<text class="scale-end" x="{pad - 6}" y="{axis_y + 4}" text-anchor="end">{e(away)}</text>',
+             f'<text class="scale-end" x="{w - pad + 6}" y="{axis_y + 4}">{e(home)}</text>',
+             f'<text class="scale-tick" x="{x(0):.1f}" y="{h - 2}" text-anchor="middle">even</text>']
+    if actual is not None:
+        parts.append(f'<rect class="scale-actual" x="{x(actual) - 1.5:.1f}" y="{axis_y - 9}" width="3" height="18"/>')
+    ox = x(ours)
+    parts.append(f'<circle class="scale-ours" cx="{ox:.1f}" cy="{axis_y}" r="5.5"/>')
+    parts.append(f'<text class="scale-label" x="{ox:.1f}" y="{axis_y - 12}" text-anchor="middle">Us: {e(words(ours))}</text>')
+    if line is not None:
+        vx = x(line)
+        parts.append(f'<polygon class="scale-vegas" points="{vx:.1f},{axis_y - 6} {vx + 6:.1f},{axis_y} {vx:.1f},{axis_y + 6} {vx - 6:.1f},{axis_y}"/>')
+        parts.append(f'<text class="scale-label vegas" x="{vx:.1f}" y="{axis_y + 20}" text-anchor="middle">Vegas: {e(words(line))}</text>')
+    parts.append("</svg>")
+    return "".join(parts)
+
+
+def plain_call(p: dict) -> str:
+    """The prediction in one sentence each for us and for Vegas."""
+    home, away = p["home_team"], p["away_team"]
+    m = abs(p["pred_margin"])
+    fav = home if p["pred_margin"] >= 0 else away
+    ours = f"Too close to call, {fav} by a hair." if m < 1 else f"{fav} should win by about {round(m)}."
+    v = p.get("vegas")
+    if not v:
+        return ours + " No Vegas line yet."
+    line = v["spread_line"]
+    vegas = "Vegas calls it even." if abs(line) < 0.05 else f"Vegas has {home if line > 0 else away} by {abs(line):g}."
+    return f"{ours} {vegas}"
+
+
 def game_card(pass_name: str, p: dict, g: dict | None) -> str:
     home, away = p["home_team"], p["away_team"]
     v = p.get("vegas")
     p_home = p["p_home"]
-    vegas_line = f'the line is {e(by_team(v["spread_line"], home, away))}' if v else "no line yet"
-    vegas_prob = f' Vegas has {e(home)} at {pct(v["p_home_moneyline"])}.' if v else ""
+    pick = p["pick"]
+    if v and v["p_home_moneyline"] is not None:
+        v_fav = home if v["p_home_moneyline"] >= 0.5 else away
+        v_conf = v["p_home_moneyline"] if v_fav == home else 1 - v["p_home_moneyline"]
+        vegas_row = (f'<div class="call vegas"><span class="who">Vegas favorite</span>'
+                     f'<span class="chip" style="background:{team_color(v_fav)}"></span><strong>{e(v_fav)}</strong>'
+                     f'<span class="conf">{pct(v_conf)}</span><span class="towin">to win</span></div>')
+    else:
+        vegas_row = '<div class="call vegas"><span class="who">Vegas favorite</span><span class="none">no line yet</span></div>'
 
     if g:
         ok = g["model"]["correct"]
-        verdict = "tie" if ok is None else ('<span class="hit">✓ right</span>' if ok else '<span class="miss">✗ wrong</span>')
-        ats_txt = {"win": "covered the spread", "loss": "did not cover", "push": "push against the spread"}.get(g["model"].get("ats"), "")
-        winner = e(g["winner"]) if g["winner"] != "tie" else "tie"
-        outcome = (f'<p class="final"><span class="score">{e(away)} {g["away_score"]}, {e(home)} {g["home_score"]}</span> '
-                   f'<span class="verdict">{winner} won, {verdict}</span>'
-                   + (f'<br><small>{e(ats_txt)}</small>' if ats_txt else "") + '</p>')
-        status = "played"
+        verdict = "a tie" if ok is None else ('<span class="hit">✓ we were right</span>' if ok else '<span class="miss">✗ we were wrong</span>')
+        ats_txt = {"win": "and our side covered the spread", "loss": "but our side did not cover the spread",
+                   "push": "and the spread was a push"}.get(g["model"].get("ats"), "")
+        winner = f'{e(g["winner"])} won' if g["winner"] != "tie" else "it was a tie"
+        outcome = (f'<p class="final"><span class="score">{e(away)} {g["away_score"]}, {e(home)} {g["home_score"]}</span><br>'
+                   f'{winner}, {verdict}' + (f' {e(ats_txt)}' if ats_txt else "") + '.</p>')
+        actual, status = g["margin"], "played"
     else:
-        outcome, status = "", "upcoming"
+        outcome, actual, status = "", None, "upcoming"
 
-    return f'''<article class="card {status}">
-  <header><h3>{e(away)} at {e(home)}</h3><time datetime="{e(p["kickoff_utc"])}">{e(fmt_et(p["kickoff_utc"]))}</time></header>
-  <p class="pick"><strong>{e(p["pick"])}</strong> to win <span class="conf">{pct(p_pick(p))}</span></p>
+    return f'''<article class="card {status}" style="--team:{team_color(pick)}">
+  <header><h3>{e(team_nick(away))} at {e(team_nick(home))}</h3><time datetime="{e(p["kickoff_utc"])}">{e(fmt_et(p["kickoff_utc"]))}</time></header>
+  <div class="calls">
+    <div class="call ours"><span class="who">Our pick</span><span class="chip" style="background:{team_color(pick)}"></span>
+      <strong>{e(pick)}</strong><span class="conf">{pct(p_pick(p))}</span><span class="towin">to win</span></div>
+    {vegas_row}
+  </div>
   {prob_bar(p_home, v["p_home_moneyline"] if v else None, home, away)}
   <p class="bar-ends"><span>{e(away)} {pct(1 - p_home)}</span><span>{e(home)} {pct(p_home)}</span></p>
-  <p class="spread">We say {e(by_team(p["pred_margin"], home, away))}; {vegas_line}.{vegas_prob}</p>
+  <p class="plain">{e(plain_call(p))}</p>
+  {spread_scale(p["pred_margin"], v["spread_line"] if v else None, actual, home, away)}
   {outcome}
 </article>'''
 
@@ -271,8 +362,9 @@ def week_body(season: int, week: int, passes: list[dict], result: dict | None) -
     status = "" if not result else (", complete" if result["complete"] else f', {result["n_graded"]} of {result["n_games"]} played')
     cards = "".join(game_card(pn, p, graded.get(p["game_id"])) for pn, p in rows)
     return f'''<h2>Week {week}, {season}{e(status)}</h2>
-<p class="how">One card per game: who we pick, how confident we are, and where the Vegas line sits. The bar splits the win
-   probability between the two teams; the small triangle under it is Vegas's number for comparison.</p>
+<p class="how">One card per game. <strong>Our pick</strong> is the model's call; <strong>Vegas favorite</strong> is the betting
+   market's, for comparison. The bar is the win probability, coloured for the team we pick; the small triangle under it is
+   where Vegas puts it. The line at the bottom is the point spread: how much each of us expects the winner to win by.</p>
 {summary_strip(result["summary"] if result else None, "Official predictions only: the latest pass published before each game's kickoff.")}
 <div class="cards">{cards}</div>
 <h3 class="table-title">All games this week</h3>
@@ -281,20 +373,18 @@ def week_body(season: int, week: int, passes: list[dict], result: dict | None) -
 
 
 def season_body(history: dict | None, season: int | None, backtest: dict | None) -> str:
-    parts = []
+    parts = ['<h2>Track record</h2>',
+             '<p class="how">How the picks are doing. Updated every Tuesday, after the previous week\'s games are graded.</p>']
     s = (history or {}).get("seasons", {}).get(str(season)) if season else None
     if s and s["summary"].get("n"):
         weeks = [w for w in s["weeks"] if w["summary"].get("n")]
         series = {"Model": [(w["week"], w["summary"]["model"]["accuracy"]) for w in weeks],
                   "Vegas": [(w["week"], w["summary"]["vegas"]["accuracy"]) for w in weeks if "vegas" in w["summary"]]}
         chart = line_chart(series, "picks right", 0.3, 1.0, ref=0.5) if len(weeks) >= 2 else ""
-        cal = calibration_chart(s["calibration"]) if s["summary"]["n"] >= 30 else ""
-        parts.append(f'<h2>{season} season to date</h2>' + summary_strip(s["summary"], "Every graded game so far, official predictions only.")
-                     + (f'<figure><figcaption>Share of picks right, by week.</figcaption>{chart}{legend_two()}</figure>' if chart else "")
-                     + (f'<figure><figcaption>Calibration so far. Hollow points are bins with fewer than 10 games.</figcaption>{cal}{legend_two()}</figure>' if cal
-                        else '<p class="fine">Charts appear once there are enough graded weeks to mean something.</p>'))
+        parts.append(f'<h3 class="sub">{season} season so far</h3>' + summary_strip(s["summary"], "Every graded game, official predictions only.")
+                     + (f'<figure><figcaption>Share of picks that were right, week by week. The dashed line is a coin flip.</figcaption>{chart}{legend_two()}</figure>' if chart else ""))
     else:
-        parts.append(f'<h2>{season or ""} season</h2><p>No games graded yet. Results are recorded the Tuesday after each week.</p>')
+        parts.append('<p class="empty">Nothing graded yet. The first results land the Tuesday after Week 1. Until then, the dry run below is the best guide to what to expect.</p>')
     if backtest:
         parts.append(backtest_section(backtest))
     parts.append(about_section())
@@ -303,40 +393,40 @@ def season_body(history: dict | None, season: int | None, backtest: dict | None)
 
 def backtest_section(bt: dict) -> str:
     o = bt["overall"]; m, v = o["model"], o["vegas"]
-    seasons = ", ".join(str(s) for s in bt["holdout_seasons"])
+    first, last = bt["holdout_seasons"][0], bt["holdout_seasons"][-1]
     rows = "".join(
         f'<tr><td>{e(s)}</td><td class="num">{pct(x["model"]["win"]["accuracy"], 1)}</td><td class="num">{pct(x["vegas"]["win"]["accuracy"], 1)}</td>'
-        f'<td class="num">{x["model"]["spread"]["mae"]:.2f}</td><td class="num">{x["vegas"]["spread"]["mae"]:.2f}</td></tr>'
+        f'<td class="num">{x["model"]["spread"]["mae"]:.1f}</td><td class="num">{x["vegas"]["spread"]["mae"]:.1f}</td></tr>'
         for s, x in bt["by_season"].items())
     return f'''<section id="backtest">
-  <h2>Before going live: {seasons}</h2>
-  <p>The same model, replayed week by week over five seasons it never saw during tuning: {bt["n_folds"]} retrains,
-     {bt["n_games"]:,} games, each fit using only games that had finished before that week's first kickoff.
-     Vegas is the closing line on the same games. <strong>The model does not beat Vegas.</strong> It trails by
-     {(v["win"]["accuracy"] - m["win"]["accuracy"]) * 100:.1f} points of pick accuracy and {m["spread"]["mae"] - v["spread"]["mae"]:.2f} points of
-     spread error. That is the bar the live season is measured against.</p>
-  <div class="two-col">
-  <table class="compact"><thead><tr><th>Season</th><th class="num">Our picks right</th><th class="num">Vegas</th><th class="num">Our spread error</th><th class="num">Vegas</th></tr></thead>
+  <h3 class="sub">The dry run: {first} to {last}</h3>
+  <p>Before going live, we ran the model over the last five seasons as if they were happening week by week, never letting it
+     see a game before it was played. Over {bt["n_games"]:,} games it <strong>picked the winner {pct(m["win"]["accuracy"], 1)} of the
+     time; Vegas picked {pct(v["win"]["accuracy"], 1)}.</strong> Its spreads missed the final margin by {m["spread"]["mae"]:.1f} points per
+     game on average; the Vegas line missed by {v["spread"]["mae"]:.1f}. A solid model that has not beaten the market. That is
+     the bar for this season.</p>
+  <details class="more"><summary>Season by season, and how honest the percentages are</summary>
+  <table class="compact"><thead><tr><th>Season</th><th class="num">Our picks right</th><th class="num">Vegas</th><th class="num">Our spread miss</th><th class="num">Vegas</th></tr></thead>
   <tbody>{rows}<tr class="total"><td>All</td><td class="num">{pct(m["win"]["accuracy"], 1)}</td><td class="num">{pct(v["win"]["accuracy"], 1)}</td>
-  <td class="num">{m["spread"]["mae"]:.2f}</td><td class="num">{v["spread"]["mae"]:.2f}</td></tr></tbody></table>
-  <figure><figcaption>Calibration on those {bt["n_games"]:,} games. On the diagonal, a stated probability matched how often it came true.</figcaption>
+  <td class="num">{m["spread"]["mae"]:.1f}</td><td class="num">{v["spread"]["mae"]:.1f}</td></tr></tbody></table>
+  <figure><figcaption>When we said a team had a 70% chance, did it win about 70% of the time? Each dot is a group of games;
+     dots on the dashed line mean the percentages were honest.</figcaption>
   {calibration_chart(bt["calibration"])}{legend_two()}</figure>
-  </div>
-  <p class="fine"><a href="{REPO_URL}/blob/main/data/backtest.json">backtest.json</a>, regenerated by every retrain, and the
-     <a href="{REPO_URL}/blob/main/docs/reports/phase2_model_backtest.md">full report</a> including everything tried and rejected.</p>
+  <p class="fine"><a href="{REPO_URL}/blob/main/data/backtest.json">The numbers</a> and
+     <a href="{REPO_URL}/blob/main/docs/reports/phase2_model_backtest.md">the full report</a>, including everything tried and rejected.</p>
+  </details>
 </section>'''
 
 
 def about_section() -> str:
     return f'''<section id="about">
-  <h2>How to check any of this</h2>
-  <p>Every prediction is a JSON file committed to a public repository before kickoff, stamped with the time it was
-     generated and the exact code and data that produced it. Vegas lines are fetched and frozen in the same instant,
-     into a second file beside it. After the games, a grader reads those files and writes the results; it cannot edit
-     a prediction. If a prediction were ever wrong or late, the fix is a new file with a new timestamp; the old one stays.</p>
-  <p>The model is a logistic regression and a ridge regression on 30 features: Elo, rolling EPA form from play-by-play,
-     quarterback ratings and draft position, rest, and schedule facts. It retrains before every pass on every completed
-     game since 2002. Nothing it uses is knowable only after a kickoff, and a test suite asserts that on every commit.</p>
+  <h3 class="sub">Why you can trust the record</h3>
+  <p>Every pick is saved to a public repository <em>before</em> kickoff, with the time it was made and the exact version
+     of the model that made it. The Vegas line is saved at the same moment, beside it. After the games, the results are
+     written by a separate step that can read the picks but cannot change them. A wrong pick stays wrong on the record.</p>
+  <p>The model uses only things known before a game starts: team strength ratings, recent form from play-by-play data,
+     the starting quarterbacks, rest days, and the schedule. It re-learns from every finished game since 2002 before each
+     set of picks.</p>
   <p><a href="{REPO_URL}">Repository</a>, <a href="{REPO_URL}/tree/main/data/predictions">predictions</a>,
      <a href="{REPO_URL}/tree/main/data/odds">odds snapshots</a>, <a href="{REPO_URL}/tree/main/data/results">results</a>,
      <a href="{REPO_URL}/actions">the scheduled jobs</a>.</p>
@@ -376,10 +466,26 @@ a:focus-visible, summary:focus-visible {{ outline: 2px solid var(--model); outli
 .card {{ background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 1rem 1.1rem 1.1rem; }}
 .card header {{ display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; flex-wrap: wrap; }}
 .card time {{ color: var(--muted); font-size: .9rem; }}
-.pick {{ margin: .7rem 0 .5rem; font-size: 1.05rem; }}
-.pick strong {{ font-size: 1.6rem; margin-right: .2rem; }} .conf {{ font-size: 1.25rem; font-weight: 600; margin-left: .25rem; }}
+.card {{ border-top: 4px solid var(--team); }}
+.calls {{ margin: .8rem 0 .7rem; display: grid; gap: .35rem; }}
+.call {{ display: grid; grid-template-columns: 7.2rem 1rem auto auto 1fr; align-items: center; gap: .5rem; }}
+.call .who {{ color: var(--muted); font-size: .9rem; }}
+.call .chip {{ width: .8rem; height: .8rem; border-radius: 50%; display: inline-block; }}
+.call strong {{ font-family: "Bricolage Grotesque", system-ui, sans-serif; font-size: 1.35rem; }}
+.call .conf {{ font-family: "Bricolage Grotesque", system-ui, sans-serif; font-weight: 600; font-size: 1.15rem; }}
+.call.vegas strong {{ font-size: 1.1rem; }} .call.vegas .conf {{ font-size: 1rem; font-weight: 500; color: var(--muted); }}
+.call .towin, .call .none {{ color: var(--muted); font-size: .9rem; }}
+.plain {{ margin: .5rem 0 .2rem; font-size: 1rem; }}
+.scale {{ display: block; width: 100%; height: auto; margin-top: .2rem; }}
+.scale-axis {{ stroke: var(--rule); stroke-width: 2; }} .scale-zero {{ stroke: var(--muted); stroke-width: 1; }}
+.scale-end, .scale-tick, .scale-label {{ font-size: 11px; fill: var(--muted); font-family: "Source Sans 3", system-ui, sans-serif; }}
+.scale-label {{ fill: var(--ink); font-weight: 600; }} .scale-label.vegas {{ fill: var(--vegas); }}
+.scale-ours {{ fill: var(--team); stroke: var(--panel); stroke-width: 2; }} .scale-vegas {{ fill: var(--vegas); stroke: var(--panel); stroke-width: 2; }}
+.scale-actual {{ fill: var(--ink); opacity: .55; }}
+.sub {{ font-size: 1.3rem; margin: 2rem 0 .5rem; }} .empty {{ padding: 1rem 1.1rem; background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; }}
+.more {{ margin: 1rem 0; }} .more summary {{ cursor: pointer; color: var(--model); }}
 .bar {{ display: block; width: 100%; height: auto; overflow: visible; }}
-.bar-away {{ fill: var(--away); }} .bar-home {{ fill: var(--model); }} .bar-vegas {{ fill: var(--vegas); }}
+.bar-vegas {{ fill: var(--vegas); }}
 .bar-ends {{ display: flex; justify-content: space-between; margin: .3rem 0 .4rem; font-size: .9rem; color: var(--muted); }}
 .spread {{ margin: .4rem 0 0; font-size: .95rem; }}
 .final {{ margin: .8rem 0 0; padding-top: .7rem; border-top: 1px dashed var(--rule); }}
