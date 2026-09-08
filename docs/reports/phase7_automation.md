@@ -32,12 +32,22 @@ reasoning live in each workflow's header.
 
 ## Design decisions
 
-**The bot commits data; that is the only thing that pushes to `main` besides you.** Unattended
-pre-kickoff publishing is impossible otherwise. The commit step is narrow: it stages only
-`data/predictions`, `data/odds` (predict) or `data/results` (grade), exits cleanly when there is
-nothing new, and commits as `github-actions[bot]` with a message derived from the file it just
-wrote (`publish 2026_01_late prediction`). It rebases on `main` before pushing, on a
-full-history checkout, so a race with a human push does not fail the run.
+**The bot commits data, and only data.** `tools/publish.sh` stages `data/predictions` +
+`data/odds` (predict) or `data/results` (grade), commits as `github-actions[bot]` with a message
+derived from the file just written, rebases with `--autostash`, and pushes with three retries.
+
+**The site is never committed.** It is gitignored build output; the deploy job rebuilds it from
+whatever data is on `main` and uploads it straight to Pages. This was a correctness fix, not
+tidiness: committing 24 generated HTML files that change on every run meant any concurrent job
+produced a rebase conflict in files nobody merges, and the job died *after* making the prediction
+but before pushing it. On an ephemeral runner that prediction is gone, and a prediction cannot be
+back-dated. Data files are new files with unique names, so a rebase between jobs is
+conflict-free.
+
+The script is defensive about the specific ways a shell step strands committed work: it stages
+only paths that exist (`git add` on a missing directory is fatal under `set -e`), autostashes so
+an unrelated dirty file cannot block the rebase, and pushes an unpushed commit from a previous
+attempt rather than reporting "nothing to do".
 
 **Deploy is called, not triggered.** Pushes made with the built-in `GITHUB_TOKEN` never fire
 other workflows, so a data commit would not have triggered `deploy-site`'s `push` trigger.

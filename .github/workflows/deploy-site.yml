@@ -13,7 +13,8 @@ on:
   push:
     branches: [main]
     paths:
-      - "site/**"
+      - "data/**"
+      - "src/nfl_predict/site_build.py"
       - ".github/workflows/deploy-site.yml"
   workflow_dispatch:
   workflow_call:
@@ -37,6 +38,14 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e .
+      # The site is never committed: it is rebuilt here from the data on main and uploaded
+      # straight to Pages, so a generated file can never take part in a merge.
+      - run: python -m nfl_predict.site_build
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -306,3 +306,33 @@ ignore red.
 
 4 new tests pinning the distinction, including one proving a recovering server still yields the
 season. Full suite (including network): 136 passed.
+
+## 2026-09-08 — Publishing made race-proof; the site is no longer committed
+
+Audited what remains for autonomy and found the worst failure mode yet in the commit step.
+
+**Measured first:** a cold `build_frame()` on a fresh runner takes **38s** (nflreadpy caches in
+memory only, so every run downloads). Well inside the 30-minute job timeout — that risk is clear.
+
+**The bug.** Each job committed `site/` — 24 generated HTML files — *before* rebasing. Any
+concurrent job that had landed produced a rebase conflict in generated files, and the job died
+after making the prediction but before pushing it. On an ephemeral runner that prediction is
+gone, and a prediction cannot be back-dated, so the week gets a permanent hole.
+
+**The fix is architectural, and CLAUDE.md already called it:** "the site is a generated view over
+those files and can always be rebuilt from them from scratch." So `site/` is now gitignored build
+output. The deploy job installs, runs `site_build` against the data on `main`, and uploads
+straight to Pages. Generated files can no longer take part in a merge at all.
+
+`tools/publish.sh` now owns publishing for all three workflows. Building it surfaced three more
+ways a shell step can strand committed work, each fixed and then verified against a real
+three-repo git race:
+
+- `git add data/odds` when that directory does not exist is **fatal** under `set -e` — after the
+  prediction was already made. Now stages only paths that exist.
+- `git pull --rebase` refuses to run with any unrelated dirty file in the tree. Now `--autostash`.
+- A commit made by an attempt that then failed to push was reported as "nothing new to publish"
+  on the next run and abandoned. Now an unpushed commit is detected and pushed.
+
+Verified end to end with two clones racing against a bare origin: a grade commit lands first, the
+predict job rebases onto it, and origin ends with both. A re-run is a clean no-op, exit 0.

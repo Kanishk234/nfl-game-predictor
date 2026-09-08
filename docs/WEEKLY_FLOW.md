@@ -15,8 +15,10 @@ cron is always UTC and has no DST awareness, so every schedule is chosen to be s
 | **Mon 12:00** | 8 AM EDT / 7 AM EST | `grade` | Scores the Sunday slate. |
 | **Tue 12:00** | 8 AM EDT / 7 AM EST | `grade` | Scores Monday night. The week is now complete. |
 
-Every job that writes something also rebuilds `site/` and deploys, so the page reflects the new
-data within a couple of minutes.
+Every job that writes something then triggers the deploy job, which rebuilds the site from the
+data on `main` and uploads it to Pages, so the page reflects the new data within a couple of
+minutes. The site is never committed — it is generated output, and committing 24 HTML files that
+change on every run only created merge conflicts in files nobody merges.
 
 ## What each job does
 
@@ -82,7 +84,7 @@ from facts, so running it twice changes nothing.
 | `data/odds/*.json` | **Never.** Frozen at the instant of its prediction. |
 | `data/results/*.json` | Yes, as more of the week finishes. Results are facts. |
 | `data/results/history.json` | Rebuilt from the per-week files on every run. |
-| `site/` | Rebuilt on every job that writes data. |
+| `site/` | Not committed at all. It is build output, rebuilt by the deploy job from whatever data is on `main`. |
 
 A pass whose file already exists exits green without touching it. Nothing to do is not a failure.
 

@@ -67,17 +67,10 @@ jobs:
           else
             python -m nfl_predict.predict --pass early
           fi
-      - run: python -m nfl_predict.site_build
-      - name: commit and push the frozen prediction + odds and the rebuilt site
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/predictions data/odds site
-          if git diff --cached --quiet; then echo "nothing new to publish"; exit 0; fi
-          latest=$(git diff --cached --name-only -- data/predictions | head -1 | xargs -n1 basename | sed 's/\.json$//')
-          git commit -m "publish ${latest} prediction"
-          git pull --rebase origin main
-          git push origin HEAD:main
+      # Commits the data, rebases, rebuilds the site on top, and pushes with retries.
+      # See tools/publish.sh for why the site is built after the rebase and not before.
+      - name: publish
+        run: tools/publish.sh "data/predictions data/odds"
 
   deploy:
     needs: predict
