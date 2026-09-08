@@ -11,15 +11,26 @@ name: predict-early
 # free runners get delayed under load.
 #
 # The gate is per game, enforced in code: the pass predicts only games whose kickoff is still
-# ahead and refuses to run once the whole week has started. A week that opens on Wednesday
-# (2026 Week 1 did) keeps its Wednesday game out of this pass; that game needs a manual run
-# beforehand, as Week 1's did.
+# ahead and refuses to run once the whole week has started.
+#
+# SECOND CRON, Tuesday 16:00 UTC (12 PM EDT / 11 AM EST) — the safety net. Some weeks open
+# before Thursday afternoon and the Thursday pass would miss those games:
+#
+#   Thanksgiving      a 12:30 PM ET game every single season since 2002
+#   Christmas         e.g. 2025 week 17, 1:00 PM ET
+#   Wednesday openers 2012 and 2026 week 1; 2026 week 12 (Thanksgiving eve)
+#
+# Left alone that is one lost game a year, every year. The Tuesday run passes
+# `--only-early-openers`, so it publishes ONLY when the week's first kickoff falls before the
+# next scheduled Thursday pass, and otherwise exits without touching anything. Normal weeks are
+# still predicted Thursday with the freshest possible model.
 #
 # Re-running for a week that is already published is a clean no-op, not a failure.
 
 on:
   schedule:
-    - cron: "0 21 * * 4"
+    - cron: "0 21 * * 4"   # every Thursday: the regular pass
+    - cron: "0 16 * * 2"   # every Tuesday: publishes only if the week opens before Thursday
   workflow_dispatch:
 
 permissions:
@@ -50,7 +61,12 @@ jobs:
           # The only place the key exists in CI. It is masked in logs and never written to a
           # file; see odds/fetch.py for the scrubbing on the code side.
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
-        run: python -m nfl_predict.predict --pass early
+        run: |
+          if [ "${{ github.event.schedule }}" = "0 16 * * 2" ]; then
+            python -m nfl_predict.predict --pass early --only-early-openers
+          else
+            python -m nfl_predict.predict --pass early
+          fi
       - run: python -m nfl_predict.site_build
       - name: commit and push the frozen prediction + odds and the rebuilt site
         run: |
