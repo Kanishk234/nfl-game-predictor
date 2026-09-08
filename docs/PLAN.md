@@ -29,8 +29,11 @@ should be "trust me, it'll come together in phase 6."
   coverage (how many seasons/games, any gaps).
 
 ## Phase 2 — Baseline model + backtest
-- Train a GBDT (XGBoost/LightGBM) for win probability and spread, properly tuned (not
-  hardware-constrained this time).
+- Train the best-performing model achievable on the feature set — a GBDT (XGBoost/LightGBM) as a
+  strong starting point, but not capped there if a richer feature set, ensembling multiple model
+  families, or a heavier hyperparameter search meaningfully improves the backtest. Unlike the
+  FPGA project, there is no resource ceiling here beyond GitHub Actions' free compute minutes for
+  the weekly retrain — optimize for accuracy/calibration, not for simplicity or deployability.
 - Backtest on held-out seasons; report accuracy, AUC, spread MAE, and — critically — how it
   compares to the closing Vegas line on the same held-out games (using historical odds data if
   available, or acknowledging the gap if not yet wired up).
