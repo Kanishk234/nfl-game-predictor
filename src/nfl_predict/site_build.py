@@ -132,7 +132,15 @@ def logo_url(abbr: str) -> str:
 
 
 def logo(abbr: str, cls: str = "logo") -> str:
-    return f'<img class="{cls}" src="{logo_url(abbr)}" alt="" width="40" height="40" loading="lazy">'
+    """A team logo on a light disc, so black and navy marks read on the dark panel.
+
+    Loaded eagerly on purpose. ESPN serves one 500px PNG per team and ignores resize params, so
+    a lazy logo pops in as a bare white circle a moment after the card paints. There are only 32
+    distinct images in a week and the browser caches them across pages, so eager is the better
+    trade: a slightly heavier first load, and nothing that flashes.
+    """
+    return (f'<img class="{cls}" src="{logo_url(abbr)}" alt="" width="40" height="40" '
+            f'decoding="async">')
 
 
 def team_color(abbr: str) -> str:
@@ -628,7 +636,7 @@ a:focus-visible, summary:focus-visible {{ outline: 2px solid var(--model); outli
 .matchup .vs {{ flex: 1; text-align: center; font-family: "Bricolage Grotesque", system-ui, sans-serif; font-weight: 600; font-size: 1.1rem; line-height: 1.2; }}
 .matchup small {{ color: var(--muted); font-weight: 400; }}
 .card time {{ display: block; text-align: center; margin-top: .45rem; color: var(--muted); font-size: .85rem; }}
-.logo {{ width: 40px; height: 40px; object-fit: contain; flex: none; background: #fff; border-radius: 50%; padding: 5px; }}
+.logo {{ width: 40px; height: 40px; object-fit: contain; flex: none; background: #F2F3F5; border-radius: 50%; padding: 5px; }}
 .logo.small {{ width: 24px; height: 24px; padding: 3px; vertical-align: -7px; margin: 0 .2rem 0 .35rem; }}
 .logo.big {{ width: 48px; height: 48px; padding: 6px; margin: 0 .7rem 0 0; }}
 .our-call {{ display: flex; align-items: center; gap: .1rem; margin: 0 0 .8rem; min-width: 0; }}

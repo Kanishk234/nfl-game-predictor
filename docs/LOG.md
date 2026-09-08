@@ -181,3 +181,9 @@ Open:
 
 - **Vegas is pink (#F06BB0), not gold.** Gold sat ~15 CIELAB units from Vikings/Steelers/Packers/Chiefs gold. Measured every candidate against all 32 teams' primary, secondary and lightened-for-dark colours: pink is ~34 from its nearest neighbour and no NFL team uses pink at all, so the market marker can never read as a team. Test asserts it matches no team colour.
 - **Cards decluttered:** dropped the "Spread | away | even | home" axis header (the values already name the team); the spread is now one grid with a "Points" caption spanning both rows. Card split into three zones separated by hairlines (matchup / pick / points), padding 1.15rem, card min-width 21rem, gap 1.1rem. Eight rows down to six with more air between them.
+
+## 2026-09-08 — Verified in a browser at last
+
+- localhost approved in the extension, so the site was finally reviewed by looking at it rather than by reading markup. Confirmed: spread rows stack and align (Us above Vegas, both growing from a shared centre), 3-column grid at 1440px, slot dividers reading correctly, pink Vegas markers distinct from every team colour on the page.
+- The "spread still looks broken" report was a stale browser cache: the deployed page already had the fix (33 `spread-row` elements, pink `#F06BB0`). Hard refresh resolves it.
+- Logos flashed as bare white discs: ESPN serves one 500px PNG per team and ignores resize params, so `loading="lazy"` left them empty for a moment after paint. Now eager with `decoding="async"`, disc softened to #F2F3F5. 32 distinct images per week, cached across pages.
