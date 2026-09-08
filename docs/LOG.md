@@ -196,3 +196,4 @@ Open:
 - `next_scheduled_early_pass()` in schedule.py; 4 tests including the Thanksgiving-week case. Suite 94 passed.
 
 - Added `docs/WEEKLY_FLOW.md`: the running schedule (what fires when, what each job writes, what is immutable, how the gate is enforced, manual commands, what a red/no-op job means). Linked from PLAN.md.
+- Wrote `README.md` as the repo's front door: what the project is, a user-facing "when the site updates" table, what a game card shows, the honest 65.0% vs Vegas 66.5% comparison, why the record is trustworthy (with links straight into `data/predictions`, `data/odds`, `data/results` and Actions), the model in a paragraph, and how to run it. All relative links verified; the 30-feature claim checked against `FEATURE_COLUMNS`.
