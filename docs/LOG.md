@@ -63,3 +63,13 @@ Open:
 - Everything else rejected; nothing cleared -0.0005. Feature set is near saturation for public data + linear model.
 - Fixed a screen that silently tested nothing (form window bound as a default arg). Injuries: 2025 rows lack `date_modified`; some polars concat schema drift across seasons.
 - Holdout now: 64.4% / 0.632 / MAE 10.08 / ATS 49.4% vs Vegas 66.5% / 0.610 / 9.76. `pytest` 49 passed, ruff clean.
+
+## 2026-09-08 — Phase 2 third pass (diagnose, then unconventional)
+
+- Diagnosed OOF gap to Vegas: weeks 10-17 (+0.015) and QB-change games (+0.022) carry it; wk 5-9 dead even. Top disagreements = Week 17 rested starters (Manning/Brady 2009). Info gap, not model gap.
+- Widened tuning window to 2006-2019 (14 folds) for this round's decisions.
+- **Adopted QB draft-position prior** (`home_qb_draft`/`away_qb_draft`): -0.0007 wide, -0.0002 narrow. Holdout (once): 0.6322 -> 0.6303, MAE 10.08 -> 10.06. Transferred.
+- **Rejected market distillation** (train margin on past closing lines): -0.0012 on 2006-19 but +0.0010 on 2012-19 — all gain in the data-starved early era.
+- Rejected: SRS rating, team HFA, training-window ensembles, recent-intercept recal, prev-season EPA prior, week flags/interactions, diffs-only set, stakes/eliminated features, C=0.01. Elo params and QB window re-validated on wide window.
+- Calibration slope 0.964 / intercept -0.02 on tuning: no global miscalibration to fix.
+- Holdout now: 64.5% / 0.630 / MAE 10.06 / ATS 49.2% vs Vegas 66.5% / 0.610 / 9.76. 26 features. `pytest` 50 passed.

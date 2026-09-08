@@ -10,11 +10,11 @@ kickoff):
 
 | | accuracy | log loss | Brier | AUC | ECE | spread MAE |
 |---|---|---|---|---|---|---|
-| **Model** | **64.4%** | **0.632** | 0.221 | 0.695 | 0.039 | **10.08** |
+| **Model** | **64.5%** | **0.630** | 0.221 | 0.697 | 0.042 | **10.06** |
 | Vegas closing line | 66.5% | 0.610 | 0.212 | 0.727 | 0.026 | 9.76 |
 
-**The model does not beat Vegas.** It trails by 2.1 points of accuracy, 0.022 of log loss and
-0.31 points of spread MAE, and its against-the-spread record is 687–704–33, 49.4% (breakeven
+**The model does not beat Vegas.** It trails by 2.0 points of accuracy, 0.020 of log loss and
+0.29 points of spread MAE, and its against-the-spread record is 684–707–33, 49.2% (breakeven
 at −110 is 52.4%). It is, however, a real model: bare Elo is at 62–63%, the untuned first attempt was 63.1%,
 and the gap to the market roughly halved over this phase. Every number above comes from a
 window that nothing was tuned on.
@@ -36,7 +36,7 @@ window that nothing was tuned on.
 
 ## What ships, and why it is not a GBDT
 
-**Logistic regression for win probability, ridge for margin, 24 features.** The plan named a
+**Logistic regression for win probability, ridge for margin, 26 features.** The plan named a
 gradient-boosted model; CLAUDE.md says to optimise purely for predictive quality. Those turned
 out to conflict, and the invariant wins:
 
@@ -123,15 +123,62 @@ cleared −0.0005. That is a result: on schedule + EPA + QB data, a linear model
 saturated, and the remaining gap to the market is information we do not have (roster detail
 beyond the QB, and the market's own aggregation of it) rather than modelling left on the table.
 
+## Third pass: diagnose first, then the unconventional ideas
+
+This round started from a diagnosis instead of a feature list, and validated on a wider tuning
+window (2006–2019, 14 folds) because decisions at the ±0.0005 level are noisy on eight.
+
+**Where the gap to Vegas actually lives** (tuning-season out-of-fold, gap = model log loss − Vegas):
+weeks 5–9 are dead even (−0.0002); weeks 10–17 carry the bulk (+0.015); games with a QB change
+are three times worse than games without (+0.022 vs +0.007). The 113 games where the two disagree
+by 20+ points of win probability are dominated by **Week 17 games in which a clinched team rested
+its starters** — Manning and Brady both listed as starters in 2009 Week 17 and pulled after a
+series. The listed starter is the star; the market knows he will not play. That is information we
+do not have before kickoff, not a modelling failure. A stakes feature built from as-of season
+records (eliminated / 12+ wins) did not capture it (+0.0007), because "clinched a seed and will
+rest" is not "has 12 wins".
+
+**Adopted: a draft-position prior for quarterbacks** (`home_qb_draft`, `away_qb_draft`, 1 = first
+overall, 0 = undrafted). A rookie has no rating history, so the model treated a #1 pick and a UDFA
+identically until a few hundred attempts in; the market does not. −0.0007 on the wide window,
+−0.0002 on the narrow one, consistent sign, sound mechanism, two features. **Holdout, touched
+once: 0.6322 → 0.6303, 64.4% → 64.5%, MAE 10.08 → 10.06.** It transferred.
+
+**The interesting rejection: market distillation.** Train the margin model on the *closing line
+of past games* as a lower-noise target (α·line + (1−α)·margin), with no line used at prediction
+time. On 2006–2019 it looked like the best idea of the round (−0.0012 log loss, −0.03 MAE). On
+2012–2019 it *hurt* (+0.0010). The entire gain sits in 2006–2011, when the model was data-starved;
+in the modern era the line adds nothing our features do not already carry. Rejected on the
+evidence, which also spares the project the argument about whether a model trained on the market
+is still independent of it.
+
+**Also rejected, wide window:** SRS-style joint margin rating (best −0.0002; as an Elo
+replacement +0.0010), team-specific home advantage (+0.0002), ensembles over training windows —
+all / last 8 / last 4 seasons (+0.0005), intercept recalibrated on recent seasons (+0.0002 to
++0.0012), previous-season EPA as an early-season prior (+0.0002), early/late/postseason flags or
+interactions in place of `week` (+0.0004 / +0.0012), a diffs-only 12-feature set (+0.0001), and
+stronger regularisation (C=0.01 −0.0006 wide but flat narrow: an early-era effect again). The
+Elo parameters re-validated on the wide window: K 35–70 and carryover 0.35–0.65 all within
+0.0006, the chosen values at the optimum.
+
+**The QB window re-checked on the wide window** and held: 16 games +0.0015, 32 +0.0006, 64 and 96
+at 0. The earlier concern that it did not transfer to the holdout is now moot; with the draft
+prior the holdout moved.
+
+The calibration diagnostic is worth recording: on the tuning seasons the model's logits have
+slope 0.964 and intercept −0.02 (perfect is 1, 0). It is not systematically over- or
+under-confident; the residual error is game-specific information, not a global miscalibration
+that a Platt layer would fix.
+
 ## Per-season, holdout
 
 | season | model acc | model logloss | Vegas acc | Vegas logloss |
 |---|---|---|---|---|
-| 2021 | 60.0% | 0.652 | 62.1% | 0.628 |
-| 2022 | 63.4% | 0.629 | 66.5% | 0.603 |
-| 2023 | 64.6% | 0.633 | 67.4% | 0.623 |
-| 2024 | 68.4% | 0.614 | 70.5% | 0.589 |
-| 2025 | 65.6% | 0.633 | 66.0% | 0.606 |
+| 2021 | 61.8% | 0.652 | 62.1% | 0.628 |
+| 2022 | 63.7% | 0.627 | 66.5% | 0.603 |
+| 2023 | 63.5% | 0.631 | 67.4% | 0.623 |
+| 2024 | 68.8% | 0.612 | 70.5% | 0.589 |
+| 2025 | 64.9% | 0.629 | 66.0% | 0.606 |
 
 ## Known limitations — the honest part
 
