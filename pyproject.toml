@@ -17,6 +17,7 @@ dependencies = [
     "lightgbm",
     "requests",
     "tzdata",
+    "joblib",
 ]
 
 [project.optional-dependencies]
