@@ -28,6 +28,11 @@ from nfl_predict.predict import PREDICTIONS_DIR
 #: runs three times a week, so anything unscored after four days has been missed, not delayed.
 GRADING_GRACE = timedelta(days=4)
 
+#: The free tier allows 500 requests a month and a snapshot costs three (one per market), so a
+#: season needs roughly 25. Warn well before it matters: a pass that cannot fetch odds still
+#: publishes, but the track record loses its baseline, which is half the point of the project.
+QUOTA_WARN_BELOW = 100
+
 
 def operating_seasons() -> set[int]:
     """Seasons we have actually published for. A season we never ran is not a hole in our
@@ -35,11 +40,37 @@ def operating_seasons() -> set[int]:
     return {int(p.name[:4]) for p in PREDICTIONS_DIR.glob("*_*_*.json")}
 
 
+def odds_problems() -> list[str]:
+    """Checks that do not depend on any game having been played yet — an exhausted quota is
+    worth hearing about on a Tuesday in the off-week, not only after a game finishes."""
+    found: list[str] = []
+    snapshots = sorted(PREDICTIONS_DIR.parent.glob("odds/*.json"))
+
+    # a snapshot that recorded a provider failure, so the gap is explained and not silent
+    for path in snapshots:
+        snap = json.loads(path.read_text())
+        if snap.get("unavailable"):
+            found.append(f"{path.name}: published without a Vegas baseline ({snap['unavailable'][:80]})")
+
+    # the quota, read from the most recent snapshot that recorded one. Running out mid season
+    # would quietly cost every remaining week its baseline.
+    for path in reversed(snapshots):
+        remaining = json.loads(path.read_text()).get("source", {}).get("quota", {}).get("requests_remaining")
+        if remaining is None:
+            continue
+        if int(remaining) < QUOTA_WARN_BELOW:
+            found.append(f"odds API quota down to {remaining} requests (as of {path.name}); "
+                         f"a season needs about 25")
+        break
+    return found
+
+
 def problems(games: pl.DataFrame, now: datetime) -> list[str]:
     found: list[str] = []
     seasons = operating_seasons()
     if not seasons:
         return found
+    found += odds_problems()
     season = max(seasons)
     played = games.filter(
         (pl.col("season") == season) & (pl.col("kickoff_utc") + GAME_DURATION < now)
@@ -75,11 +106,6 @@ def problems(games: pl.DataFrame, now: datetime) -> list[str]:
             found.append(f"{season} week {week}: finished but ungraded after "
                          f"{GRADING_GRACE.days} days: {overdue}")
 
-    # 4. an odds snapshot that recorded a provider failure, so the gap is explained not silent
-    for path in sorted(PREDICTIONS_DIR.parent.glob("odds/*.json")):
-        snap = json.loads(path.read_text())
-        if snap.get("unavailable"):
-            found.append(f"{path.name}: published without a Vegas baseline ({snap['unavailable'][:80]})")
     return found
 
 

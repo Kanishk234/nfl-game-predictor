@@ -170,3 +170,42 @@ class TestHealthCheck:
         monkeypatch.setattr(H, "RESULTS_DIR", tmp_path / "results")
         monkeypatch.setattr("nfl_predict.grade.PREDICTIONS_DIR", tmp_path / "predictions")
         assert H.problems(games, now=T0 + timedelta(hours=6)) == []
+
+
+class TestQuotaWarning:
+    def _dirs(self, monkeypatch, tmp_path):
+        for d in ("predictions", "results", "odds"):
+            (tmp_path / d).mkdir()
+        (tmp_path / "predictions" / "2026_01_early.json").write_text(json.dumps(
+            {"season": 2026, "week": 1, "pass": "early",
+             "generated_at_utc": (T0 - timedelta(days=1)).isoformat(), "predictions": []}))
+        monkeypatch.setattr(H, "PREDICTIONS_DIR", tmp_path / "predictions")
+        monkeypatch.setattr(H, "RESULTS_DIR", tmp_path / "results")
+        monkeypatch.setattr("nfl_predict.grade.PREDICTIONS_DIR", tmp_path / "predictions")
+
+    def _snapshot(self, tmp_path, name, remaining):
+        (tmp_path / "odds" / name).write_text(json.dumps(
+            {"source": {"quota": {"requests_remaining": remaining}}, "lines": []}))
+
+    def _games(self):
+        return pl.DataFrame({"game_id": ["2026_01_G0"], "season": [2026], "week": [1],
+                             "kickoff_utc": [T0]}).with_columns(
+            pl.col("kickoff_utc").cast(pl.Datetime("us", "UTC")))
+
+    def test_a_healthy_quota_says_nothing(self, monkeypatch, tmp_path):
+        self._dirs(monkeypatch, tmp_path)
+        self._snapshot(tmp_path, "2026_01_early.json", "480")
+        assert not any("quota" in p for p in H.problems(self._games(), now=T0 - timedelta(hours=1)))
+
+    def test_a_low_quota_is_reported(self, monkeypatch, tmp_path):
+        self._dirs(monkeypatch, tmp_path)
+        self._snapshot(tmp_path, "2026_01_early.json", "42")
+        found = H.problems(self._games(), now=T0 - timedelta(hours=1))
+        assert any("quota down to 42" in p for p in found), found
+
+    def test_the_most_recent_snapshot_wins(self, monkeypatch, tmp_path):
+        """An old low reading must not outlive a renewed quota."""
+        self._dirs(monkeypatch, tmp_path)
+        self._snapshot(tmp_path, "2026_01_early.json", "12")
+        self._snapshot(tmp_path, "2026_02_early.json", "495")
+        assert not any("quota" in p for p in H.problems(self._games(), now=T0 - timedelta(hours=1)))
