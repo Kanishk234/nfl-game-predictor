@@ -40,7 +40,7 @@ The subject is a verifiable record, so evidence sits with the data rather than i
 and the hero is the ledger, not a headline number. One element carries the visual weight — the
 per-game spread gauge — and everything else is quiet. Bricolage Grotesque for headings and
 numbers (tabular figures), Source Sans 3 for body. Pale bone-grey ground, slate ink, model blue
-and Vegas bronze; the two series colours were validated for colour-vision-deficiency separation
+and Vegas pink; the two series colours were validated for colour-vision-deficiency separation
 and contrast on both the light and dark surface with the dataviz validator, and the dark pair
 was re-stepped once to pass the lightness band. Green/red are reserved for results and always
 paired with a glyph. Dark mode follows the system setting. No all-caps labels, no decorative

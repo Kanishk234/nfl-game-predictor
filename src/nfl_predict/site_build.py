@@ -518,9 +518,9 @@ def week_body(season: int, week: int, passes: list[dict], result: dict | None) -
               + "</div>")
     return f'''<h2>Week {week}, {season}{e(status)}</h2>
 <details class="howto"><summary>How to read a card</summary>
-<p><strong>Our pick</strong> is the model's call, in that team's colour. The bar is the win probability; the small bronze
+<p><strong>Our pick</strong> is the model's call, in that team's colour. The bar is the win probability; the small pink
    triangle under it is where Vegas puts it. <strong>Vegas</strong> is the betting favourite, for comparison. The spread
-   rows show how much each of us expects the winner to win by: ours in the team colour, Vegas in bronze. Once a game is
+   rows show how much each of us expects the winner to win by: ours in the team colour, Vegas in pink. Once a game is
    played, the score and a verdict appear at the bottom.</p></details>
 {summary_strip(result["summary"] if result else None, "Official predictions only: the latest pass published before each game's kickoff.")}
 {groups}
