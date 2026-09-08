@@ -40,7 +40,10 @@ a:focus-visible, summary:focus-visible { outline: 2px solid var(--model); outlin
 .card { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 1rem 1.1rem 1.1rem; }
 .card header { display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; flex-wrap: wrap; }
 .card time { color: var(--muted); font-size: .9rem; }
-.card { border-top: 4px solid var(--team); }
+.card { --team: var(--tl); border-top: 4px solid var(--team); }
+.chip { --team: var(--tl); background: var(--team); } .chip.own { background: var(--team); }
+.spread-row { --favc: var(--fav); }
+@media (prefers-color-scheme: dark) { .card, .chip { --team: var(--td); } .spread-row { --favc: var(--favd); } }
 .calls { margin: .8rem 0 .7rem; display: grid; gap: .35rem; }
 .call { display: grid; grid-template-columns: 7.2rem 1rem auto auto 1fr; align-items: center; gap: .5rem; }
 .call .who { color: var(--muted); font-size: .9rem; }
@@ -50,12 +53,15 @@ a:focus-visible, summary:focus-visible { outline: 2px solid var(--model); outlin
 .call.vegas strong { font-size: 1.1rem; } .call.vegas .conf { font-size: 1rem; font-weight: 500; color: var(--muted); }
 .call .towin, .call .none { color: var(--muted); font-size: .9rem; }
 .plain { margin: .5rem 0 .2rem; font-size: 1rem; }
-.scale { display: block; width: 100%; height: auto; margin-top: .2rem; }
-.scale-axis { stroke: var(--rule); stroke-width: 2; } .scale-zero { stroke: var(--muted); stroke-width: 1; }
-.scale-end, .scale-tick, .scale-label { font-size: 11px; fill: var(--muted); font-family: "Source Sans 3", system-ui, sans-serif; }
-.scale-label { fill: var(--ink); font-weight: 600; } .scale-label.vegas { fill: var(--vegas); }
-.scale-ours { fill: var(--team); stroke: var(--panel); stroke-width: 2; } .scale-vegas { fill: var(--vegas); stroke: var(--panel); stroke-width: 2; }
-.scale-actual { fill: var(--ink); opacity: .55; }
+.spread { margin-top: .7rem; font-size: .9rem; }
+.spread-head { display: grid; grid-template-columns: 8.6rem 1fr; color: var(--muted); margin-bottom: .25rem; }
+.spread-axis { display: flex; justify-content: space-between; }
+.spread-row { display: grid; grid-template-columns: 3rem 5.6rem 1fr; align-items: center; gap: 0; margin: .3rem 0; }
+.spread-who { color: var(--muted); } .spread-val { font-weight: 600; white-space: nowrap; }
+.spread-track { position: relative; height: 10px; background: var(--rule); border-radius: 5px; }
+.spread-track::before { content: ""; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: var(--muted); }
+.spread-bar { position: absolute; top: 0; height: 10px; border-radius: 5px; background: var(--favc); }
+.spread-row.vegas .spread-bar { opacity: .55; } .spread-row.final .spread-bar { background: var(--ink); }
 .sub { font-size: 1.3rem; margin: 2rem 0 .5rem; } .empty { padding: 1rem 1.1rem; background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; }
 .more { margin: 1rem 0; } .more summary { cursor: pointer; color: var(--model); }
 .bar { display: block; width: 100%; height: auto; overflow: visible; }
@@ -127,7 +133,7 @@ footer { margin-top: 3rem; }
      <a href="https://github.com/Kanishk234/nfl-game-predictor/tree/main/data/odds">odds snapshots</a>, <a href="https://github.com/Kanishk234/nfl-game-predictor/tree/main/data/results">results</a>,
      <a href="https://github.com/Kanishk234/nfl-game-predictor/actions">the scheduled jobs</a>.</p>
 </section>
-<footer class="fine"><p>Built Tue Sep 8, 2:08 pm ET from the committed data. No JavaScript, no tracking.</p></footer>
+<footer class="fine"><p>Built Tue Sep 8, 2:15 pm ET from the committed data. No JavaScript, no tracking.</p></footer>
 </main>
 </body>
 </html>

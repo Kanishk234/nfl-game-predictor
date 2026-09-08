@@ -70,9 +70,10 @@ class TestPages:
         assert '<span class="who">Our pick</span>' in page and "<strong>SEA</strong>" in page and "67%" in page
         assert '<span class="who">Vegas favorite</span>' in page and "62%" in page
         assert "SEA should win by about 5. Vegas has SEA by 3." in page
-        assert "Us: SEA by 5.1" in page and "Vegas: SEA by 3.0" in page   # the labelled spread scale
+        assert '<span class="spread-who">Us</span><span class="spread-val">SEA by 5.1</span>' in page
+        assert '<span class="spread-who">Vegas</span><span class="spread-val">SEA by 3.0</span>' in page
         assert "no line yet" in page                       # missing line is shown as missing
-        assert 'fill="#002244"' in page                    # the bar wears the picked team's colour
+        assert 'style="--tl:#002244;--td:' in page          # picked team's colour, one per surface
         assert "All games this week" in page               # the table at the end
         assert "30 hours before the first kickoff" in page  # provenance, collapsed
         assert "abc1234" in page
@@ -96,7 +97,7 @@ class TestPages:
         late = _pred(1, "late", [_row("2026_01_ATL_PIT", "PIT", "ATL", p=0.40)], gen_offset_h=-3)
         page = S.render_site([early, late], {}, None, None, NOW)["index.html"]
         assert page.count("<h3>Falcons at Steelers</h3>") == 1
-        assert 'style="background:#A71930"></span>\n      <strong>ATL</strong>' in page  # ATL, in ATL's colour
+        assert 'style="--tl:#A71930;--td:' in page          # ATL's colour on the card
 
     def test_season_page_with_backtest(self):
         bt = {"holdout_seasons": [2021, 2022], "n_folds": 40, "n_games": 500,
@@ -110,6 +111,21 @@ class TestPages:
         assert "picked the winner 64.6% of the\n     time; Vegas picked 66.5%." in page and "The dry run: 2021 to 2022" in page
         assert "Nothing graded yet" in page
         assert 'fill="none"' in page  # the n=5 bin is hollow
+
+
+class TestTeamColours:
+    def test_dark_primary_is_swapped_or_lightened_on_dark_surface(self):
+        # Seahawks navy is fine on white, invisible on the dark panel: the green takes over.
+        assert S.readable_team_color("SEA", S.LIGHT_PANEL) == "#002244"
+        assert S.readable_team_color("SEA", S.DARK_PANEL) == "#69BE28"
+        # Raiders: black and silver. Silver reads on dark; on white neither is strong but black passes.
+        assert S._contrast(S.readable_team_color("LV", S.DARK_PANEL), S.DARK_PANEL) >= 3.0
+        assert S._contrast(S.readable_team_color("LV", S.LIGHT_PANEL), S.LIGHT_PANEL) >= 3.0
+
+    def test_every_team_reads_on_both_surfaces(self):
+        for abbr in S.TEAM_COLORS:
+            for surface in (S.LIGHT_PANEL, S.DARK_PANEL):
+                assert S._contrast(S.readable_team_color(abbr, surface), surface) >= 3.0, abbr
 
 
 class TestBar:

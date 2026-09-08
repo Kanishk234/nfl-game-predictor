@@ -56,8 +56,56 @@ TEAM_COLORS = {
 }
 
 
+LIGHT_PANEL, DARK_PANEL = "#FFFFFF", "#1F2326"
+
+
+def _luminance(hex_color: str) -> float:
+    r, g, b = (int(hex_color[i:i + 2], 16) / 255 for i in (1, 3, 5))
+    def lin(c: float) -> float:
+        return c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+    return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
+
+
+def _contrast(a: str, b: str) -> float:
+    la, lb = _luminance(a), _luminance(b)
+    hi, lo = max(la, lb), min(la, lb)
+    return (hi + 0.05) / (lo + 0.05)
+
+
+def _mix(hex_color: str, toward: str, amount: float) -> str:
+    c = [int(hex_color[i:i + 2], 16) for i in (1, 3, 5)]
+    d = [int(toward[i:i + 2], 16) for i in (1, 3, 5)]
+    return "#" + "".join(f"{round(x + (y - x) * amount):02X}" for x, y in zip(c, d))
+
+
+def readable_team_color(abbr: str, surface: str) -> str:
+    """The team colour that actually shows on this surface.
+
+    Navy, black and near-black primaries vanish on a dark background, and a few pale
+    secondaries vanish on white. Prefer the primary, fall back to the secondary if it reads
+    better, and if neither reaches 3:1 pull the better one toward the opposite of the surface
+    until it does. 3:1 is the WCAG floor for graphical objects.
+    """
+    primary, secondary = TEAM_COLORS.get(abbr, ("#62707E", "#62707E"))[:2]
+    best = max((primary, secondary), key=lambda c: _contrast(c, surface))
+    if _contrast(primary, surface) >= 3.0:
+        best = primary
+    opposite = "#FFFFFF" if _luminance(surface) < 0.5 else "#000000"
+    amount = 0.0
+    while _contrast(best, surface) < 3.0 and amount < 1.0:
+        amount += 0.1
+        best = _mix(max((primary, secondary), key=lambda c: _contrast(c, surface)), opposite, amount)
+    return best
+
+
 def team_color(abbr: str) -> str:
-    return TEAM_COLORS.get(abbr, ("#62707E",))[0]
+    """Light-surface colour; the dark-surface one is set beside it as a CSS variable."""
+    return readable_team_color(abbr, LIGHT_PANEL)
+
+
+def team_vars(abbr: str) -> str:
+    """Inline style carrying both surface variants; CSS picks one per colour scheme."""
+    return f"--tl:{readable_team_color(abbr, LIGHT_PANEL)};--td:{readable_team_color(abbr, DARK_PANEL)}"
 
 
 def team_nick(abbr: str) -> str:
@@ -146,8 +194,8 @@ def prob_bar(p_home: float, p_vegas: float | None, home: str, away: str) -> str:
     w, h = 300, 14
     split = w * (1 - p_home)
     pick_home = p_home >= 0.5
-    away_fill = "var(--away)" if pick_home else team_color(away)
-    home_fill = team_color(home) if pick_home else "var(--away)"
+    away_fill = "var(--away)" if pick_home else "var(--team)"
+    home_fill = "var(--team)" if pick_home else "var(--away)"
     parts = [f'<svg class="bar" viewBox="0 -1 {w} {h + 10}" role="img" aria-label="{e(away)} {pct(1 - p_home)}, {e(home)} {pct(p_home)}'
              + (f", Vegas has {e(home)} at {pct(p_vegas)}" if p_vegas is not None else "") + '">',
              f'<rect x="0" y="0" width="{split:.1f}" height="{h}" rx="3" fill="{away_fill}"/>',
@@ -213,35 +261,33 @@ def legend_two() -> str:
 
 # ----------------------------------------------------------------------------- game cards
 
-def spread_scale(ours: float, line: float | None, actual: float | None, home: str, away: str) -> str:
-    """A labelled number line: away side on the left, home side on the right, 'even' in the
-    middle. Our margin is a round marker labelled above the axis, the Vegas line a diamond
-    labelled below, so the two can never overprint. The final margin, once known, is a bar."""
-    w, h, pad, half = 300, 64, 34, 14.0
-    axis_y = 36
-    def x(v: float) -> float:
-        v = max(-half, min(half, v))
-        return pad + (v + half) / (2 * half) * (w - 2 * pad)
-    def words(v: float) -> str:
-        return by_team(v, home, away)
-    parts = [f'<svg class="scale" viewBox="0 0 {w} {h}" role="img" aria-label="our margin {e(words(ours))}'
-             + (f', Vegas line {e(words(line))}' if line is not None else "") + (f', final {e(words(actual))}' if actual is not None else "") + '">',
-             f'<line class="scale-axis" x1="{pad}" y1="{axis_y}" x2="{w - pad}" y2="{axis_y}"/>',
-             f'<line class="scale-zero" x1="{x(0):.1f}" y1="{axis_y - 6}" x2="{x(0):.1f}" y2="{axis_y + 6}"/>',
-             f'<text class="scale-end" x="{pad - 6}" y="{axis_y + 4}" text-anchor="end">{e(away)}</text>',
-             f'<text class="scale-end" x="{w - pad + 6}" y="{axis_y + 4}">{e(home)}</text>',
-             f'<text class="scale-tick" x="{x(0):.1f}" y="{h - 2}" text-anchor="middle">even</text>']
-    if actual is not None:
-        parts.append(f'<rect class="scale-actual" x="{x(actual) - 1.5:.1f}" y="{axis_y - 9}" width="3" height="18"/>')
-    ox = x(ours)
-    parts.append(f'<circle class="scale-ours" cx="{ox:.1f}" cy="{axis_y}" r="5.5"/>')
-    parts.append(f'<text class="scale-label" x="{ox:.1f}" y="{axis_y - 12}" text-anchor="middle">Us: {e(words(ours))}</text>')
+def spread_rows(ours: float, line: float | None, actual: float | None, home: str, away: str) -> str:
+    """Two (three, once played) aligned rows: a fixed text column on the left, a bar on the
+    right whose length is the margin and whose colour is the favoured team's. Text is never
+    positioned by value, so labels cannot collide."""
+    half = 14.0
+    rows = [("Us", ours, "ours")]
     if line is not None:
-        vx = x(line)
-        parts.append(f'<polygon class="scale-vegas" points="{vx:.1f},{axis_y - 6} {vx + 6:.1f},{axis_y} {vx:.1f},{axis_y + 6} {vx - 6:.1f},{axis_y}"/>')
-        parts.append(f'<text class="scale-label vegas" x="{vx:.1f}" y="{axis_y + 20}" text-anchor="middle">Vegas: {e(words(line))}</text>')
-    parts.append("</svg>")
-    return "".join(parts)
+        rows.append(("Vegas", line, "vegas"))
+    if actual is not None:
+        rows.append(("Final", actual, "final"))
+    out = [f'<div class="spread"><div class="spread-head"><span>Spread</span><span class="spread-axis"><span>{e(away)}</span><span>even</span><span>{e(home)}</span></span></div>'
+           ]
+    for who, v, cls in rows:
+        v_c = max(-half, min(half, v))
+        width = abs(v_c) / half * 50
+        left = 50 if v_c >= 0 else 50 - width
+        fav = home if v >= 0 else away
+        style = f"--fav:{team_vars_pair(fav)}" if cls != "final" else ""
+        out.append(f'<div class="spread-row {cls}" style="{e(style)}"><span class="spread-who">{who}</span>'
+                   f'<span class="spread-val">{e(by_team(v, home, away))}</span>'
+                   f'<span class="spread-track"><span class="spread-bar" style="left:{left:.1f}%;width:{width:.1f}%"></span></span></div>')
+    out.append("</div>")
+    return "".join(out)
+
+
+def team_vars_pair(abbr: str) -> str:
+    return f"{readable_team_color(abbr, LIGHT_PANEL)};--favd:{readable_team_color(abbr, DARK_PANEL)}"
 
 
 def plain_call(p: dict) -> str:
@@ -267,7 +313,7 @@ def game_card(pass_name: str, p: dict, g: dict | None) -> str:
         v_fav = home if v["p_home_moneyline"] >= 0.5 else away
         v_conf = v["p_home_moneyline"] if v_fav == home else 1 - v["p_home_moneyline"]
         vegas_row = (f'<div class="call vegas"><span class="who">Vegas favorite</span>'
-                     f'<span class="chip" style="background:{team_color(v_fav)}"></span><strong>{e(v_fav)}</strong>'
+                     f'<span class="chip" style="{team_vars(v_fav)}"></span><strong>{e(v_fav)}</strong>'
                      f'<span class="conf">{pct(v_conf)}</span><span class="towin">to win</span></div>')
     else:
         vegas_row = '<div class="call vegas"><span class="who">Vegas favorite</span><span class="none">no line yet</span></div>'
@@ -284,17 +330,17 @@ def game_card(pass_name: str, p: dict, g: dict | None) -> str:
     else:
         outcome, actual, status = "", None, "upcoming"
 
-    return f'''<article class="card {status}" style="--team:{team_color(pick)}">
+    return f'''<article class="card {status}" style="{team_vars(pick)}">
   <header><h3>{e(team_nick(away))} at {e(team_nick(home))}</h3><time datetime="{e(p["kickoff_utc"])}">{e(fmt_et(p["kickoff_utc"]))}</time></header>
   <div class="calls">
-    <div class="call ours"><span class="who">Our pick</span><span class="chip" style="background:{team_color(pick)}"></span>
+    <div class="call ours"><span class="who">Our pick</span><span class="chip own"></span>
       <strong>{e(pick)}</strong><span class="conf">{pct(p_pick(p))}</span><span class="towin">to win</span></div>
     {vegas_row}
   </div>
   {prob_bar(p_home, v["p_home_moneyline"] if v else None, home, away)}
   <p class="bar-ends"><span>{e(away)} {pct(1 - p_home)}</span><span>{e(home)} {pct(p_home)}</span></p>
   <p class="plain">{e(plain_call(p))}</p>
-  {spread_scale(p["pred_margin"], v["spread_line"] if v else None, actual, home, away)}
+  {spread_rows(p["pred_margin"], v["spread_line"] if v else None, actual, home, away)}
   {outcome}
 </article>'''
 
@@ -466,7 +512,10 @@ a:focus-visible, summary:focus-visible {{ outline: 2px solid var(--model); outli
 .card {{ background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 1rem 1.1rem 1.1rem; }}
 .card header {{ display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; flex-wrap: wrap; }}
 .card time {{ color: var(--muted); font-size: .9rem; }}
-.card {{ border-top: 4px solid var(--team); }}
+.card {{ --team: var(--tl); border-top: 4px solid var(--team); }}
+.chip {{ --team: var(--tl); background: var(--team); }} .chip.own {{ background: var(--team); }}
+.spread-row {{ --favc: var(--fav); }}
+@media (prefers-color-scheme: dark) {{ .card, .chip {{ --team: var(--td); }} .spread-row {{ --favc: var(--favd); }} }}
 .calls {{ margin: .8rem 0 .7rem; display: grid; gap: .35rem; }}
 .call {{ display: grid; grid-template-columns: 7.2rem 1rem auto auto 1fr; align-items: center; gap: .5rem; }}
 .call .who {{ color: var(--muted); font-size: .9rem; }}
@@ -476,12 +525,15 @@ a:focus-visible, summary:focus-visible {{ outline: 2px solid var(--model); outli
 .call.vegas strong {{ font-size: 1.1rem; }} .call.vegas .conf {{ font-size: 1rem; font-weight: 500; color: var(--muted); }}
 .call .towin, .call .none {{ color: var(--muted); font-size: .9rem; }}
 .plain {{ margin: .5rem 0 .2rem; font-size: 1rem; }}
-.scale {{ display: block; width: 100%; height: auto; margin-top: .2rem; }}
-.scale-axis {{ stroke: var(--rule); stroke-width: 2; }} .scale-zero {{ stroke: var(--muted); stroke-width: 1; }}
-.scale-end, .scale-tick, .scale-label {{ font-size: 11px; fill: var(--muted); font-family: "Source Sans 3", system-ui, sans-serif; }}
-.scale-label {{ fill: var(--ink); font-weight: 600; }} .scale-label.vegas {{ fill: var(--vegas); }}
-.scale-ours {{ fill: var(--team); stroke: var(--panel); stroke-width: 2; }} .scale-vegas {{ fill: var(--vegas); stroke: var(--panel); stroke-width: 2; }}
-.scale-actual {{ fill: var(--ink); opacity: .55; }}
+.spread {{ margin-top: .7rem; font-size: .9rem; }}
+.spread-head {{ display: grid; grid-template-columns: 8.6rem 1fr; color: var(--muted); margin-bottom: .25rem; }}
+.spread-axis {{ display: flex; justify-content: space-between; }}
+.spread-row {{ display: grid; grid-template-columns: 3rem 5.6rem 1fr; align-items: center; gap: 0; margin: .3rem 0; }}
+.spread-who {{ color: var(--muted); }} .spread-val {{ font-weight: 600; white-space: nowrap; }}
+.spread-track {{ position: relative; height: 10px; background: var(--rule); border-radius: 5px; }}
+.spread-track::before {{ content: ""; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: var(--muted); }}
+.spread-bar {{ position: absolute; top: 0; height: 10px; border-radius: 5px; background: var(--favc); }}
+.spread-row.vegas .spread-bar {{ opacity: .55; }} .spread-row.final .spread-bar {{ background: var(--ink); }}
 .sub {{ font-size: 1.3rem; margin: 2rem 0 .5rem; }} .empty {{ padding: 1rem 1.1rem; background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; }}
 .more {{ margin: 1rem 0; }} .more summary {{ cursor: pointer; color: var(--model); }}
 .bar {{ display: block; width: 100%; height: auto; overflow: visible; }}

@@ -156,3 +156,9 @@ Open:
 - Cards now: explicit "Our pick" / "Vegas favorite" rows with team-colour chips; probability bar filled in the picked team's colour; one-sentence plain-English call ("SEA should win by about 5. Vegas has SEA by 3."); a labelled spread number line (Us above, Vegas below, final margin as a bar once played); team nicknames in headers; team-colour top border.
 - Season page rewritten as "Track record" in plain English; the backtest is a two-sentence dry-run summary with details collapsed.
 - Team colours hardcoded from nflverse (32 teams) so the build needs no network.
+
+## 2026-09-08 — Site, third review round
+
+- Team colours were vanishing in dark mode (navy/black primaries on a dark panel). Added contrast-aware selection: per team, per surface, primary if it reaches 3:1, else secondary, else lightened; emitted as `--tl`/`--td` CSS variables so the page picks the right one for the colour scheme. Test asserts all 32 teams pass on both surfaces.
+- Spread number line had colliding labels. Replaced with aligned rows (Us / Vegas / Final) — fixed text column, bar from a shared zero coloured by the favoured team. Labels are never positioned by value.
+- No browser tools available this session; user reviewed live.
