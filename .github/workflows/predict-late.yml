@@ -1,0 +1,26 @@
+name: predict-late
+
+# Late pass — a fresher pass covering the Sunday/Monday slate, after the week's early games
+# have been played and their results are available to retrain on.
+#
+# UTC conversion (see predict-early.yml for why one fixed UTC time must cover EDT and EST):
+#   Sunday early slate  1:00 PM ET  =  17:00 UTC (EDT) / 18:00 UTC (EST)
+#   We run              14:00 UTC Sun  =  10:00 AM EDT / 9:00 AM EST
+# Three hours of slack in the tighter (EDT) case, because scheduled runs on free runners get
+# delayed under load and a delayed run breaks the gate, not merely the schedule.
+#
+# This pass covers only games that have not yet kicked off. Games already played earlier in the
+# week keep their early-pass prediction, which is immutable.
+
+on:
+  schedule:
+    - cron: "0 14 * * 0"
+  workflow_dispatch:
+
+jobs:
+  predict:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: placeholder
+        run: echo "Phase 0 scaffold - prediction logic lands in Phase 4 (see docs/PLAN.md)"
