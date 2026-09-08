@@ -34,6 +34,14 @@ ELO_SEASON_CARRYOVER = 0.5
 #: Games in the rolling form window.
 FORM_WINDOW = 8
 
+#: A per-season feed can be unavailable for three different reasons, and none of them is an
+#: error: the season has no release yet (404 -> ConnectionError), the file is unreadable
+#: (OSError), or nflreadpy refuses the season outright because its own idea of "current season"
+#: has not rolled over yet (ValueError, which is what `load_pbp` does the moment the first game
+#: of a new season is marked played but the pbp release is not up). All three mean the same
+#: thing: that season contributes nothing yet.
+_FEED_NOT_READY = (ConnectionError, OSError, ValueError)
+
 #: nflreadpy's schedules keep the abbreviation a franchise used *at the time*, while its team
 #: stats use the current one. Joining the two without this mapping silently yields null EPA for
 #: every San Diego, St. Louis and Oakland game -- a quiet quality loss rather than a loud error,
@@ -159,7 +167,7 @@ def _team_game_epa(seasons: list[int]) -> pl.DataFrame:
                     "game_id", "team", "passing_epa", "rushing_epa", "attempts", "carries"
                 )
             )
-        except (ConnectionError, OSError):
+        except _FEED_NOT_READY:
             # A not-yet-started season has no stats release. Not an error: those games have no
             # results to summarise yet.
             continue
@@ -251,7 +259,7 @@ def _qb_game_log(seasons: list[int]) -> pl.DataFrame:
                 .filter((pl.col("position") == "QB") & (pl.col("attempts") >= QB_MIN_ATTEMPTS))
                 .select("game_id", "player_id", "attempts", "passing_epa")
             )
-        except (ConnectionError, OSError):
+        except _FEED_NOT_READY:
             continue
     if not frames:
         return pl.DataFrame(
@@ -372,7 +380,7 @@ def _qb_draft_scores() -> pl.DataFrame:
     """
     try:
         picks = nfl.load_draft_picks()
-    except (ConnectionError, OSError):
+    except _FEED_NOT_READY:
         return pl.DataFrame(schema={"player_id": pl.String, "qb_draft": pl.Float64})
     return (
         picks.filter((pl.col("position") == "QB") & pl.col("gsis_id").is_not_null())
@@ -420,7 +428,7 @@ def _team_game_pbp(seasons: list[int]) -> pl.DataFrame:
                 "game_id", "posteam", "defteam", "play_type", "epa", "yards_gained",
                 "fumble", "interception",
             )
-        except (ConnectionError, OSError):
+        except _FEED_NOT_READY:
             continue
         plays = pbp.filter(
             pl.col("posteam").is_not_null()
