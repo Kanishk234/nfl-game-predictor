@@ -383,3 +383,75 @@ def qb_draft_features(games: pl.DataFrame) -> pl.DataFrame:
         pl.col("home_qb_draft").fill_null(0.0),
         pl.col("away_qb_draft").fill_null(0.0),
     )
+
+
+#: Play-by-play form window. 16 games for both stats: on the tuning seasons the no-turnover EPA
+#: gain was flat from 16 to 32 and the explosive-rate gain grew to 24, with 16 the shortest
+#: window inside both plateaus.
+PBP_WINDOW = 16
+
+
+def _team_game_pbp(seasons: list[int]) -> pl.DataFrame:
+    """Per team-game play-by-play summaries. Seasons with no pbp release yet are skipped.
+
+    Two quantities that raw EPA per play mixes together and that predict better apart:
+
+    - `epa_noto`: EPA per play on plays with no fumble or interception. Turnover plays carry huge
+      EPA swings and the recovery is close to a coin flip, so they add noise to a team's measured
+      quality without adding much signal about it.
+    - `expl_rate`: share of plays gaining 20+ yards. Explosiveness is a stable trait that EPA
+      averages wash out.
+
+    Both are computed for the offence (`posteam`) and against the defence (`defteam`).
+    """
+    frames = []
+    for season in seasons:
+        try:
+            pbp = nfl.load_pbp(seasons=[season]).select(
+                "game_id", "posteam", "defteam", "play_type", "epa", "yards_gained",
+                "fumble", "interception",
+            )
+        except (ConnectionError, OSError):
+            continue
+        plays = pbp.filter(
+            pl.col("posteam").is_not_null()
+            & pl.col("epa").is_not_null()
+            & pl.col("play_type").is_in(["pass", "run"])
+        ).with_columns(
+            ((pl.col("fumble") == 1) | (pl.col("interception") == 1)).alias("turnover_play"),
+            (pl.col("yards_gained") >= 20).cast(pl.Float64).alias("explosive"),
+        )
+        off = plays.group_by("game_id", pl.col("posteam").alias("team")).agg(
+            pl.col("epa").filter(~pl.col("turnover_play")).mean().alias("epa_noto"),
+            pl.col("explosive").mean().alias("expl_rate"),
+        )
+        de = plays.group_by("game_id", pl.col("defteam").alias("team")).agg(
+            pl.col("epa").filter(~pl.col("turnover_play")).mean().alias("def_epa_noto"),
+            pl.col("explosive").mean().alias("def_expl_rate"),
+        )
+        frames.append(off.join(de, on=["game_id", "team"], how="full", coalesce=True))
+    if not frames:
+        return pl.DataFrame(schema={
+            "game_id": pl.String, "team": pl.String, "epa_noto": pl.Float64,
+            "expl_rate": pl.Float64, "def_epa_noto": pl.Float64, "def_expl_rate": pl.Float64,
+        })
+    return pl.concat(frames)
+
+
+def pbp_form(games: pl.DataFrame, window: int = PBP_WINDOW) -> pl.DataFrame:
+    """Rolling play-by-play form per team, strictly backward-looking like `rolling_form`."""
+    played = games.filter(pl.col("is_played"))
+    pbp = _team_game_pbp(sorted(played["season"].unique().to_list()))
+    long = pl.concat([
+        played.select("game_id", "kickoff_utc", pl.col("home_team").alias("team")),
+        played.select("game_id", "kickoff_utc", pl.col("away_team").alias("team")),
+    ]).with_columns(canonical_team().alias("team_canonical"))
+    long = long.join(
+        pbp.rename({"team": "team_canonical"}), on=["game_id", "team_canonical"], how="left"
+    ).sort("team", "kickoff_utc")
+    stats = ["epa_noto", "expl_rate", "def_epa_noto", "def_expl_rate"]
+    return long.with_columns(
+        *[pl.col(c).shift(1).rolling_mean(window, min_samples=1).over("team").alias(f"{c}_form")
+          for c in stats],
+        (pl.col("kickoff_utc").shift(1).over("team") + GAME_DURATION).alias("pbp_as_of_utc"),
+    ).select("game_id", "team", *[f"{c}_form" for c in stats], "pbp_as_of_utc")

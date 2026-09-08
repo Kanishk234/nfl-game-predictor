@@ -227,3 +227,21 @@ class TestQbFeaturesAreBackwardLooking:
         second = F.qb_features(games).sort("game_id").row(1, named=True)
         # Home kept Q1 -> 0. Away swapped the (bad) Q2 for unknown Q9 (replacement) -> positive.
         assert second["qb_change_delta"] < 0.0  # home 0 minus a positive away delta
+
+
+class TestPbpFormIsBackwardLooking:
+    def test_a_teams_own_game_is_not_in_its_pbp_form(self, monkeypatch):
+        from nfl_predict.data import features as F
+
+        monkeypatch.setattr(F, "_team_game_pbp", lambda seasons: pl.DataFrame({
+            "game_id": ["g1", "g2"], "team": ["AAA", "AAA"],
+            "epa_noto": [0.5, -0.5], "expl_rate": [0.2, 0.0],
+            "def_epa_noto": [0.0, 0.0], "def_expl_rate": [0.0, 0.0]}))
+        form = F.pbp_form(_games([
+            _game("g1", T0, "AAA", "BBB", 30, 0),
+            _game("g2", T0 + timedelta(days=7), "AAA", "CCC", 0, 3, week=2),
+        ])).filter(pl.col("team") == "AAA").sort("game_id")
+        first, second = form.row(0, named=True), form.row(1, named=True)
+        assert first["epa_noto_form"] is None and first["pbp_as_of_utc"] is None
+        assert second["epa_noto_form"] == 0.5  # g1 only, not its own -0.5
+        assert second["pbp_as_of_utc"] == T0 + GAME_DURATION

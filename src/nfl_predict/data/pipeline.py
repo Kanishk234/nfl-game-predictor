@@ -20,7 +20,13 @@ from pathlib import Path
 
 import polars as pl
 
-from nfl_predict.data.features import elo_ratings, qb_draft_features, qb_features, rolling_form
+from nfl_predict.data.features import (
+    elo_ratings,
+    pbp_form,
+    qb_draft_features,
+    qb_features,
+    rolling_form,
+)
 from nfl_predict.data.games import load_games
 
 PROCESSED_PATH = Path("data/processed/games.parquet")
@@ -42,6 +48,10 @@ FEATURE_COLUMNS = [
     "away_def_epa_form",
     "home_margin_form",
     "away_margin_form",
+    "epa_noto_form_diff",
+    "def_epa_noto_form_diff",
+    "expl_rate_form_diff",
+    "def_expl_rate_form_diff",
     "qb_rating_diff",
     "qb_change_delta",
     "qb_exp_diff",
@@ -72,6 +82,12 @@ def build_frame() -> pl.DataFrame:
     form = rolling_form(games)
     qb = qb_features(games)
     draft = qb_draft_features(games)
+    pbp = pbp_form(games)
+    pbp_stats = ["epa_noto_form", "expl_rate_form", "def_epa_noto_form", "def_expl_rate_form"]
+    home_pbp = pbp.rename({"team": "home_team", "pbp_as_of_utc": "home_pbp_as_of_utc",
+                           **{c: f"home_{c}" for c in pbp_stats}})
+    away_pbp = pbp.rename({"team": "away_team", "pbp_as_of_utc": "away_pbp_as_of_utc",
+                           **{c: f"away_{c}" for c in pbp_stats}})
 
     home_form = form.rename(
         {
@@ -98,10 +114,13 @@ def build_frame() -> pl.DataFrame:
         .join(away_form, on=["game_id", "away_team"], how="left")
         .join(qb, on="game_id", how="left")
         .join(draft, on="game_id", how="left")
+        .join(home_pbp, on=["game_id", "home_team"], how="left")
+        .join(away_pbp, on=["game_id", "away_team"], how="left")
         .with_columns(
             (pl.col("home_off_epa_form") - pl.col("away_off_epa_form")).alias("off_epa_form_diff"),
             (pl.col("home_def_epa_form") - pl.col("away_def_epa_form")).alias("def_epa_form_diff"),
             (pl.col("home_margin_form") - pl.col("away_margin_form")).alias("margin_form_diff"),
+            *[(pl.col(f"home_{c}") - pl.col(f"away_{c}")).alias(f"{c}_diff") for c in pbp_stats],
             (pl.col("home_rest") - pl.col("away_rest")).alias("rest_diff"),
             (pl.col("location") != "Home").cast(pl.Int8).alias("is_neutral_site"),
             (pl.col("season") == COVID_SEASON).cast(pl.Int8).alias("no_crowd"),
@@ -110,7 +129,8 @@ def build_frame() -> pl.DataFrame:
             # Rest days and the schedule itself are known when the schedule is published, so
             # they contribute no as-of constraint. Only result-derived features do.
             pl.max_horizontal(
-                "elo_as_of_utc", "home_form_as_of_utc", "away_form_as_of_utc", "qb_as_of_utc"
+                "elo_as_of_utc", "home_form_as_of_utc", "away_form_as_of_utc", "qb_as_of_utc",
+                "home_pbp_as_of_utc", "away_pbp_as_of_utc",
             ).alias("as_of_utc"),
         )
     )
