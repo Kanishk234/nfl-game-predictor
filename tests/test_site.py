@@ -44,44 +44,58 @@ def _graded(gid, home, away, winner, correct):
 NOW = T0 - timedelta(hours=20)
 
 
-class TestStates:
+class TestPages:
     def test_no_predictions_at_all(self):
-        page = S.render([], {}, None, None, NOW)
-        assert "No predictions published yet" in page
+        pages = S.render_site([], {}, None, None, NOW)
+        assert set(pages) == {"index.html", "season.html"}
+        assert "No predictions published yet" in pages["index.html"]
 
-    def test_upcoming_week_with_no_results(self):
-        preds = [_pred(1, "early", [_row("2026_01_NE_SEA", "SEA", "NE"), _row("2026_01_SF_LA", "LA", "SF", line=None)])]
-        page = S.render(preds, {}, None, None, NOW)
-        assert "Week 1, 2026" in page and "not played" in page
-        assert "NE at <strong>SEA</strong>" in page
-        assert "no line" in page                     # missing line is shown as missing, not invented
-        assert "30 hours before the first kickoff" in page
-        assert "abc1234" in page                     # model provenance is on the page
-        assert "Earlier weeks" not in page
+    def test_one_page_per_week_and_index_is_the_latest(self):
+        preds = [_pred(1, "early", [_row("2026_01_NE_SEA", "SEA", "NE")]),
+                 _pred(2, "early", [_row("2026_02_KC_DEN", "DEN", "KC", week=2)])]
+        pages = S.render_site(preds, {}, None, None, NOW + timedelta(days=7))
+        assert set(pages) == {"index.html", "weeks/2026_01.html", "weeks/2026_02.html", "season.html"}
+        assert "<h2>Week 2, 2026" in pages["index.html"] and "<h2>Week 1, 2026" in pages["weeks/2026_01.html"]
+        # the strip lists both weeks on every page, with relative links that work from a subfolder
+        for p in pages.values():
+            assert "Week 1</a>" in p and "Week 2</a>" in p
+        assert 'href="../weeks/2026_02.html"' in pages["weeks/2026_01.html"]
+        assert 'href="weeks/2026_02.html"' in pages["index.html"]
 
-    def test_graded_week_shows_winner_and_marks(self):
+    def test_upcoming_game_card_reads_in_plain_words(self):
+        preds = [_pred(1, "early", [_row("2026_01_NE_SEA", "SEA", "NE", p=0.67, m=5.1, line=3.0, pv=0.618),
+                                    _row("2026_01_SF_LA", "LA", "SF", line=None)])]
+        page = S.render_site(preds, {}, None, None, NOW)["index.html"]
+        assert "<h3>NE at SEA</h3>" in page
+        assert "<strong>SEA</strong> to win" in page and "67%" in page
+        assert "We say SEA by 5.1; the line is SEA by 3.0." in page
+        assert "Vegas has SEA at 62%" in page
+        assert "no line yet" in page                       # missing line is shown as missing
+        assert "All games this week" in page               # the table at the end
+        assert "30 hours before the first kickoff" in page  # provenance, collapsed
+        assert "abc1234" in page
+
+    def test_away_pick_shows_away_confidence(self):
+        preds = [_pred(1, "early", [_row("2026_01_NE_SEA", "SEA", "NE", p=0.40, m=-2.0)])]
+        page = S.render_site(preds, {}, None, None, NOW)["index.html"]
+        assert "<strong>NE</strong> to win <span class=\"conf\">60%</span>" in page
+        assert "We say NE by 2.0" in page
+
+    def test_graded_card_shows_score_winner_and_verdict(self):
         preds = [_pred(1, "early", [_row("2026_01_NE_SEA", "SEA", "NE")])]
         results = {(2026, 1): _result(1, [_graded("2026_01_NE_SEA", "SEA", "NE", "SEA", 1)])}
-        page = S.render(preds, results, None, None, NOW)
-        assert '<span class="winner">SEA</span>' in page and 'class="hit"' in page
-        assert "ATS win" in page and "complete" in page
+        page = S.render_site(preds, results, None, None, NOW)["index.html"]
+        assert '<span class="score">NE 17, SEA 24</span>' in page
+        assert "✓ right" in page and "covered the spread" in page and "Week 1, 2026, complete" in page
 
     def test_late_pass_supersedes_early_for_its_games(self):
         early = _pred(1, "early", [_row("2026_01_NE_SEA", "SEA", "NE", p=0.62), _row("2026_01_ATL_PIT", "PIT", "ATL", p=0.55)])
         late = _pred(1, "late", [_row("2026_01_ATL_PIT", "PIT", "ATL", p=0.40)], gen_offset_h=-3)
-        page = S.render([early, late], {}, None, None, NOW)
-        # one row per game; PIT's row is the late pass (40%, pick ATL)
-        assert page.count("2026_01_ATL_PIT") == 0 and page.count("ATL at <strong>PIT</strong>") == 1
-        assert "<strong>ATL</strong>" in page and "late pass" in page
+        page = S.render_site([early, late], {}, None, None, NOW)["index.html"]
+        assert page.count("<h3>ATL at PIT</h3>") == 1
+        assert "<strong>ATL</strong> to win" in page  # the late pass's pick
 
-    def test_past_weeks_collapse_and_latest_is_open(self):
-        preds = [_pred(1, "early", [_row("2026_01_NE_SEA", "SEA", "NE")]),
-                 _pred(2, "early", [_row("2026_02_KC_DEN", "DEN", "KC", week=2)])]
-        page = S.render(preds, {}, None, None, NOW + timedelta(days=7))
-        assert '<section id="this-week"><h2>Week 2' in page
-        assert '<details class="past-week"><summary><h3>Week 1' in page
-
-    def test_backtest_section_when_file_exists(self):
+    def test_season_page_with_backtest(self):
         bt = {"holdout_seasons": [2021, 2022], "n_folds": 40, "n_games": 500,
               "overall": {"model": {"win": {"accuracy": 0.646, "brier": 0.22}, "spread": {"mae": 10.07}},
                           "vegas": {"win": {"accuracy": 0.665, "brier": 0.21}, "spread": {"mae": 9.76}}},
@@ -89,28 +103,24 @@ class TestStates:
                                      "vegas": {"win": {"accuracy": 0.63, "brier": 0.22}, "spread": {"mae": 10.1}}}},
               "calibration": {"model": [{"bin_low": 0.5, "bin_high": 0.6, "n": 50, "mean_predicted": 0.55, "observed": 0.52}],
                               "vegas": [{"bin_low": 0.5, "bin_high": 0.6, "n": 5, "mean_predicted": 0.55, "observed": 0.6}]}}
-        page = S.render([], {}, None, bt, NOW)
+        page = S.render_site([], {}, None, bt, NOW)["season.html"]
         assert "The model does not beat Vegas" in page and "Before going live: 2021, 2022" in page
         assert 'fill="none"' in page  # the n=5 bin is hollow
 
 
-class TestGauge:
-    def test_gauge_clamps_and_labels(self):
-        svg = S.spread_gauge(30.0, -3.0, 7.0)
-        assert 'aria-label="our margin +30.0, line −3.0, actual +7"' in svg
-        assert "gauge-model" in svg and "gauge-vegas" in svg and "gauge-actual" in svg
+class TestBar:
+    def test_bar_splits_by_probability_and_marks_vegas(self):
+        svg = S.prob_bar(0.75, 0.6, "SEA", "NE")
+        assert 'aria-label="NE 25%, SEA 75%, Vegas has SEA at 60%"' in svg and "bar-vegas" in svg
 
-    def test_gauge_without_line_or_result(self):
-        svg = S.spread_gauge(2.5, None, None)
-        assert "gauge-vegas" not in svg and "gauge-actual" not in svg
+    def test_bar_without_line(self):
+        assert "bar-vegas" not in S.prob_bar(0.5, None, "A", "B")
 
 
-def test_real_build_writes_index_without_secrets(tmp_path, monkeypatch):
+def test_real_build_writes_pages_without_secrets(tmp_path, monkeypatch):
     monkeypatch.setattr(S, "SITE_DIR", tmp_path)
     S.main()
-    page = (tmp_path / "index.html").read_text(encoding="utf-8")
-    assert "<title>nfl-predict</title>" in page
-    assert "apiKey" not in page
-    assert "<script" not in page  # no JavaScript, by design
-    assert page.count("http://") == 0  # relative or https only
-    assert "2026_01_early.json" in page  # the real Week 1 file is linked
+    index = (tmp_path / "index.html").read_text(encoding="utf-8")
+    assert (tmp_path / "weeks" / "2026_01.html").exists() and (tmp_path / "season.html").exists()
+    assert "apiKey" not in index and "<script" not in index and "http://" not in index
+    assert "2026_01_early.json" in index

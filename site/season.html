@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Season</title>
+<meta name="description" content="NFL picks, win probabilities and spreads, published before kickoff and graded against the Vegas line.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;600&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root { --bg: #F4F5F1; --panel: #FFFFFF; --ink: #1E2A38; --muted: #62707E; --rule: #D9DDD6;
+         --model: #1F6FB5; --vegas: #9A6A1F; --away: #C9D2DA; --hit: #2E7D4F; --miss: #B23A3A; }
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #171A1C; --panel: #1F2326; --ink: #E8EAE6; --muted: #9AA4AD; --rule: #33393E;
+           --model: #3F7FC6; --vegas: #B8891F; --away: #3A434B; --hit: #5FB37F; --miss: #E06C6C; } }
+* { box-sizing: border-box; }
+html { color-scheme: light dark; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.5 "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+        font-variant-numeric: tabular-nums; }
+main { max-width: 72rem; margin: 0 auto; padding: 1.5rem 1.25rem 5rem; }
+h1, h2, h3, dd, .num, .pick strong, .conf, .score { font-family: "Bricolage Grotesque", "Source Sans 3", system-ui, sans-serif; }
+h1 { font-size: 1.6rem; margin: 0; font-weight: 600; }
+h1 a { color: inherit; text-decoration: none; }
+h2 { font-size: 1.6rem; margin: 1.75rem 0 .5rem; font-weight: 600; }
+h3 { font-size: 1.2rem; margin: 0; font-weight: 600; }
+p { max-width: 66ch; }
+a { color: var(--model); text-underline-offset: .15em; }
+a:focus-visible, summary:focus-visible { outline: 2px solid var(--model); outline-offset: 3px; }
+.top { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem 1.5rem; padding-bottom: .75rem; border-bottom: 1px solid var(--rule); }
+.top .lede { color: var(--muted); margin: 0; }
+.weeks { display: flex; flex-wrap: wrap; gap: .35rem; margin: .9rem 0 0; }
+.weeks a { text-decoration: none; padding: .3rem .7rem; border: 1px solid var(--rule); border-radius: 999px; color: var(--ink); font-size: .95rem; }
+.weeks a[aria-current] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.how, .fine, small { color: var(--muted); font-size: .95rem; }
+.strip { display: flex; flex-wrap: wrap; gap: .5rem 2rem; margin: 1rem 0 .25rem; padding: .9rem 1.1rem; background: var(--panel);
+          border: 1px solid var(--rule); border-radius: 8px; }
+.strip div { min-width: 6rem; } .strip dt { font-size: .85rem; color: var(--muted); }
+.strip dd { margin: 0; font-size: 1.35rem; font-weight: 600; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(21rem, 1fr)); gap: 1rem; margin: 1.25rem 0 2.5rem; }
+.card { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 1rem 1.1rem 1.1rem; }
+.card header { display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; flex-wrap: wrap; }
+.card time { color: var(--muted); font-size: .9rem; }
+.pick { margin: .7rem 0 .5rem; font-size: 1.05rem; }
+.pick strong { font-size: 1.6rem; margin-right: .2rem; } .conf { font-size: 1.25rem; font-weight: 600; margin-left: .25rem; }
+.bar { display: block; width: 100%; height: auto; overflow: visible; }
+.bar-away { fill: var(--away); } .bar-home { fill: var(--model); } .bar-vegas { fill: var(--vegas); }
+.bar-ends { display: flex; justify-content: space-between; margin: .3rem 0 .4rem; font-size: .9rem; color: var(--muted); }
+.spread { margin: .4rem 0 0; font-size: .95rem; }
+.final { margin: .8rem 0 0; padding-top: .7rem; border-top: 1px dashed var(--rule); }
+.score { font-weight: 600; margin-right: .5rem; } .verdict { white-space: nowrap; }
+.hit { color: var(--hit); font-weight: 700; } .miss { color: var(--miss); font-weight: 700; }
+.pending { color: var(--muted); }
+.table-title { margin: 2rem 0 .5rem; }
+table { border-collapse: collapse; width: 100%; }
+.ledger { display: block; overflow-x: auto; font-size: .95rem; }
+.ledger th { text-align: left; font-weight: 600; font-size: .85rem; color: var(--muted); border-bottom: 1px solid var(--ink); padding: .4rem .6rem; white-space: nowrap; }
+.ledger td { padding: .5rem .6rem; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+.ledger .num, .compact .num { text-align: right; }
+.prov { margin: 1.5rem 0; color: var(--muted); font-size: .95rem; max-width: 72ch; }
+.prov summary { cursor: pointer; } .prov ul { padding-left: 1.2rem; } .prov li { margin: .4rem 0; }
+.legend { font-size: .9rem; color: var(--muted); margin: .5rem 0 0; }
+.swatch { display: inline-block; width: .8em; height: .8em; border-radius: 50%; margin: 0 .35em 0 1em; vertical-align: -.05em; }
+.swatch.model { background: var(--model); } .swatch.vegas { background: var(--vegas); } .legend .swatch:first-child { margin-left: 0; }
+.chart { width: 100%; max-width: 640px; height: auto; display: block; }
+.chart .grid { stroke: var(--rule); stroke-width: 1; } .chart .ref { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 4 4; }
+.chart .tick, .chart .label { font-size: 12px; fill: var(--muted); font-family: "Source Sans 3", system-ui, sans-serif; }
+.chart .line { fill: none; stroke-width: 2; } .chart .line.model { stroke: var(--model); } .chart .line.vegas { stroke: var(--vegas); }
+.chart .dot { stroke: var(--bg); stroke-width: 2; } .chart .dot.model { fill: var(--model); } .chart .dot.vegas { fill: var(--vegas); }
+.chart .dot[fill="none"] { fill: var(--bg) !important; stroke-width: 2; } .chart .dot[fill="none"].model { stroke: var(--model); } .chart .dot[fill="none"].vegas { stroke: var(--vegas); }
+.chart .label.model { fill: var(--model); } .chart .label.vegas { fill: var(--vegas); }
+figure { margin: 1.5rem 0; } figcaption { color: var(--muted); font-size: .95rem; margin-bottom: .5rem; max-width: 62ch; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start; }
+.compact td, .compact th { padding: .35rem .5rem; border-bottom: 1px solid var(--rule); font-size: .95rem; }
+.compact th { text-align: left; color: var(--muted); font-weight: 600; font-size: .85rem; } .compact .total td { font-weight: 600; border-top: 1px solid var(--ink); }
+footer { margin-top: 3rem; }
+@media (max-width: 720px) { .two-col { grid-template-columns: 1fr; } .cards { grid-template-columns: 1fr; } body { font-size: 16px; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<main>
+<div class="top"><h1><a href="index.html">nfl-predict</a></h1>
+<p class="lede">Every NFL game picked before kickoff, written down where it cannot be changed, graded against Vegas.</p></div>
+<nav class="weeks"><a href="index.html">This week</a><a href="weeks/2026_01.html">Week 1</a><a href="season.html" aria-current="page">Season</a></nav>
+<h2>2026 season</h2><p>No games graded yet. Results are recorded the Tuesday after each week.</p><section id="backtest">
+  <h2>Before going live: 2021, 2022, 2023, 2024, 2025</h2>
+  <p>The same model, replayed week by week over five seasons it never saw during tuning: 110 retrains,
+     1,424 games, each fit using only games that had finished before that week's first kickoff.
+     Vegas is the closing line on the same games. <strong>The model does not beat Vegas.</strong> It trails by
+     1.5 points of pick accuracy and 0.30 points of
+     spread error. That is the bar the live season is measured against.</p>
+  <div class="two-col">
+  <table class="compact"><thead><tr><th>Season</th><th class="num">Our picks right</th><th class="num">Vegas</th><th class="num">Our spread error</th><th class="num">Vegas</th></tr></thead>
+  <tbody><tr><td>2021</td><td class="num">63.2%</td><td class="num">62.1%</td><td class="num">11.05</td><td class="num">10.67</td></tr><tr><td>2022</td><td class="num">63.7%</td><td class="num">66.5%</td><td class="num">8.97</td><td class="num">8.78</td></tr><tr><td>2023</td><td class="num">65.3%</td><td class="num">67.4%</td><td class="num">10.31</td><td class="num">9.98</td></tr><tr><td>2024</td><td class="num">68.1%</td><td class="num">70.5%</td><td class="num">9.98</td><td class="num">9.70</td></tr><tr><td>2025</td><td class="num">64.6%</td><td class="num">66.0%</td><td class="num">10.03</td><td class="num">9.67</td></tr><tr class="total"><td>All</td><td class="num">65.0%</td><td class="num">66.5%</td>
+  <td class="num">10.07</td><td class="num">9.76</td></tr></tbody></table>
+  <figure><figcaption>Calibration on those 1,424 games. On the diagonal, a stated probability matched how often it came true.</figcaption>
+  <svg class="chart" viewBox="0 0 360 320" role="img" aria-label="calibration: predicted vs observed"><line class="ref" x1="44.0" y1="280.0" x2="344.0" y2="16.0"/><text class="tick" x="38" y="284.0" text-anchor="end">0%</text><text class="tick" x="44.0" y="298" text-anchor="middle">0%</text><text class="tick" x="38" y="218.0" text-anchor="end">25%</text><text class="tick" x="119.0" y="298" text-anchor="middle">25%</text><text class="tick" x="38" y="152.0" text-anchor="end">50%</text><text class="tick" x="194.0" y="298" text-anchor="middle">50%</text><text class="tick" x="38" y="86.0" text-anchor="end">75%</text><text class="tick" x="269.0" y="298" text-anchor="middle">75%</text><text class="tick" x="38" y="20.0" text-anchor="end">100%</text><text class="tick" x="344.0" y="298" text-anchor="middle">100%</text><text class="tick" x="194.0" y="314" text-anchor="middle">predicted home win</text><circle class="dot model" cx="92.7" cy="211.9" r="5"><title>model: predicted 16%, observed 26% (n=31)</title></circle><circle class="dot model" cx="118.9" cy="192.0" r="5"><title>model: predicted 25%, observed 33% (n=90)</title></circle><circle class="dot model" cx="150.4" cy="184.8" r="5"><title>model: predicted 35%, observed 36% (n=158)</title></circle><circle class="dot model" cx="179.0" cy="182.7" r="5"><title>model: predicted 45%, observed 37% (n=228)</title></circle><circle class="dot model" cx="209.6" cy="132.4" r="5"><title>model: predicted 55%, observed 56% (n=279)</title></circle><circle class="dot model" cx="238.2" cy="127.4" r="5"><title>model: predicted 65%, observed 58% (n=282)</title></circle><circle class="dot model" cx="267.8" cy="89.1" r="5"><title>model: predicted 75%, observed 72% (n=224)</title></circle><circle class="dot model" cx="296.1" cy="48.7" r="5"><title>model: predicted 84%, observed 88% (n=121)</title></circle><circle class="dot model" cx="319.4" cy="40.0" r="5"><title>model: predicted 92%, observed 91% (n=11)</title></circle><circle class="dot vegas" cx="67.4" cy="280.0" r="4" fill="none"><title>vegas: predicted 8%, observed 0% (n=2)</title></circle><circle class="dot vegas" cx="91.5" cy="212.6" r="5"><title>vegas: predicted 16%, observed 26% (n=47)</title></circle><circle class="dot vegas" cx="122.3" cy="221.3" r="5"><title>vegas: predicted 26%, observed 22% (n=117)</title></circle><circle class="dot vegas" cx="152.3" cy="185.1" r="5"><title>vegas: predicted 36%, observed 36% (n=231)</title></circle><circle class="dot vegas" cx="171.6" cy="160.9" r="5"><title>vegas: predicted 43%, observed 45% (n=164)</title></circle><circle class="dot vegas" cx="216.7" cy="136.7" r="5"><title>vegas: predicted 58%, observed 54% (n=291)</title></circle><circle class="dot vegas" cx="238.2" cy="106.9" r="5"><title>vegas: predicted 65%, observed 66% (n=241)</title></circle><circle class="dot vegas" cx="265.9" cy="88.6" r="5"><title>vegas: predicted 74%, observed 72% (n=200)</title></circle><circle class="dot vegas" cx="296.9" cy="40.4" r="5"><title>vegas: predicted 84%, observed 91% (n=119)</title></circle><circle class="dot vegas" cx="320.0" cy="16.0" r="5"><title>vegas: predicted 92%, observed 100% (n=12)</title></circle></svg><p class="legend"><span class="swatch model"></span>Model <span class="swatch vegas"></span>Vegas</p></figure>
+  </div>
+  <p class="fine"><a href="https://github.com/Kanishk234/nfl-game-predictor/blob/main/data/backtest.json">backtest.json</a>, regenerated by every retrain, and the
+     <a href="https://github.com/Kanishk234/nfl-game-predictor/blob/main/docs/reports/phase2_model_backtest.md">full report</a> including everything tried and rejected.</p>
+</section><section id="about">
+  <h2>How to check any of this</h2>
+  <p>Every prediction is a JSON file committed to a public repository before kickoff, stamped with the time it was
+     generated and the exact code and data that produced it. Vegas lines are fetched and frozen in the same instant,
+     into a second file beside it. After the games, a grader reads those files and writes the results; it cannot edit
+     a prediction. If a prediction were ever wrong or late, the fix is a new file with a new timestamp; the old one stays.</p>
+  <p>The model is a logistic regression and a ridge regression on 30 features: Elo, rolling EPA form from play-by-play,
+     quarterback ratings and draft position, rest, and schedule facts. It retrains before every pass on every completed
+     game since 2002. Nothing it uses is knowable only after a kickoff, and a test suite asserts that on every commit.</p>
+  <p><a href="https://github.com/Kanishk234/nfl-game-predictor">Repository</a>, <a href="https://github.com/Kanishk234/nfl-game-predictor/tree/main/data/predictions">predictions</a>,
+     <a href="https://github.com/Kanishk234/nfl-game-predictor/tree/main/data/odds">odds snapshots</a>, <a href="https://github.com/Kanishk234/nfl-game-predictor/tree/main/data/results">results</a>,
+     <a href="https://github.com/Kanishk234/nfl-game-predictor/actions">the scheduled jobs</a>.</p>
+</section>
+<footer class="fine"><p>Built Tue Sep 8, 1:57 pm ET from the committed data. No JavaScript, no tracking.</p></footer>
+</main>
+</body>
+</html>
