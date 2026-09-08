@@ -14,6 +14,10 @@ from datetime import UTC, datetime, timedelta
 
 import polars as pl
 
+#: When the regular early pass runs: Thursday 21:00 UTC (see .github/workflows/predict-early.yml).
+#: The Tuesday safety-net run uses this to decide whether a week opens too early for it.
+EARLY_PASS_WEEKDAY, EARLY_PASS_HOUR = 3, 21
+
 #: Conservative upper bound on wall-clock game length (regulation + overtime + stoppages).
 #: A game's *result* is not knowable until roughly this long after its kickoff, so this is what
 #: separates "a prior game we may learn from" from "a game still in progress".
@@ -83,6 +87,20 @@ def assert_before_kickoff(target: WeekTarget, now: datetime | None = None) -> No
             f"at or after the week's last kickoff {target.latest_kickoff.isoformat()} — "
             "there is no game left to predict (see CLAUDE.md, 'The gate')"
         )
+
+
+def next_scheduled_early_pass(now: datetime) -> datetime:
+    """The next Thursday 21:00 UTC at or after `now`.
+
+    Used by the Tuesday safety-net run: if the target week's first kickoff is later than this,
+    the regular Thursday pass will cover the whole week and Tuesday should stay out of the way.
+    """
+    d = now.replace(hour=EARLY_PASS_HOUR, minute=0, second=0, microsecond=0)
+    if d < now:
+        d += timedelta(days=1)
+    while d.weekday() != EARLY_PASS_WEEKDAY:
+        d += timedelta(days=1)
+    return d
 
 
 def games_in_week(games: pl.DataFrame, season: int, week: int) -> pl.DataFrame:

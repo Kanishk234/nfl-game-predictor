@@ -32,6 +32,7 @@ from nfl_predict.data.pipeline import PROCESSED_PATH, assert_no_leakage, build_f
 from nfl_predict.data.schedule import (
     WeekTarget,
     assert_before_kickoff,
+    next_scheduled_early_pass,
     next_week_target,
 )
 from nfl_predict.model.backtest import DEFAULT_SPEC
@@ -138,7 +139,8 @@ def write_record(record: dict, path: Path) -> Path:
     return path
 
 
-def run(pass_name: str, now: datetime | None = None, retrain: bool = True) -> tuple[Path, Path]:
+def run(pass_name: str, now: datetime | None = None, retrain: bool = True,
+        only_early_openers: bool = False) -> tuple[Path, Path] | None:
     now = now or datetime.now(UTC)
 
     frame = build_frame()
@@ -148,6 +150,13 @@ def run(pass_name: str, now: datetime | None = None, retrain: bool = True) -> tu
 
     target = next_week_target(frame, now)
     assert_before_kickoff(target, now)
+
+    if only_early_openers and target.earliest_kickoff > next_scheduled_early_pass(now):
+        # The safety-net run. This week opens after the regular Thursday pass, so that pass
+        # will cover all of it with a fresher model; publishing now would only burn the slot.
+        print(f"{target.season} week {target.week} opens {target.earliest_kickoff.isoformat()}, "
+              f"after the next scheduled pass; leaving it to Thursday")
+        return None
     pred_path, odds_path = prediction_path(target, pass_name), snapshot_path(target, pass_name)
     if pred_path.exists():
         # Already published (a manual run, or a re-triggered job). Immutability means there is
@@ -187,9 +196,15 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--pass", dest="pass_name", choices=PASSES, required=True)
     ap.add_argument("--no-retrain", action="store_true", help="reuse data/models/latest.joblib")
+    ap.add_argument("--only-early-openers", action="store_true",
+                    help="publish only if the week opens before the next scheduled Thursday pass "
+                         "(the Tuesday safety net for Thanksgiving, Christmas and Wednesday openers)")
     args = ap.parse_args(argv)
 
-    pred_path, odds_path = run(args.pass_name, retrain=not args.no_retrain)
+    paths = run(args.pass_name, retrain=not args.no_retrain, only_early_openers=args.only_early_openers)
+    if paths is None:
+        return 0
+    pred_path, odds_path = paths
     record = json.loads(pred_path.read_text())
     print(f"wrote {pred_path} and {odds_path}")
     print(f"  {record['season']} week {record['week']} ({record['pass']}): {record['n_games']} games, "
