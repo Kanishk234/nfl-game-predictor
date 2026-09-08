@@ -194,3 +194,5 @@ Open:
 - **Real gap found instead.** A Thursday 21:00 UTC pass misses any game kicking off earlier that week. Measured 2002-2026: **31 weeks would have lost a game** — Thanksgiving's 12:30 PM ET game *every season*, plus Christmas (2025 wk17) and Wednesday openers (2012, 2026 wk1, 2026 wk12).
 - Fix: second `predict-early` cron, Tuesday 16:00 UTC, with `--only-early-openers`. It publishes only when the week's first kickoff precedes the next scheduled Thursday pass; otherwise it exits without writing. Simulated over 2026 it fires for weeks 1 and 12 only.
 - `next_scheduled_early_pass()` in schedule.py; 4 tests including the Thanksgiving-week case. Suite 94 passed.
+
+- Added `docs/WEEKLY_FLOW.md`: the running schedule (what fires when, what each job writes, what is immutable, how the gate is enforced, manual commands, what a red/no-op job means). Linked from PLAN.md.

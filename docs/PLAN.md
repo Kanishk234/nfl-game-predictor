@@ -1,5 +1,7 @@
 # nfl-predict — Implementation Plan
 
+The running schedule once it is live is in [WEEKLY_FLOW.md](WEEKLY_FLOW.md).
+
 High-level phased plan. Each phase ends with a summary report in `docs/reports/` per CLAUDE.md.
 Phases are ordered so each one produces something checkable before the next starts — no phase
 should be "trust me, it'll come together in phase 6."
