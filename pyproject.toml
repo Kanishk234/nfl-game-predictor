@@ -16,6 +16,7 @@ dependencies = [
     "xgboost",
     "lightgbm",
     "requests",
+    "tzdata",
 ]
 
 [project.optional-dependencies]
@@ -32,6 +33,7 @@ where = ["src"]
 testpaths = ["tests"]
 markers = [
     "leakage: the gate - asserts no feature uses information available only at or after kickoff",
+    "network: requires a network round-trip to nflreadpy's data host",
 ]
 
 [tool.ruff]
