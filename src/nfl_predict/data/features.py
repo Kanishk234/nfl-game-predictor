@@ -22,12 +22,14 @@ import polars as pl
 
 from nfl_predict.data.schedule import GAME_DURATION
 
-#: Elo tuning. Deliberately conventional -- Phase 2 owns model tuning; this is just a feature.
+#: Elo tuning. K and carryover were chosen by walk-forward log loss over the 2012-2019 tuning
+#: seasons (see docs/reports/phase2_model_backtest.md). K sits mid-plateau (40-60 were within
+#: 0.0001 of each other); home advantage barely matters since the model fits its own intercept.
 ELO_START = 1500.0
-ELO_K = 20.0
-ELO_HOME_ADVANTAGE = 65.0
+ELO_K = 50.0
+ELO_HOME_ADVANTAGE = 55.0
 #: Fraction of a team's deviation from the mean carried into the next season.
-ELO_SEASON_CARRYOVER = 2 / 3
+ELO_SEASON_CARRYOVER = 0.5
 
 #: Games in the rolling form window.
 FORM_WINDOW = 8
@@ -212,3 +214,136 @@ def rolling_form(games: pl.DataFrame, window: int = FORM_WINDOW) -> pl.DataFrame
         .alias("margin_form"),
         prior_completion.alias("form_as_of_utc"),
     ).select("game_id", "team", "off_epa_form", "def_epa_form", "margin_form", "form_as_of_utc")
+
+
+#: Quarterback rating: shrunk rolling passing EPA per attempt over the QB's last QB_WINDOW
+#: qualifying games (>= QB_MIN_ATTEMPTS attempts, so mop-up duty does not count as a start).
+QB_WINDOW = 16
+QB_MIN_ATTEMPTS = 10
+#: Shrinkage prior: a QB with no history is treated as QB_PRIOR_ATTEMPTS attempts at replacement
+#: level, and that prior fades as real attempts accumulate. Replacement level is a fixed constant
+#: (roughly the 25th percentile of starters' per-attempt EPA) rather than something computed from
+#: the data, so it cannot smuggle in information from future seasons.
+QB_PRIOR_ATTEMPTS = 200
+QB_REPLACEMENT_EPA = -0.05
+
+
+def _qb_game_log(seasons: list[int]) -> pl.DataFrame:
+    """Per QB-game passing lines. Seasons with no published stats file yet are skipped."""
+    frames = []
+    for season in seasons:
+        try:
+            frames.append(
+                nfl.load_player_stats(seasons=[season], summary_level="week")
+                .filter((pl.col("position") == "QB") & (pl.col("attempts") >= QB_MIN_ATTEMPTS))
+                .select("game_id", "player_id", "attempts", "passing_epa")
+            )
+        except (ConnectionError, OSError):
+            continue
+    if not frames:
+        return pl.DataFrame(
+            schema={"game_id": pl.String, "player_id": pl.String,
+                    "attempts": pl.Int64, "passing_epa": pl.Float64}
+        )
+    return pl.concat(frames)
+
+
+def qb_features(games: pl.DataFrame) -> pl.DataFrame:
+    """Listed-starter quality for both sides, plus how the starter compares to the previous one.
+
+    Three things the team-level features cannot see:
+
+    - `qb_rating_diff`: the listed starters' shrunk rolling EPA/attempt, home minus away.
+    - `qb_change_delta`: for each side, listed starter's rating minus the rating of whoever
+      started that team's *previous* game (zero when unchanged), home minus away. A backup
+      stepping in looks identical to the starter at team level; this is where it shows.
+    - `qb_exp_diff`: log prior-start count, home minus away.
+
+    Ratings are looked up with a strict backward as-of join on the completion time of the QB's
+    last qualifying game, so the value is exactly what was knowable before this kickoff, and
+    the same lookup serves games that have not been played yet. The listed starter itself comes
+    from the schedule; for a completed game that is the actual starter, which is what the market
+    priced at kickoff but is marginally more certain than the projection a Tuesday pass sees.
+    """
+    played = games.filter(pl.col("is_played"))
+    log = (
+        _qb_game_log(sorted(played["season"].unique().to_list()))
+        .join(played.select("game_id", "kickoff_utc"), on="game_id", how="inner")
+        .sort("player_id", "kickoff_utc")
+    )
+    epa_sum = pl.col("passing_epa").rolling_sum(QB_WINDOW, min_samples=1).over("player_id")
+    att_sum = pl.col("attempts").rolling_sum(QB_WINDOW, min_samples=1).over("player_id")
+    # State of the QB *after* each game, stamped with when that state became knowable.
+    log = log.select(
+        "player_id",
+        (pl.col("kickoff_utc") + GAME_DURATION).alias("known_at"),
+        ((epa_sum + QB_PRIOR_ATTEMPTS * QB_REPLACEMENT_EPA) / (att_sum + QB_PRIOR_ATTEMPTS))
+        .alias("qb_rating"),
+        (pl.int_range(pl.len()).over("player_id") + 1).alias("qb_starts"),
+    )
+
+    def as_of(targets: pl.DataFrame, qb_col: str, prefix: str) -> pl.DataFrame:
+        """Latest QB state known strictly before each target kickoff.
+
+        Written as an explicit join + filter rather than `join_asof` so the strictness is
+        visible in the code, and so that a QB with no log rows at all still yields a row.
+        """
+        keyed = targets.rename({qb_col: "player_id"})
+        known = pl.col("known_at") < pl.col("kickoff_utc")
+        latest = (
+            keyed.join(log, on="player_id", how="left")
+            .sort("known_at", nulls_last=False)
+            .group_by("game_id", "kickoff_utc", "player_id", maintain_order=True)
+            .agg(
+                pl.col("qb_rating").filter(known).last(),
+                pl.col("qb_starts").filter(known).last(),
+                pl.col("known_at").filter(known).last(),
+            )
+            .with_columns(
+                pl.col("qb_rating").fill_null(QB_REPLACEMENT_EPA),
+                pl.col("qb_starts").fill_null(0),
+            )
+        )
+        return latest.rename({
+            "qb_rating": f"{prefix}_qb_rating", "qb_starts": f"{prefix}_qb_starts",
+            "known_at": f"{prefix}_qb_as_of_utc", "player_id": qb_col,
+        })
+
+    # Who started each team's previous game (in kickoff order, all games incl. unplayed).
+    starters = pl.concat([
+        games.select("game_id", "kickoff_utc", pl.col("home_team").alias("team"),
+                     pl.col("home_qb_id").alias("qb")),
+        games.select("game_id", "kickoff_utc", pl.col("away_team").alias("team"),
+                     pl.col("away_qb_id").alias("qb")),
+    ]).sort("team", "kickoff_utc").with_columns(pl.col("qb").shift(1).over("team").alias("prev_qb"))
+
+    sides = []
+    for side in ("home", "away"):
+        base = games.select("game_id", "kickoff_utc", pl.col(f"{side}_team").alias("team"),
+                            pl.col(f"{side}_qb_id").alias("qb"))
+        base = base.join(starters.select("game_id", "team", "prev_qb"), on=["game_id", "team"])
+        cur = as_of(base.select("game_id", "kickoff_utc", "qb"), "qb", side)
+        prev = as_of(base.select("game_id", "kickoff_utc", "prev_qb"), "prev_qb", f"{side}_prev")
+        merged = cur.join(prev, on=["game_id", "kickoff_utc"]).with_columns(
+            pl.when(pl.col("qb") == pl.col("prev_qb"))
+            .then(0.0)
+            .otherwise(pl.col(f"{side}_qb_rating") - pl.col(f"{side}_prev_qb_rating"))
+            .fill_null(0.0)
+            .alias(f"{side}_qb_change_delta"),
+        )
+        sides.append(merged.select(
+            "game_id", f"{side}_qb_rating", f"{side}_qb_starts", f"{side}_qb_change_delta",
+            pl.max_horizontal(f"{side}_qb_as_of_utc", f"{side}_prev_qb_as_of_utc")
+            .alias(f"{side}_qb_as_of_utc"),
+        ))
+
+    home, away = sides
+    return home.join(away, on="game_id").select(
+        "game_id",
+        "home_qb_rating", "away_qb_rating",
+        (pl.col("home_qb_rating") - pl.col("away_qb_rating")).alias("qb_rating_diff"),
+        (pl.col("home_qb_change_delta") - pl.col("away_qb_change_delta")).alias("qb_change_delta"),
+        (pl.col("home_qb_starts").cast(pl.Float64).log1p()
+         - pl.col("away_qb_starts").cast(pl.Float64).log1p()).alias("qb_exp_diff"),
+        pl.max_horizontal("home_qb_as_of_utc", "away_qb_as_of_utc").alias("qb_as_of_utc"),
+    )

@@ -29,6 +29,7 @@ _COLUMNS = [
     "away_team", "home_team", "away_score", "home_score", "result", "total",
     "location", "roof", "surface", "div_game", "overtime",
     "away_rest", "home_rest",
+    "away_qb_id", "home_qb_id",
     "spread_line", "total_line", "away_moneyline", "home_moneyline",
 ]
 

@@ -20,7 +20,7 @@ from pathlib import Path
 
 import polars as pl
 
-from nfl_predict.data.features import elo_ratings, rolling_form
+from nfl_predict.data.features import elo_ratings, qb_features, rolling_form
 from nfl_predict.data.games import load_games
 
 PROCESSED_PATH = Path("data/processed/games.parquet")
@@ -42,6 +42,11 @@ FEATURE_COLUMNS = [
     "away_def_epa_form",
     "home_margin_form",
     "away_margin_form",
+    "qb_rating_diff",
+    "qb_change_delta",
+    "qb_exp_diff",
+    "home_qb_rating",
+    "away_qb_rating",
     "rest_diff",
     "home_rest",
     "away_rest",
@@ -63,6 +68,7 @@ def build_frame() -> pl.DataFrame:
     games = load_games()
     elo = elo_ratings(games)
     form = rolling_form(games)
+    qb = qb_features(games)
 
     home_form = form.rename(
         {
@@ -87,6 +93,7 @@ def build_frame() -> pl.DataFrame:
         games.join(elo, on="game_id", how="left")
         .join(home_form, on=["game_id", "home_team"], how="left")
         .join(away_form, on=["game_id", "away_team"], how="left")
+        .join(qb, on="game_id", how="left")
         .with_columns(
             (pl.col("home_off_epa_form") - pl.col("away_off_epa_form")).alias("off_epa_form_diff"),
             (pl.col("home_def_epa_form") - pl.col("away_def_epa_form")).alias("def_epa_form_diff"),
@@ -98,8 +105,9 @@ def build_frame() -> pl.DataFrame:
             pl.col("result").alias("margin"),
             # Rest days and the schedule itself are known when the schedule is published, so
             # they contribute no as-of constraint. Only result-derived features do.
-            pl.max_horizontal("elo_as_of_utc", "home_form_as_of_utc", "away_form_as_of_utc")
-            .alias("as_of_utc"),
+            pl.max_horizontal(
+                "elo_as_of_utc", "home_form_as_of_utc", "away_form_as_of_utc", "qb_as_of_utc"
+            ).alias("as_of_utc"),
         )
     )
     return frame.select(
