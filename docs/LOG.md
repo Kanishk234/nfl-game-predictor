@@ -205,3 +205,9 @@ Open:
 - Fixed: `_FEED_NOT_READY = (ConnectionError, OSError, ValueError)` across all four per-season loaders. 6 new tests parametrised over all three exception types, plus an end-to-end "partly published season" test.
 - Verified the simulation end to end: completed games 6499 -> 6501, the Sunday game's Elo as-of advances from Feb (last season) to Sep 11 (Thursday night), and pbp form still builds 13,542 rows with the feed refusing.
 - Suite 101 passed.
+
+## 2026-09-08 — Dress rehearsal of a graded week
+
+- `tools/preview_graded_week.py` replays real completed weeks (2025 wk1-2) through the whole pipeline — walk-forward predict, freeze the real historical Vegas lines, grade against real finals, render the site — into a scratch directory. `data/` untouched (verified with git status).
+- Confirms the parts that had only ever been exercised by test fixtures: the Final row in the spread block, the score + verdict line ("GB won, ✓ we were right and our side covered the spread"), the week results strip, slot labels counting played games, and the season page's weekly accuracy chart.
+- Round trip is sound: 32 games graded, per-week and season summaries agree, history rebuilt.
