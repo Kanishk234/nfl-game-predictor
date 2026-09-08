@@ -1,29 +1,25 @@
 name: predict-early
 
-# Early pass — the frozen official prediction for the whole upcoming week, including whichever
-# game opens it.
+# Early pass — the frozen prediction for the week's Thursday-through-Saturday games (and
+# Sunday/Monday too, until the late pass refreshes them).
 #
-# This runs TUESDAY, not Thursday. The original Thursday schedule assumed the week always opens
-# with Thursday Night Football. It does not: since 2002 there have been 136 Saturday, 13 Friday,
-# 6 Wednesday and 5 Tuesday regular-season games, and 2026 Week 1 opens on WEDNESDAY Sept 9.
-# A Thursday run would have published that week's prediction ~21 hours after kickoff.
+# UTC conversion (Actions cron is UTC and has no DST awareness, so one fixed time must be safe
+# in both EDT (UTC-4) and EST (UTC-5)):
+#   We run           21:00 UTC Thu  =  5:00 PM EDT / 4:00 PM EST
+#   TNF kickoff      8:15 PM ET     =  00:15 UTC Fri (EDT) / 01:15 UTC Fri (EST)
+# That leaves 3h15m of slack in the tighter (EDT) case. Slack is deliberate: scheduled runs on
+# free runners get delayed under load.
 #
-# UTC conversion (Actions cron is UTC and has no DST awareness, so one time must be safe in both
-# EDT (UTC-4) and EST (UTC-5)):
-#   We run           16:00 UTC Tue  =  12:00 PM EDT / 11:00 AM EST
-#   Earliest opener  a Wednesday night game, ~8:20 PM ET  =  00:20 UTC Wed
-# That leaves ~32h of slack, and it lands after the Tuesday grade job (12:00 UTC) has finished.
+# The gate is per game, enforced in code: the pass predicts only games whose kickoff is still
+# ahead and refuses to run once the whole week has started. A week that opens on Wednesday
+# (2026 Week 1 did) keeps its Wednesday game out of this pass; that game needs a manual run
+# beforehand, as Week 1's did.
 #
-# The cron is only the trigger. The gate is enforced in code: the pass computes the week's
-# earliest kickoff and refuses to publish if it has already passed (see data/schedule.py). A
-# refusal fails this job loudly rather than publishing a late prediction.
-#
-# Do NOT dispatch this by hand ahead of its slot. Each (week, pass) file is immutable; a manual
-# Tuesday run of `predict-late` would burn Week N's late slot with a Tuesday prediction.
+# Re-running for a week that is already published is a clean no-op, not a failure.
 
 on:
   schedule:
-    - cron: "0 16 * * 2"
+    - cron: "0 21 * * 4"
   workflow_dispatch:
 
 permissions:

@@ -1,17 +1,24 @@
 name: grade
 
-# Post-weekend grading pass — pulls final scores and updates the results + season history.
+# Grading — pulls final scores, updates results + season history, rebuilds the site. Runs three
+# times a week so cards update as the week's games finish, not only on Tuesday:
 #
-# UTC conversion: Monday Night Football ends around 11:30 PM ET, i.e. ~03:30 UTC Tue (EDT) or
-# ~04:30 UTC Tue (EST). We run 12:00 UTC Tue (8:00 AM EDT / 7:00 AM EST), well after the last
-# game of the week has finished and after the box scores have settled upstream — and four hours
-# before predict-early, so the new week's model trains on a fully graded previous week.
+#   Fri 12:00 UTC  after Thursday night        (8 AM EDT / 7 AM EST)
+#   Mon 12:00 UTC  after the Sunday slate
+#   Tue 12:00 UTC  after Monday night          -> the week is complete
+#
+# Monday Night Football ends ~11:30 PM ET = ~03:30 UTC Tue (EDT) / ~04:30 UTC Tue (EST); noon
+# UTC leaves hours for the box scores to settle upstream. The model itself retrains at every
+# prediction pass on all completed games, so Thursday's pass already includes the whole previous
+# week; there is no separate "train on Tuesday" step to schedule.
 #
 # Safe to dispatch by hand at any time: grading only reads predictions and rewrites result files
 # from facts, and a week with no completed games writes nothing.
 
 on:
   schedule:
+    - cron: "0 12 * * 5"
+    - cron: "0 12 * * 1"
     - cron: "0 12 * * 2"
   workflow_dispatch:
 

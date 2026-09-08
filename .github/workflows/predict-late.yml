@@ -1,7 +1,7 @@
 name: predict-late
 
-# Late pass — a fresher pass covering the Sunday/Monday slate, after the week's early games
-# have been played and their results are in the training data.
+# Late pass — a fresher pass covering the Sunday/Monday slate, retrained with Thursday's (and
+# any Saturday) results already in the training data.
 #
 # UTC conversion (see predict-early.yml for why one fixed UTC time must cover EDT and EST):
 #   Sunday early slate  1:00 PM ET  =  17:00 UTC (EDT) / 18:00 UTC (EST)
@@ -13,7 +13,7 @@ name: predict-late
 # week keep their early-pass prediction, which is immutable. The grader's "official" rule picks
 # the latest pass generated before each game's kickoff, so this one wins for Sun/Mon games.
 #
-# Do NOT dispatch this by hand ahead of Sunday — see predict-early.yml.
+# Re-running for a week that is already published is a clean no-op, not a failure.
 
 on:
   schedule:
