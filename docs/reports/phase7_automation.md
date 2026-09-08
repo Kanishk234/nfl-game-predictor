@@ -7,6 +7,7 @@
 | workflow | cron (UTC) | ET | does |
 |---|---|---|---|
 | `predict-early` | `0 21 * * 4` (Thu) | 5 PM EDT / 4 PM EST | predicts every game still ahead → commit → rebuild site → deploy |
+| `predict-early` | `0 16 * * 2` (Tue) | 12 PM EDT / 11 AM EST | safety net: publishes **only** if the week opens before Thursday's pass |
 | `predict-late` | `0 14 * * 0` (Sun) | 10 AM EDT / 9 AM EST | re-predicts the Sunday/Monday slate with Thursday's result in the model |
 | `grade` | `0 12 * * 5`, `0 12 * * 1`, `0 12 * * 2` | 8 AM EDT | grades what has finished, updates history, rebuilds the site |
 
@@ -14,6 +15,16 @@ Thursday 21:00 UTC is 3h15m before the earliest possible TNF kickoff (8:15 PM ET
 EDT half of the season; Sunday 14:00 UTC is three hours before the 1 PM ET slate. Grading runs
 three times a week — Friday after Thursday night, Monday after the Sunday slate, Tuesday after
 Monday night — so the cards fill in with results as the week goes rather than all at once.
+
+**The Tuesday safety net.** A Thursday-afternoon pass misses any game that kicks off earlier in
+its own week, and that is not rare — it happens **every season since 2002**: Thanksgiving always
+has a 12:30 PM ET game, Christmas sometimes does, and 2012, 2025 and 2026 opened weeks on a
+Wednesday. Measured across 2002–2026, 31 weeks would have lost a game. So `predict-early` also
+runs Tuesday with `--only-early-openers`, which publishes only when the target week's first
+kickoff falls before the next scheduled Thursday pass and otherwise exits without writing
+anything. Simulated over 2026 it fires for exactly two weeks — week 1 (Wednesday opener) and
+week 12 (Thanksgiving eve) — and stays out of the way for the other sixteen, which keep the
+freshest possible Thursday model.
 
 **There is no separate retrain job.** Every prediction pass refits on every completed game, so
 Thursday's pass already carries the whole previous week. The ET→UTC conversion and the DST
@@ -62,8 +73,8 @@ Safe. Each `(week, pass)` file is immutable and a re-run for a week already publ
 no-op. Dispatching `predict-late` early would still burn that week's late slot with an early
 prediction, so only do it deliberately.
 
-**A week that opens before Thursday needs a manual pass.** 2026 Week 1 opened on Wednesday; its
-prediction was published by hand on the Tuesday. The Thursday cron covers every normal week.
+~~**A week that opens before Thursday needs a manual pass.**~~ Withdrawn — the Tuesday safety-net
+cron handles those automatically now. 2026 Week 1 was published by hand before that existed.
 
 ## Deferred
 

@@ -187,3 +187,10 @@ Open:
 - localhost approved in the extension, so the site was finally reviewed by looking at it rather than by reading markup. Confirmed: spread rows stack and align (Us above Vegas, both growing from a shared centre), 3-column grid at 1440px, slot dividers reading correctly, pink Vegas markers distinct from every team colour on the page.
 - The "spread still looks broken" report was a stale browser cache: the deployed page already had the fix (33 `spread-row` elements, pink `#F06BB0`). Hard refresh resolves it.
 - Logos flashed as bare white discs: ESPN serves one 500px PNG per team and ignores resize params, so `loading="lazy"` left them empty for a moment after paint. Now eager with `decoding="async"`, disc softened to #F2F3F5. 32 distinct images per week, cached across pages.
+
+## 2026-09-08 — Bye weeks checked; Thanksgiving gap found and closed
+
+- **Byes need no code.** A team on bye is simply absent from that week's games: rolling form and Elo stay put (correct — nothing happened), `rest_diff` picks up the 13+ day rest, and weeks with 13-15 games render like any other. Nothing to change.
+- **Real gap found instead.** A Thursday 21:00 UTC pass misses any game kicking off earlier that week. Measured 2002-2026: **31 weeks would have lost a game** — Thanksgiving's 12:30 PM ET game *every season*, plus Christmas (2025 wk17) and Wednesday openers (2012, 2026 wk1, 2026 wk12).
+- Fix: second `predict-early` cron, Tuesday 16:00 UTC, with `--only-early-openers`. It publishes only when the week's first kickoff precedes the next scheduled Thursday pass; otherwise it exits without writing. Simulated over 2026 it fires for weeks 1 and 12 only.
+- `next_scheduled_early_pass()` in schedule.py; 4 tests including the Thanksgiving-week case. Suite 94 passed.
