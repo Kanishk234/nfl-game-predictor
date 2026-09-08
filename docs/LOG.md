@@ -143,3 +143,9 @@ Broke / fixed:
 
 Open:
 - Visual check in a browser (none available in this session). Phone layout + gauge legibility.
+
+## 2026-09-08 — Site redesign after review
+
+- Two reviewers: the single-page ledger was cluttered and hard to read. Rebuilt: a card per game (pick in words, probability bar with Vegas marker, spreads in team terms, result + verdict once played), compact week table at the end, one page per week with a week strip, season page separate. Provenance collapsed.
+- Multi-page output regenerated every run: `index.html` (current week), `weeks/<s>_<ww>.html`, `season.html`. Nothing manual for a new week.
+- 10 site tests; all pages parse. Live site fetched and confirmed rendering Week 1 before the redesign.
