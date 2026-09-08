@@ -47,11 +47,19 @@ def test_earliest_kickoff_is_the_wednesday_game_not_the_thursday_one():
     assert target.earliest_kickoff < datetime(2026, 9, 11, 0, 35, tzinfo=UTC)
 
 
-def test_guard_rejects_the_old_thursday_cron_for_a_wednesday_opener():
-    """The regression this whole change exists for: Thursday 21:00 UTC is ~21h too late."""
+def test_thursday_run_after_a_wednesday_opener_targets_the_rest_of_the_week():
+    """The gate is per game: Wednesday's game is out of reach, Thursday's and Sunday's are not."""
+    now = datetime(2026, 9, 10, 21, 0, tzinfo=UTC)
+    target = next_week_target(_week1_with_wednesday_opener(), now)
+    assert (target.season, target.week) == (2026, 1)
+    assert target.earliest_kickoff == datetime(2026, 9, 11, 0, 35, tzinfo=UTC)  # Thursday, not Wednesday
+    assert_before_kickoff(target, now)
+
+
+def test_guard_rejects_a_run_after_the_whole_week_has_kicked_off():
     target = next_week_target(_week1_with_wednesday_opener(), datetime(2026, 9, 8, tzinfo=UTC))
-    with pytest.raises(LateRunError, match="not valid"):
-        assert_before_kickoff(target, datetime(2026, 9, 10, 21, 0, tzinfo=UTC))
+    with pytest.raises(LateRunError, match="no game left"):
+        assert_before_kickoff(target, datetime(2026, 9, 13, 17, 0, tzinfo=UTC))
 
 
 def test_guard_accepts_the_tuesday_cron():
@@ -59,11 +67,11 @@ def test_guard_accepts_the_tuesday_cron():
     assert_before_kickoff(target, datetime(2026, 9, 8, 16, 0, tzinfo=UTC))
 
 
-def test_guard_rejects_a_run_exactly_at_kickoff():
+def test_guard_rejects_a_run_exactly_at_the_last_kickoff():
     """'Before kickoff' is strict — equal timestamps are late, not on time."""
     target = next_week_target(_week1_with_wednesday_opener(), datetime(2026, 9, 8, tzinfo=UTC))
     with pytest.raises(LateRunError):
-        assert_before_kickoff(target, target.earliest_kickoff)
+        assert_before_kickoff(target, target.latest_kickoff)
 
 
 def test_target_rolls_to_next_week_once_every_game_has_kicked_off():

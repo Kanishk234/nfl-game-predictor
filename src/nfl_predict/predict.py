@@ -1,19 +1,21 @@
 """The prediction pass. Refresh data, retrain, predict the coming week, freeze the odds beside it.
 
-    python -m nfl_predict.predict --pass early     # Tuesday: the whole upcoming week
-    python -m nfl_predict.predict --pass late      # Sunday: whatever has not kicked off yet
+    python -m nfl_predict.predict --pass early     # Thursday: everything not yet kicked off
+    python -m nfl_predict.predict --pass late      # Sunday: whatever is still ahead
 
 Writes two files that are immutable once written:
 
 - data/predictions/<season>_<week>_<pass>.json
 - data/odds/<season>_<week>_<pass>.json
 
-The gate runs first: the pass computes the target week's earliest remaining kickoff and refuses
-to proceed if it has passed. Every prediction row records the UTC time it was generated and the
-model it came from, so a late or leaky prediction is provable after the fact.
+The gate is per game and enforced twice: the pass only ever selects games whose kickoff is
+still ahead, and it refuses to run at all once every game in the week has started. Every
+prediction row records the UTC time it was generated, so the grader can ignore anything written
+after its game began. A week already published is a no-op, not an error: files are immutable.
 
 "Retrain" means what CLAUDE.md says it means: refit the same model on the expanding set of
-completed games. The Sunday pass retrains too, so Thursday's result is in Sunday's model.
+completed games. Every pass retrains, so the Sunday pass has Thursday's result in its model and
+the Thursday pass has all of the previous week.
 """
 
 from __future__ import annotations
@@ -50,9 +52,11 @@ def prediction_path(target: WeekTarget, pass_name: str) -> Path:
 
 
 def games_to_predict(frame: pl.DataFrame, target: WeekTarget, now: datetime) -> pl.DataFrame:
-    """The target week's games that have not kicked off. The early pass normally gets the whole
-    week; the late pass gets the Sunday/Monday slate, and games already played keep the early
-    pass's prediction."""
+    """The target week's games that have not kicked off.
+
+    The early (Thursday) pass gets everything still ahead of it; the late (Sunday) pass gets
+    whatever remains, which is the Sunday/Monday slate. Games already played keep the earlier
+    pass's prediction, and the grader treats the latest pass before each kickoff as official."""
     return frame.filter(
         (pl.col("season") == target.season)
         & (pl.col("week") == target.week)
@@ -145,9 +149,13 @@ def run(pass_name: str, now: datetime | None = None, retrain: bool = True) -> tu
     target = next_week_target(frame, now)
     assert_before_kickoff(target, now)
     pred_path, odds_path = prediction_path(target, pass_name), snapshot_path(target, pass_name)
-    for p in (pred_path, odds_path):
-        if p.exists():
-            raise PredictionExistsError(f"{p} already exists; a pass is never re-run in place")
+    if pred_path.exists():
+        # Already published (a manual run, or a re-triggered job). Immutability means there is
+        # nothing to do, and nothing to do is not a failure.
+        print(f"{pred_path} already published; leaving it untouched")
+        return pred_path, odds_path
+    if odds_path.exists():
+        raise PredictionExistsError(f"{odds_path} exists without its prediction; refusing to guess")
 
     if retrain:
         bundle = fit_final(frame, DEFAULT_SPEC)

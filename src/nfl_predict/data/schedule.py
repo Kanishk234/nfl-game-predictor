@@ -31,9 +31,11 @@ class WeekTarget:
     season: int
     week: int
     earliest_kickoff: datetime
+    latest_kickoff: datetime
     n_games: int
 
     def deadline_gap(self, now: datetime) -> timedelta:
+        """Time until the next kickoff the pass still has to beat."""
         return self.earliest_kickoff - now
 
 
@@ -58,19 +60,28 @@ def next_week_target(games: pl.DataFrame, now: datetime | None = None) -> WeekTa
     return WeekTarget(
         season=season,
         week=week,
-        earliest_kickoff=in_week["kickoff_utc"].min(),
+        # The earliest kickoff *still ahead*: a Thursday pass after a Wednesday opener is
+        # measured against Thursday's game, not the one already played.
+        earliest_kickoff=first["kickoff_utc"],
+        latest_kickoff=in_week["kickoff_utc"].max(),
         n_games=in_week.height,
     )
 
 
 def assert_before_kickoff(target: WeekTarget, now: datetime | None = None) -> None:
-    """The gate. Refuse to proceed if the week's first game has already started."""
+    """The gate. Refuse to proceed if there is no game left in the week to predict.
+
+    The gate is per game: a pass only ever predicts games whose kickoff is still ahead
+    (`predict.games_to_predict`), and the grader ignores any prediction generated after its
+    game's kickoff. So a pass run after some of the week's games have started is fine for the
+    rest of the week; a pass run after all of them have started has nothing valid to publish.
+    """
     now = now or utcnow()
-    if now >= target.earliest_kickoff:
+    if now >= target.latest_kickoff:
         raise LateRunError(
             f"pass for {target.season} week {target.week} would run at {now.isoformat()}, "
-            f"at or after the week's first kickoff {target.earliest_kickoff.isoformat()} — "
-            "a prediction published now is not valid (see CLAUDE.md, 'The gate')"
+            f"at or after the week's last kickoff {target.latest_kickoff.isoformat()} — "
+            "there is no game left to predict (see CLAUDE.md, 'The gate')"
         )
 
 

@@ -54,7 +54,7 @@ def _odds():
 
 
 def _target():
-    return WeekTarget(season=2026, week=1, earliest_kickoff=T0, n_games=3)
+    return WeekTarget(season=2026, week=1, earliest_kickoff=T0, latest_kickoff=T0 + timedelta(days=3), n_games=3)
 
 
 class TestWhatGetsPredicted:
@@ -97,22 +97,34 @@ class TestRecord:
 
 
 class TestGateInRun:
-    def test_run_refuses_after_kickoff(self, monkeypatch, tmp_path):
+    def test_run_refuses_once_the_whole_week_has_kicked_off(self, monkeypatch, tmp_path):
         monkeypatch.setattr(P, "build_frame", _frame)
         monkeypatch.setattr(P, "assert_no_leakage", lambda f: None)
         monkeypatch.setattr(P, "PROCESSED_PATH", tmp_path / "games.parquet")
         from nfl_predict.data.schedule import LateRunError
         with pytest.raises(LateRunError):
-            P.run("early", now=T0 + timedelta(minutes=5))
+            P.run("late", now=T0 + timedelta(days=3, minutes=5))
 
-    def test_run_refuses_to_overwrite_an_existing_pass(self, monkeypatch, tmp_path):
+    def test_run_after_the_opener_predicts_only_the_rest(self, monkeypatch, tmp_path):
+        monkeypatch.setattr(P, "build_frame", _frame)
+        monkeypatch.setattr(P, "assert_no_leakage", lambda f: None)
+        monkeypatch.setattr(P, "PROCESSED_PATH", tmp_path / "games.parquet")
+        monkeypatch.setattr(P, "PREDICTIONS_DIR", tmp_path / "predictions")
+        monkeypatch.setattr(P, "snapshot_path", lambda t, n: tmp_path / "odds" / f"{t.season}_{t.week:02d}_{n}.json")
+        monkeypatch.setattr(P, "fetch_snapshot", lambda t, n, f, now=None: {**_odds(), "fetched_at_utc": now.isoformat()})
+        monkeypatch.setattr(P, "fit_final", lambda frame, spec: _bundle())
+        pred_path, _ = P.run("early", now=T0 + timedelta(hours=5))  # Wednesday's game is under way
+        rec = json.loads(pred_path.read_text())
+        assert [p["game_id"] for p in rec["predictions"]] == ["2026_01_SF_LA", "2026_01_ATL_PIT"]
+
+    def test_run_leaves_an_existing_pass_untouched_and_does_not_fail(self, monkeypatch, tmp_path):
         monkeypatch.setattr(P, "build_frame", _frame)
         monkeypatch.setattr(P, "assert_no_leakage", lambda f: None)
         monkeypatch.setattr(P, "PROCESSED_PATH", tmp_path / "games.parquet")
         monkeypatch.setattr(P, "PREDICTIONS_DIR", tmp_path)
-        (tmp_path / "2026_01_early.json").write_text("{}")
-        with pytest.raises(P.PredictionExistsError):
-            P.run("early", now=T0 - timedelta(days=1))
+        (tmp_path / "2026_01_early.json").write_text('{"published": "earlier"}')
+        pred_path, _ = P.run("early", now=T0 - timedelta(days=1))
+        assert json.loads(pred_path.read_text()) == {"published": "earlier"}
 
     def test_run_end_to_end_with_stubbed_odds_and_model(self, monkeypatch, tmp_path):
         monkeypatch.setattr(P, "build_frame", _frame)
