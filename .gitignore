@@ -1,1 +1,26 @@
 CLAUDE.md
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+build/
+dist/
+
+# Tooling
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Regenerable training snapshots (data/ is otherwise committed and is the source of truth)
+data/processed/*
+!data/processed/.gitkeep
+
+# Notebooks are exploration only, nothing here is load-bearing
+notebooks/.ipynb_checkpoints/
+
+# Local secrets (odds API key comes from GitHub Actions secrets in CI)
+.env

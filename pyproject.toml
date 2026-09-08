@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nfl-predict"
+version = "0.1.0"
+description = "Weekly-retraining NFL win-probability and spread predictions with a public, pre-kickoff track record"
+requires-python = ">=3.12"
+dependencies = [
+    "nflreadpy",
+    "polars",
+    "pandas",
+    "numpy",
+    "scikit-learn",
+    "xgboost",
+    "lightgbm",
+    "requests",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "ruff",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "leakage: the gate - asserts no feature uses information available only at or after kickoff",
+]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
