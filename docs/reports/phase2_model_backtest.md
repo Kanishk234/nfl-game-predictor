@@ -10,11 +10,11 @@ kickoff):
 
 | | accuracy | log loss | Brier | AUC | ECE | spread MAE |
 |---|---|---|---|---|---|---|
-| **Model** | **64.5%** | **0.630** | 0.221 | 0.697 | 0.042 | **10.06** |
+| **Model** | **65.0%** | **0.631** | 0.221 | 0.696 | 0.043 | **10.07** |
 | Vegas closing line | 66.5% | 0.610 | 0.212 | 0.727 | 0.026 | 9.76 |
 
-**The model does not beat Vegas.** It trails by 2.0 points of accuracy, 0.020 of log loss and
-0.29 points of spread MAE, and its against-the-spread record is 684–707–33, 49.2% (breakeven
+**The model does not beat Vegas.** It trails by 1.5 points of accuracy, 0.021 of log loss and
+0.30 points of spread MAE, and its against-the-spread record is 682–709–33, 49.0% (breakeven
 at −110 is 52.4%). It is, however, a real model: bare Elo is at 62–63%, the untuned first attempt was 63.1%,
 and the gap to the market roughly halved over this phase. Every number above comes from a
 window that nothing was tuned on.
@@ -36,7 +36,7 @@ window that nothing was tuned on.
 
 ## What ships, and why it is not a GBDT
 
-**Logistic regression for win probability, ridge for margin, 26 features.** The plan named a
+**Logistic regression for win probability, ridge for margin, 30 features.** The plan named a
 gradient-boosted model; CLAUDE.md says to optimise purely for predictive quality. Those turned
 out to conflict, and the invariant wins:
 
@@ -170,15 +170,56 @@ slope 0.964 and intercept −0.02 (perfect is 1, 0). It is not systematically ov
 under-confident; the residual error is game-specific information, not a global miscalibration
 that a Platt layer would fix.
 
+## Fourth pass: new data sources, and the noise floor
+
+The previous three passes screened features built from the same sources. This one went after
+*untapped* public data, on both tuning windows (2006–2019 and 2012–2019) simultaneously.
+
+**Adopted: play-by-play form** — four features from `load_pbp` (complete back to 2002), each a
+16-game rolling mean, offence and defence: **EPA per play excluding turnover plays** (turnover
+EPA swings are huge and the recovery is close to a coin flip, so they are noise in a quality
+measure) and **explosive-play rate** (share of plays gaining 20+, a stable trait that EPA
+averages wash out). Together: −0.0011 on the wide window, −0.0023 on the narrow. The raw 8-game
+EPA form stays; dropping it in favour of these was worse. Holdout, touched once: log loss
+0.6303 → 0.6306, accuracy 64.5% → 65.0%, MAE flat. Kept by the selection rule.
+
+**Rejected from pbp**, same windows: success rate (8 and 16), competitive-only (10–90% win
+probability) EPA and success rate, turnover rates, early-down pass/rush EPA, CPOE, early-down
+pass rate over expected — all between +0.0010 and −0.0004 — and replacing the raw EPA form with
+any of the pbp variants.
+
+**Rejected, other sources:**
+
+| candidate | WIDE | NARROW | note |
+|---|---|---|---|
+| Snap-weighted injuries (sum of prior-game snap share of players Out, 2012+) | +0.0013 | — | worse even with kickoff-time reports; Tuesday-time: 0 |
+| Offseason roster continuity (share of last season's snaps still on the week-1 roster) | — | −0.0002 (2015–19) | weeks 1–4 only: 0.6503 → 0.6497 |
+| Linear season trend (lets home advantage drift) | +0.0004 | +0.0004 | |
+| Referee home-win rate as-of | −0.0005 | −0.0003 | assignments are not known in advance for upcoming games; unusable regardless |
+| Coach career win% / tenure | +0.0010 / +0.0005 | +0.0002 | |
+| Turnover-margin form | 0 | +0.0010 | |
+| Elo: higher K in weeks 1–4; EPA-driven updates; split home/away ratings | +0.0004 to +0.0048 | +0.0014 to +0.0052 | every variant worse |
+| Variance scaling by predicted total | 0 | 0 | |
+
+**The noise floor.** Four passes and roughly eighty candidates in, the pattern is now clear
+enough to state as a finding. The paired standard error of a log-loss difference is about
+0.002–0.003 on the tuning windows and about 0.004 on the 1,424-game holdout. Every adopted
+change since the QB features has been of that size, which is why two of them (QB window, pbp
+form) did not visibly move the holdout and one (draft prior) did: at this scale, transfer is a
+coin flip. Vegas is 0.020 ahead. An improvement large enough to matter — 0.01 or more — would
+have been unmistakable in any of these screens, and nothing came close. On public pre-kickoff
+data this model is at the resolution limit of the dataset, and further screening on 2002–2019
+cannot distinguish a real 0.001 gain from luck. The right next experiment is a live season.
+
 ## Per-season, holdout
 
 | season | model acc | model logloss | Vegas acc | Vegas logloss |
 |---|---|---|---|---|
-| 2021 | 61.8% | 0.652 | 62.1% | 0.628 |
-| 2022 | 63.7% | 0.627 | 66.5% | 0.603 |
-| 2023 | 63.5% | 0.631 | 67.4% | 0.623 |
-| 2024 | 68.8% | 0.612 | 70.5% | 0.589 |
-| 2025 | 64.9% | 0.629 | 66.0% | 0.606 |
+| 2021 | 63.2% | 0.651 | 62.1% | 0.628 |
+| 2022 | 63.7% | 0.626 | 66.5% | 0.603 |
+| 2023 | 65.3% | 0.633 | 67.4% | 0.623 |
+| 2024 | 68.1% | 0.615 | 70.5% | 0.589 |
+| 2025 | 64.6% | 0.628 | 66.0% | 0.606 |
 
 ## Known limitations — the honest part
 

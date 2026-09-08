@@ -73,3 +73,11 @@ Open:
 - Rejected: SRS rating, team HFA, training-window ensembles, recent-intercept recal, prev-season EPA prior, week flags/interactions, diffs-only set, stakes/eliminated features, C=0.01. Elo params and QB window re-validated on wide window.
 - Calibration slope 0.964 / intercept -0.02 on tuning: no global miscalibration to fix.
 - Holdout now: 64.5% / 0.630 / MAE 10.06 / ATS 49.2% vs Vegas 66.5% / 0.610 / 9.76. 26 features. `pytest` 50 passed.
+
+## 2026-09-08 — Phase 2 fourth pass (new data sources)
+
+- Pulled `load_pbp` 2002-2025 (complete, ~70s). Screened 13 pbp-derived stats on both tuning windows.
+- **Adopted pbp form (4 features, 16-game window):** no-turnover EPA/play and explosive-play rate, off+def. WIDE -0.0011, NARROW -0.0023. Holdout once: logloss 0.6303 -> 0.6306 (flat), acc 64.5 -> 65.0%.
+- Rejected: success rate, competitive-only EPA/SR, TO rates, early-down EPA, CPOE, pass-rate-over-expected; snap-weighted injuries (+0.0013 even at kickoff as-of); roster continuity; season trend; referee (unusable in advance anyway); coach; TO-margin form; three Elo variants (all worse); total-variance scaling.
+- **Noise floor stated in report:** SE of a logloss diff ~0.002-0.003 tuning / ~0.004 holdout. Every post-QB gain is that size; Vegas leads by 0.020. Model is at the dataset's resolution limit on public data.
+- Holdout now: 65.0% / 0.631 / MAE 10.07 vs Vegas 66.5% / 0.610 / 9.76. 30 features. `pytest` 51 passed, ruff clean.
