@@ -63,6 +63,7 @@ class TestScoring:
     def test_per_game_grades(self):
         graded = {g["game_id"]: g for g in G.grade_rows(list(G.official_predictions(_passes()).values()), _finals())}
         ab = graded["2026_01_A_B"]
+        assert ab["pick"] == "B" and ab["winner"] == "B"
         assert ab["model"]["correct"] == 1 and ab["vegas"]["correct"] == 1
         assert ab["model"]["brier"] == pytest.approx(0.09) and ab["model"]["abs_error"] == 1.0
         assert ab["model"]["ats"] == "win"       # we said +6 vs line +3, home won by 7: home covers
@@ -70,7 +71,15 @@ class TestScoring:
         assert cd["pass"] == "late"
         assert cd["model"]["ats"] == "push"      # margin 3 == line 3
         ef = graded["2026_01_E_F"]
+        assert ef["pick"] == "F" and ef["winner"] == "E"
         assert ef["model"]["correct"] == 0 and ef["vegas"] is None and "ats" not in ef["model"]
+
+    def test_a_tie_has_no_winner_and_is_not_scored_as_a_pick(self):
+        finals = _finals().with_columns(
+            pl.when(pl.col("game_id") == "2026_01_A_B").then(24).otherwise(pl.col("away_score")).alias("away_score"))
+        graded = {g["game_id"]: g for g in G.grade_rows(list(G.official_predictions(_passes()).values()), finals)}
+        assert graded["2026_01_A_B"]["winner"] == "tie"
+        assert graded["2026_01_A_B"]["model"]["correct"] is None
 
     def test_summary_aggregates(self):
         graded = G.grade_rows(list(G.official_predictions(_passes()).values()), _finals())

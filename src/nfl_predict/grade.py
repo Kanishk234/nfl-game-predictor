@@ -79,6 +79,9 @@ def grade_rows(rows: list[tuple[str, dict]], finals: pl.DataFrame) -> list[dict]
             "home_team": p["home_team"], "away_team": p["away_team"],
             "home_score": int(g["home_score"]), "away_score": int(g["away_score"]),
             "margin": margin, "home_win": home_win,
+            # Plain-English verdict beside the numbers: who we said, who actually won.
+            "winner": p["home_team"] if margin > 0 else (p["away_team"] if margin < 0 else "tie"),
+            "pick": p["pick"],
             "model": {
                 "p_home": p_home, "pred_margin": p["pred_margin"], "pick": p["pick"],
                 "correct": int((p_home >= 0.5) == (home_win == 1)) if margin != 0 else None,
