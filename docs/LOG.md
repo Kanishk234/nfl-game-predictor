@@ -118,3 +118,14 @@ Open:
 
 Open:
 - Correction-file naming convention still undefined (needed by both predict and grade); define when first needed.
+
+## 2026-09-08 — Phase 7 automation
+
+- Crons wired: grade Tue 12:00 UTC, predict-early Tue 16:00 UTC, predict-late Sun 14:00 UTC. Each: run -> bot commits only its data dir -> push (rebase, full-history checkout) -> deploy.
+- `GITHUB_TOKEN` pushes don't trigger workflows -> `deploy-site` made `workflow_call` and chained as a downstream job; checkout pinned to `ref: main`.
+- Shared concurrency group `data-writes`; gate failure = red job, nothing written.
+- All YAML parses; commit shell simulated locally. **Real scheduled run not yet verified** — that's the exit criterion.
+
+Open:
+- Dispatch `grade` by hand once to exercise the chain safely. Never dispatch predict-* early (immutable slots).
+- Phase 6 site_build must be added to the workflows when it exists.
