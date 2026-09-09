@@ -384,3 +384,28 @@ predict job rebases onto it, and origin ends with both. A re-run is a clean no-o
 - Season chart: 22 weeks of x labels collided ("wk 10wk 11"), and both series ending at 100%
   stacked their end labels. Labels are now thinned to fit with the last week always kept, and
   colliding end labels are nudged apart.
+
+## 2026-09-08 (late) — pre-season readiness check
+
+Audited what has actually run on Actions versus what is only assumed to work.
+
+Proven on real Actions: `deploy-site` (the live site serves the newest commit's markup), and
+`grade` + `tools/publish.sh` (commit 733ba47, "grade 2026-09-08 results", authored by
+github-actions[bot] — so checkout, GITHUB_TOKEN push and permissions are all good).
+
+Never yet exercised on Actions: the odds fetch. Week 1's early prediction was committed by hand
+during phase 4 development, using the local `.env` key — the `ODDS_API_KEY` *repository secret*
+has never been read by a job. Worse, Thursday's run cannot test it: predict.py returns at the
+"already published" check (predict.py:183) before it ever reaches fetch_snapshot (line 209), so
+the no-op skips the odds path entirely. First real use would have been Sunday's late pass.
+
+An outage there is non-fatal by design — the prediction publishes and the gap is recorded — so a
+bad secret produces a *green* run with a silently baseline-less week. Added
+`.github/workflows/check-odds-key.yml`: manual dispatch only, asserts the secret is present,
+then fetches to `$RUNNER_TEMP` and prints the quota. Commits nothing, so it cannot burn the
+week's slot.
+
+Also confirmed: no cron could have fired today (the Tuesday cron landed on main at 16:50 UTC,
+after its own 16:00 slot; every other cron landed later still). First scheduled runs are
+Thursday 21:00 UTC (a no-op, week 1 is published) and Friday 12:00 UTC (the first real grading).
+Retrain cost measured at 113s of a 30-minute budget: 106s downloading feeds, 5.6s fitting.
