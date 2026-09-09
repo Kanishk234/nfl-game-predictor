@@ -357,3 +357,9 @@ predict job rebases onto it, and origin ends with both. A re-run is a clean no-o
   the colour-distance work. Fixed the wording, and the same stale claim in phase6's report.
 - Rebuilt the full 2025 simulation's 24 site pages with current code to show what a completed
   week looks like.
+- Card results were a sentence you had to read ("SEA won, ✓ we were right, and our side covered
+  the spread"). Replaced with a tinted band: one large ✓/✗/= glyph, the score with the winner
+  picked out and the loser muted, and a chip each for the pick and the spread. Colour is never
+  the only signal — every state carries its own glyph too. Verified by rendering all 22
+  simulated weeks: 183 hit bands, 101 miss, 1 tie, and every chip variant including the push.
+  Two site tests asserted on the old sentence and were rewritten to assert the structure.
