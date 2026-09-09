@@ -89,12 +89,19 @@ class TestPages:
         assert '<strong>NE</strong><span class="conf">60%</span>' in page
         assert "we disagree" in page  # Vegas (58% SEA) and we (NE) differ
 
-    def test_graded_card_shows_score_winner_and_verdict(self):
+    def test_graded_card_shows_the_result_at_a_glance(self):
+        """The verdict must be legible without reading a sentence: a tone, a glyph, the winner
+        picked out of the score, and one chip per thing we were judged on."""
         preds = [_pred(1, "early", [_row("2026_01_NE_SEA", "SEA", "NE")])]
         results = {(2026, 1): _result(1, [_graded("2026_01_NE_SEA", "SEA", "NE", "SEA", 1)])}
         page = S.render_site(preds, results, None, None, NOW)["index.html"]
-        assert '<span class="score">NE 17, SEA 24</span>' in page
-        assert 'SEA won, <span class="hit">✓ we were right</span>, and our side covered the spread.' in page
+        band = re.search(r'<div class="result.*?</div></div>', page, re.DOTALL).group(0)
+        assert 'class="result hit"' in band                       # the tint
+        assert '✓</span>' in band                             # and a glyph, never colour alone
+        assert '<span class="side">NE 17</span>' in band          # loser stays muted
+        assert '<span class="side won">SEA 24</span>' in band     # winner is picked out
+        assert 'Pick ✓' in band and 'Spread ✓' in band
+        assert "we were right" not in page, "the verdict is shown, not narrated"
         assert "Week 1, 2026, complete" in page
         assert "1 game, 1 played" in page  # the slot label counts what is done
 
@@ -210,15 +217,20 @@ class TestSeasonChartHonesty:
 
 
 class TestTiesAndTableConsistency:
-    def test_a_tie_reads_as_a_sentence_and_is_not_scored(self):
+    def test_a_tie_is_neutral_and_is_not_scored(self):
         preds = [_pred(1, "early", [_row("2026_01_NE_SEA", "SEA", "NE")])]
         tie = {**_graded("2026_01_NE_SEA", "SEA", "NE", "tie", None),
                "home_score": 20, "away_score": 20, "margin": 0.0}
         tie["model"]["correct"] = None
         page = S.render_site(preds, {(2026, 1): _result(1, [tie])}, None, None, NOW)["index.html"]
-        assert "It was a tie, so the pick does not count" in page
-        assert "a tie, a tie" not in page          # the sentence it used to produce
-        assert "✓ we were right" not in page and "✗ we were wrong" not in page
+        band = re.search(r'<div class="result.*?</div></div>', page, re.DOTALL).group(0)
+        assert 'class="result tie"' in band
+        assert 'Pick —' in band and 'the pick does not count' in band
+        # neither side is the winner, and the pick is never claimed as right or wrong. The
+        # spread chip is left alone on purpose: a 20-20 tie can still beat a non-zero line, so
+        # it is legitimately gradeable even when the pick is not.
+        assert 'class="side won"' not in band
+        assert 'Pick ✓' not in band and 'Pick ✗' not in band
 
     def test_both_probability_columns_describe_the_team_we_picked(self):
         # We pick the away team at 60%; Vegas has the home team at 58%, i.e. our pick at 42%.

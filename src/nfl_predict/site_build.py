@@ -402,18 +402,28 @@ def game_card(pass_name: str, p: dict, g: dict | None) -> str:
 
     if g:
         ok = g["model"]["correct"]
+        # The result has to read at a glance, not be parsed: one glyph and a tint carry the
+        # verdict, the score is picked out by winner, and the two things we were judged on -
+        # the pick and the spread - are separate chips rather than clauses in a sentence.
         # A tie is neither right nor wrong: the pick simply does not count towards accuracy.
         if g["winner"] == "tie":
-            verdict = "It was a tie, so the pick does not count"
+            tone, mark, pick_chip = "tie", "=", ("tie", "Pick —", "a tie: the pick does not count")
+        elif ok:
+            tone, mark, pick_chip = "hit", "✓", ("hit", "Pick ✓", "we picked the winner")
         else:
-            mark = ('<span class="hit">✓ we were right</span>' if ok
-                    else '<span class="miss">✗ we were wrong</span>')
-            verdict = f'{e(g["winner"])} won, {mark}'
-        ats_txt = {"win": "our side covered the spread", "loss": "our side did not cover the spread",
-                   "push": "the spread was a push"}.get(g["model"].get("ats"), "")
-        joiner = "; " if g["winner"] == "tie" else ", and "
-        outcome = (f'<p class="final"><span class="score">{e(away)} {g["away_score"]}, {e(home)} {g["home_score"]}</span><br>'
-                   f'{verdict}' + (f'{joiner}{e(ats_txt)}' if ats_txt else "") + '.</p>')
+            tone, mark, pick_chip = "miss", "✗", ("miss", "Pick ✗", "we picked the loser")
+        ats_chip = {"win": ("hit", "Spread ✓", "our side covered the spread"),
+                    "loss": ("miss", "Spread ✗", "our side did not cover the spread"),
+                    "push": ("tie", "Spread —", "the spread was a push")}.get(g["model"].get("ats"))
+        chips = "".join(f'<span class="chip {c}" title="{e(title)}">{e(text)}</span>'
+                        for c, text, title in (pick_chip, ats_chip) if c)
+        won_home = g["winner"] == home
+        won_away = g["winner"] == away
+        outcome = (f'<div class="result {tone}"><span class="mark" aria-hidden="true">{mark}</span>'
+                   f'<div class="result-body">'
+                   f'<p class="score"><span class="side{" won" if won_away else ""}">{e(away)} {g["away_score"]}</span>'
+                   f'<span class="side{" won" if won_home else ""}">{e(home)} {g["home_score"]}</span></p>'
+                   f'<p class="chips">{chips}</p></div></div>')
         actual, status = g["margin"], "played"
     else:
         outcome, actual, status = "", None, "upcoming"
@@ -521,7 +531,8 @@ def week_body(season: int, week: int, passes: list[dict], result: dict | None) -
 <p><strong>Our pick</strong> is the model's call, in that team's colour. The bar is the win probability; the small pink
    triangle under it is where Vegas puts it. <strong>Vegas</strong> is the betting favourite, for comparison. The spread
    rows show how much each of us expects the winner to win by: ours in the team colour, Vegas in pink. Once a game is
-   played, the score and a verdict appear at the bottom.</p></details>
+   played, a green or red band appears at the bottom with the score and two chips: whether we
+   picked the winner, and whether our side covered the spread.</p></details>
 {summary_strip(result["summary"] if result else None, "Official predictions only: the latest pass published before each game's kickoff.")}
 {groups}
 <h3 class="table-title">All games this week</h3>
@@ -688,8 +699,25 @@ a:focus-visible, summary:focus-visible {{ outline: 2px solid var(--model); outli
 .spread-fill {{ position: absolute; top: 0; height: 10px; border-radius: 5px; background: var(--favc); min-width: 3px; }}
 .spread-row.vegas .spread-fill {{ background: var(--vegas); }}
 .spread-row.final .spread-fill {{ background: var(--ink); }}
-.final {{ margin: 1.15rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); font-size: .95rem; }}
-.score {{ font-weight: 600; margin-right: .5rem; }}
+/* The played-game footer. The tint and the glyph say right or wrong before any word is read;
+   the chips split the two judgements so neither has to be found inside a sentence. Colour is
+   never the only signal - every state also carries its own glyph. */
+.result {{ display: flex; align-items: center; gap: .85rem; margin: 1.15rem -1.25rem -1.25rem;
+           padding: .8rem 1.25rem; border-top: 1px solid var(--rule); }}
+.result.hit {{ background: rgba(63, 185, 80, .10); border-top-color: rgba(63, 185, 80, .35); }}
+.result.miss {{ background: rgba(248, 81, 73, .10); border-top-color: rgba(248, 81, 73, .35); }}
+.result.tie {{ background: rgba(138, 143, 152, .10); }}
+.result .mark {{ flex: none; font-size: 1.6rem; line-height: 1; font-weight: 700; width: 1.3rem; text-align: center; }}
+.result.hit .mark {{ color: var(--hit); }} .result.miss .mark {{ color: var(--miss); }}
+.result.tie .mark {{ color: var(--muted); }}
+.result-body {{ min-width: 0; flex: 1; }}
+.result .score {{ display: flex; gap: 1.1rem; margin: 0; font-size: 1.05rem; font-weight: 600; color: var(--muted); }}
+.result .side.won {{ color: var(--ink); }}
+.chips {{ display: flex; flex-wrap: wrap; gap: .4rem; margin: .35rem 0 0; }}
+.chip {{ font-size: .78rem; font-weight: 600; padding: .1rem .5rem; border-radius: 999px;
+         border: 1px solid var(--rule2); color: var(--muted); white-space: nowrap; }}
+.chip.hit {{ color: var(--hit); border-color: rgba(63, 185, 80, .45); }}
+.chip.miss {{ color: var(--miss); border-color: rgba(248, 81, 73, .45); }}
 .hit {{ color: var(--hit); font-weight: 700; }} .miss {{ color: var(--miss); font-weight: 700; }}
 .pending {{ color: var(--muted); }}
 .table-title {{ margin: 2.25rem 0 .5rem; }}
