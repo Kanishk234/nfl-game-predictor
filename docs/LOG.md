@@ -409,3 +409,6 @@ Also confirmed: no cron could have fired today (the Tuesday cron landed on main 
 after its own 16:00 slot; every other cron landed later still). First scheduled runs are
 Thursday 21:00 UTC (a no-op, week 1 is published) and Friday 12:00 UTC (the first real grading).
 Retrain cost measured at 113s of a 30-minute budget: 106s downloading feeds, 5.6s fitting.
+- check-odds-key dispatched and green: the ODDS_API_KEY *secret* works in Actions, not just the
+  local .env. That was the last link in the chain never exercised by a job. Everything the
+  unattended season depends on has now run for real at least once.
