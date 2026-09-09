@@ -1,0 +1,49 @@
+name: check-odds-key
+
+# Manual only. Proves the ODDS_API_KEY repository secret actually works, before a scheduled
+# pass depends on it.
+#
+# Why this exists: an odds outage is deliberately non-fatal — predict.py publishes the
+# prediction anyway and records why the baseline is missing, because a missing prediction is a
+# permanent hole and a missing line is one empty column. That is the right trade, but it also
+# means a bad or absent secret produces a GREEN run with a quietly baseline-less week. The
+# health check reports it afterwards; this reports it beforehand.
+#
+# It writes the snapshot to a scratch path and commits nothing, so it can be run any day
+# without consuming the week's slot or touching the record. It does spend API credits (one per
+# market, three per snapshot, out of 500 a month), so run it when something changed — a new
+# key, a new repo, a rotated secret — not on a schedule.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e .
+      - name: the secret is present
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+        # Checked separately so an unset secret says so, rather than surfacing as a confusing
+        # failure inside the fetch. Never echo the key itself — only whether it is there.
+        run: |
+          if [ -z "${ODDS_API_KEY}" ]; then
+            echo "ODDS_API_KEY is not set for this repository."
+            echo "Settings -> Secrets and variables -> Actions -> New repository secret."
+            exit 1
+          fi
+          echo "ODDS_API_KEY is set (${#ODDS_API_KEY} characters)."
+      - name: the key works and the quota is healthy
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+        run: python -m nfl_predict.odds.fetch --pass early --out "${RUNNER_TEMP}/odds-check.json"
