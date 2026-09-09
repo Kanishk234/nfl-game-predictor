@@ -217,6 +217,42 @@ class TestSeasonChartHonesty:
 
 
 class TestTiesAndTableConsistency:
+    def test_a_graded_game_with_no_line_still_renders(self):
+        """No odds means no spread chip and no Vegas chip. The page must still build: this
+        exact shape once raised TypeError and took every week page down with it."""
+        preds = [_pred(1, "early", [_row("2026_01_NE_SEA", "SEA", "NE", pv=None)])]
+        g = _graded("2026_01_NE_SEA", "SEA", "NE", "SEA", 1)
+        g["vegas"] = None
+        g["model"].pop("ats", None)
+        page = S.render_site(preds, {(2026, 1): _result(1, [g])}, None, None, NOW)["index.html"]
+        band = re.search(r'<div class="result.*?</div></div>', page, re.DOTALL).group(0)
+        assert 'Pick ✓' in band
+        assert "Spread" not in band and "Vegas" not in band
+
+    def test_the_card_grades_vegas_on_the_same_game(self):
+        """Head to head, per game: we disagreed and were right, so the two glyphs must differ."""
+        preds = [_pred(1, "early", [_row("2026_01_NE_SEA", "SEA", "NE", p=0.62, pv=0.40)])]
+        g = _graded("2026_01_NE_SEA", "SEA", "NE", "SEA", 1)
+        g["vegas"]["correct"] = 0
+        page = S.render_site(preds, {(2026, 1): _result(1, [g])}, None, None, NOW)["index.html"]
+        band = re.search(r'<div class="result.*?</div></div>', page, re.DOTALL).group(0)
+        assert 'Pick ✓' in band
+        assert 'class="chip vegas" title="Vegas picked the loser">Vegas ✗' in band
+
+    def test_the_strip_reports_the_head_to_head_record(self):
+        preds = [_pred(1, "early", [_row("2026_01_NE_SEA", "SEA", "NE")])]
+        res = _result(1, [_graded("2026_01_NE_SEA", "SEA", "NE", "SEA", 1)])
+        res["summary"]["head_to_head"] = {"disagreements": 8, "we_were_right": 5, "vegas_was_right": 3}
+        page = S.render_site(preds, {(2026, 1): res}, None, None, NOW)["index.html"]
+        assert "When we disagree" in page and "5 of 8" in page
+
+    def test_the_strip_hides_the_head_to_head_until_there_is_one(self):
+        preds = [_pred(1, "early", [_row("2026_01_NE_SEA", "SEA", "NE")])]
+        res = _result(1, [_graded("2026_01_NE_SEA", "SEA", "NE", "SEA", 1)])
+        res["summary"]["head_to_head"] = {"disagreements": 0, "we_were_right": 0, "vegas_was_right": 0}
+        page = S.render_site(preds, {(2026, 1): res}, None, None, NOW)["index.html"]
+        assert "When we disagree" not in page
+
     def test_a_tie_is_neutral_and_is_not_scored(self):
         preds = [_pred(1, "early", [_row("2026_01_NE_SEA", "SEA", "NE")])]
         tie = {**_graded("2026_01_NE_SEA", "SEA", "NE", "tie", None),

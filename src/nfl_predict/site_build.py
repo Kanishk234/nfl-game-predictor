@@ -300,8 +300,18 @@ def line_chart(series: dict[str, list[tuple[int, float]]], y_label: str, y_min: 
                    f'<text class="tick" x="{ml - 6}" y="{Y(t) + 4:.1f}" text-anchor="end">{t * 100:.0f}%</text>')
     if ref is not None:
         out.append(f'<line class="ref" x1="{ml}" y1="{Y(ref):.1f}" x2="{w - mr}" y2="{Y(ref):.1f}"/>')
-    for wk in weeks:
+    # Thin the week labels to whatever fits. A full 22-week season at 640px wide put them
+    # 25px apart and "wk 10" ran into "wk 11"; the first and last are always kept so the axis
+    # still says what it spans.
+    gap = 34
+    step = max(1, -(-len(weeks) * gap // (w - ml - mr)))
+    keep = [wk for i, wk in enumerate(weeks) if i % step == 0]
+    if weeks[-1] not in keep:
+        # The last week always gets a label, so drop whatever it would have landed on top of.
+        keep = [wk for wk in keep if X(weeks[-1]) - X(wk) >= gap] + [weeks[-1]]
+    for wk in keep:
         out.append(f'<text class="tick" x="{X(wk):.1f}" y="{h - 10}" text-anchor="middle">wk {wk}</text>')
+    ends: dict[int, float] = {}
     for name, pts in series.items():
         cls = "model" if name == "Model" else "vegas"
         d = " ".join(f"{'M' if i == 0 else 'L'}{X(wk):.1f},{Y(v):.1f}" for i, (wk, v) in enumerate(pts))
@@ -309,7 +319,11 @@ def line_chart(series: dict[str, list[tuple[int, float]]], y_label: str, y_min: 
         for wk, v in pts:
             out.append(f'<circle class="dot {cls}" cx="{X(wk):.1f}" cy="{Y(v):.1f}" r="4"/>')
         wk, v = pts[-1]
-        out.append(f'<text class="label {cls}" x="{X(wk) + 10:.1f}" y="{Y(v) + 4:.1f}">{e(name)} {v * 100:.0f}%</text>')
+        # Both series can finish on the same value (two short playoff weeks both at 100%), which
+        # stacked the two end labels on top of each other. Nudge them apart when that happens.
+        y = Y(v) + 4 + ends.get(round(Y(v)), 0)
+        ends[round(Y(v))] = ends.get(round(Y(v)), 0) + 14
+        out.append(f'<text class="label {cls}" x="{X(wk) + 10:.1f}" y="{y:.1f}">{e(name)} {v * 100:.0f}%</text>')
     out.append("</svg>")
     return "".join(out)
 
@@ -415,8 +429,16 @@ def game_card(pass_name: str, p: dict, g: dict | None) -> str:
         ats_chip = {"win": ("hit", "Spread ✓", "our side covered the spread"),
                     "loss": ("miss", "Spread ✗", "our side did not cover the spread"),
                     "push": ("tie", "Spread —", "the spread was a push")}.get(g["model"].get("ats"))
+        # Vegas gets graded on the same game, on the card, in its own colour. Most weeks we
+        # agree and the chip just mirrors ours; the games worth seeing are the ones where the
+        # two glyphs disagree, and those are exactly the games this makes findable.
+        gv = g.get("vegas")
+        vegas_chip = None
+        if gv and gv.get("correct") is not None:
+            vegas_chip = ("vegas", f'Vegas {"✓" if gv["correct"] else "✗"}',
+                          "Vegas picked the winner" if gv["correct"] else "Vegas picked the loser")
         chips = "".join(f'<span class="chip {c}" title="{e(title)}">{e(text)}</span>'
-                        for c, text, title in (pick_chip, ats_chip) if c)
+                        for c, text, title in filter(None, (pick_chip, ats_chip, vegas_chip)))
         won_home = g["winner"] == home
         won_away = g["winner"] == away
         outcome = (f'<div class="result {tone}"><span class="mark" aria-hidden="true">{mark}</span>'
@@ -492,6 +514,9 @@ def summary_strip(s: dict | None, note: str) -> str:
              ("Our spread error", f'{m["spread_mae"]:.1f} pts'), ("Line's error", f'{v["spread_mae"]:.1f} pts' if v else "—")]
     if "ats" in m:
         a = m["ats"]; cells.append(("Against the spread", f'{a["ats_w"]}–{a["ats_l"]}–{a["ats_push"]}'))
+    h = s.get("head_to_head")
+    if h and h["disagreements"]:
+        cells.append(("When we disagree", f'{h["we_were_right"]} of {h["disagreements"]}'))
     return ('<dl class="strip">' + "".join(f'<div><dt>{e(k)}</dt><dd>{val}</dd></div>' for k, val in cells)
             + f'</dl><p class="fine">{e(note)}</p>')
 
@@ -531,8 +556,8 @@ def week_body(season: int, week: int, passes: list[dict], result: dict | None) -
 <p><strong>Our pick</strong> is the model's call, in that team's colour. The bar is the win probability; the small pink
    triangle under it is where Vegas puts it. <strong>Vegas</strong> is the betting favourite, for comparison. The spread
    rows show how much each of us expects the winner to win by: ours in the team colour, Vegas in pink. Once a game is
-   played, a green or red band appears at the bottom with the score and two chips: whether we
-   picked the winner, and whether our side covered the spread.</p></details>
+   played, a green or red band appears at the bottom with the score and chips for whether we
+   picked the winner, whether our side covered the spread, and whether Vegas got it right.</p></details>
 {summary_strip(result["summary"] if result else None, "Official predictions only: the latest pass published before each game's kickoff.")}
 {groups}
 <h3 class="table-title">All games this week</h3>
@@ -718,6 +743,7 @@ a:focus-visible, summary:focus-visible {{ outline: 2px solid var(--model); outli
          border: 1px solid var(--rule2); color: var(--muted); white-space: nowrap; }}
 .chip.hit {{ color: var(--hit); border-color: rgba(63, 185, 80, .45); }}
 .chip.miss {{ color: var(--miss); border-color: rgba(248, 81, 73, .45); }}
+.chip.vegas {{ color: var(--vegas); border-color: rgba(240, 107, 176, .45); }}
 .hit {{ color: var(--hit); font-weight: 700; }} .miss {{ color: var(--miss); font-weight: 700; }}
 .pending {{ color: var(--muted); }}
 .table-title {{ margin: 2.25rem 0 .5rem; }}
