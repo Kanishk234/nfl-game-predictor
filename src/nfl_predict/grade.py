@@ -141,7 +141,27 @@ def summarise(graded: list[dict]) -> dict:
         out["model"]["ats"] = spread_metrics(mmv, mv, line).row()
         out["model"]["ats"]["breakeven"] = ATS_BREAKEVEN
         out["n_with_line"] = len(with_v)
+        out["head_to_head"] = head_to_head(with_v)
     return out
+
+
+def head_to_head(graded: list[dict]) -> dict:
+    """The sharpest read on whether we are adding anything: the games where we and Vegas named
+    different winners. Agreeing with the market says nothing about our edge either way - only a
+    disagreement puts the two of us on opposite sides of a decidable question.
+
+    Ties are excluded, since neither side can be right about a game with no winner.
+    """
+    n = won = lost = 0
+    for g in graded:
+        if g["model"]["correct"] is None or g["vegas"]["correct"] is None:
+            continue
+        if (g["model"]["p_home"] >= 0.5) == (g["vegas"]["p_home"] >= 0.5):
+            continue
+        n += 1
+        won += g["model"]["correct"]
+        lost += g["vegas"]["correct"]
+    return {"disagreements": n, "we_were_right": won, "vegas_was_right": lost}
 
 
 def grade_week(season: int, week: int, games: pl.DataFrame) -> dict | None:

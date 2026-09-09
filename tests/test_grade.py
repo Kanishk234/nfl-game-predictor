@@ -159,3 +159,35 @@ class TestIdempotency:
         self._setup(monkeypatch, tmp_path, ())
         G.run(2026)
         assert not (tmp_path / "results" / "2026_01.json").exists()
+
+
+class TestHeadToHead:
+    """Agreeing with the market proves nothing either way. The disagreements are the test."""
+
+    def _g(self, model_p, vegas_p, home_won, *, tie=False):
+        return {"model": {"p_home": model_p, "correct": None if tie else int((model_p >= 0.5) == home_won)},
+                "vegas": {"p_home": vegas_p, "correct": None if tie else int((vegas_p >= 0.5) == home_won)}}
+
+    def test_agreements_are_not_counted(self):
+        both_right = [self._g(0.7, 0.8, True) for _ in range(5)]
+        both_wrong = [self._g(0.7, 0.8, False) for _ in range(3)]
+        h = G.head_to_head(both_right + both_wrong)
+        assert h == {"disagreements": 0, "we_were_right": 0, "vegas_was_right": 0}
+
+    def test_a_disagreement_is_scored_to_exactly_one_side(self):
+        ours = [self._g(0.7, 0.4, True) for _ in range(3)]     # we say home, they say away, home wins
+        theirs = [self._g(0.3, 0.6, True) for _ in range(2)]   # we say away, they say home, home wins
+        h = G.head_to_head(ours + theirs)
+        assert h == {"disagreements": 5, "we_were_right": 3, "vegas_was_right": 2}
+        assert h["we_were_right"] + h["vegas_was_right"] == h["disagreements"]
+
+    def test_a_tie_is_not_a_disagreement_anyone_can_win(self):
+        h = G.head_to_head([self._g(0.7, 0.4, True, tie=True)])
+        assert h["disagreements"] == 0
+
+    def test_it_rides_along_with_the_week_summary(self):
+        graded = [{"home_win": 1, "margin": 7.0,
+                   "model": {"p_home": 0.7, "pred_margin": 3.0, "correct": 1},
+                   "vegas": {"p_home": 0.4, "spread_line": -1.0, "correct": 0}}]
+        s = G.summarise(graded)
+        assert s["head_to_head"] == {"disagreements": 1, "we_were_right": 1, "vegas_was_right": 0}
