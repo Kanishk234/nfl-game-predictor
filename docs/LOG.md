@@ -363,3 +363,24 @@ predict job rebases onto it, and origin ends with both. A re-run is a clean no-o
   the only signal — every state carries its own glyph too. Verified by rendering all 22
   simulated weeks: 183 hit bands, 101 miss, 1 tie, and every chip variant including the push.
   Two site tests asserted on the old sentence and were rewritten to assert the structure.
+
+## 2026-09-08 — grading Vegas head to head
+
+- Vegas was already scored on every game with the same metrics as us (accuracy, Brier, spread
+  MAE, per game and per week) — it just was not visible on the cards. Added:
+  - a Vegas chip on every graded card, in the Vegas pink, so the head-to-head is readable per
+    game. Where we agreed it mirrors ours; where we disagreed the two glyphs differ, which is
+    exactly the case worth finding.
+  - `head_to_head()` in grade.py: of the games where we and Vegas named different winners, how
+    many each side got right. Agreeing with the market says nothing either way, so this is the
+    sharpest read on whether the model adds anything. Ties excluded (nobody can be right).
+    Shown in the summary strip as "When we disagree — 14 of 32", hidden until there is one.
+- Re-graded the simulated 2025 season with the new code: 285 games, us 64.6% / Vegas 66.0%,
+  spread MAE 10.03 vs 9.67, and 32 disagreements which we lost 14–18. Consistent with the
+  holdout backtest — a solid model that has not beaten the market.
+- Fixed a latent crash found while doing it: the chip generator unpacked its tuples before the
+  `if c` filter ran, so any absent chip raised TypeError. A graded game with no Vegas line would
+  have taken down every week page. Now filters first; regression test covers the no-line card.
+- Season chart: 22 weeks of x labels collided ("wk 10wk 11"), and both series ending at 100%
+  stacked their end labels. Labels are now thinned to fit with the last week always kept, and
+  colliding end labels are nudged apart.
