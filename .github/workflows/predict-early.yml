@@ -70,7 +70,7 @@ jobs:
       # Commits the data, rebases, rebuilds the site on top, and pushes with retries.
       # See tools/publish.sh for why the site is built after the rebase and not before.
       - name: publish
-        run: tools/publish.sh "data/predictions data/odds"
+        run: bash tools/publish.sh "data/predictions data/odds"
 
   deploy:
     needs: predict
