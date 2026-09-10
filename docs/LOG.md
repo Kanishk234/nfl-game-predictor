@@ -412,3 +412,29 @@ Retrain cost measured at 113s of a 30-minute budget: 106s downloading feeds, 5.6
 - check-odds-key dispatched and green: the ODDS_API_KEY *secret* works in Actions, not just the
   local .env. That was the last link in the chain never exercised by a job. Everything the
   unattended season depends on has now run for real at least once.
+
+## 2026-09-10 — publish.sh was not executable on the runner
+
+Thursday's predict-early run went red:
+
+    tools/publish.sh: Permission denied
+    Error: Process completed with exit code 126
+
+`tools/publish.sh` was committed from Windows as mode 100644, so ubuntu could not execute it.
+Nothing was lost — week 1 was already published, so the predict step was a no-op and the
+publisher had nothing to push. That is luck, not design: on Sunday the late pass makes a *real*
+prediction and would have failed the same way, after the work was done, on an ephemeral runner.
+The prediction would have been gone and cannot be back-dated. Friday's grade job would have hit
+it too, since all three publishing workflows invoked the script the same way.
+
+Fixed both layers: `git update-index --chmod=+x tools/publish.sh`, and all three workflows now
+call `bash tools/publish.sh`, which makes the file mode irrelevant even if the bit is lost again
+by a future edit from Windows.
+
+The deeper defect was that nothing checked the workflows at all — they are the one part of the
+system that only ever runs on someone else's machine, once a week, unattended. Added
+tests/test_workflows.py: repo scripts invoked directly must be committed 100755, referenced
+scripts must exist, and the three publishing workflows must invoke the publisher identically so
+they cannot drift. Verified it catches the real bug by reproducing the exact broken state
+(direct invocation + 100644) and watching it fail, then restoring the fix. Also declared pyyaml
+in the dev extra, which the new test needs and CI would otherwise have failed on.
