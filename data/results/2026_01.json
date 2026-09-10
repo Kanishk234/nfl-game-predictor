@@ -1,0 +1,120 @@
+{
+  "season": 2026,
+  "week": 1,
+  "n_games": 16,
+  "n_predicted": 16,
+  "n_graded": 1,
+  "complete": false,
+  "passes": [
+    "early"
+  ],
+  "official_rule": "latest pass generated before each game's actual kickoff",
+  "rescheduled_games": [],
+  "summary": {
+    "n": 1,
+    "model": {
+      "n": 1,
+      "accuracy": 1.0,
+      "brier": 0.10883400999999998,
+      "log_loss": 0.400328324003012,
+      "auc": NaN,
+      "ece": 0.32989999999999997,
+      "spread_mae": 2.09,
+      "ats": {
+        "n": 1,
+        "mae": 2.09,
+        "rmse": 2.09,
+        "ats_w": 0,
+        "ats_l": 0,
+        "ats_push": 1,
+        "ats_pct": NaN,
+        "breakeven": 0.5238
+      }
+    },
+    "vegas": {
+      "n": 1,
+      "accuracy": 1.0,
+      "brier": 0.1456791562263271,
+      "log_loss": 0.4807481685287127,
+      "auc": NaN,
+      "ece": 0.38167938931297707,
+      "spread_mae": 0.0
+    },
+    "n_with_line": 1,
+    "head_to_head": {
+      "disagreements": 0,
+      "we_were_right": 0,
+      "vegas_was_right": 0
+    }
+  },
+  "by_pass": {
+    "early": {
+      "n": 1,
+      "model": {
+        "n": 1,
+        "accuracy": 1.0,
+        "brier": 0.10883400999999998,
+        "log_loss": 0.400328324003012,
+        "auc": NaN,
+        "ece": 0.32989999999999997,
+        "spread_mae": 2.09,
+        "ats": {
+          "n": 1,
+          "mae": 2.09,
+          "rmse": 2.09,
+          "ats_w": 0,
+          "ats_l": 0,
+          "ats_push": 1,
+          "ats_pct": NaN,
+          "breakeven": 0.5238
+        }
+      },
+      "vegas": {
+        "n": 1,
+        "accuracy": 1.0,
+        "brier": 0.1456791562263271,
+        "log_loss": 0.4807481685287127,
+        "auc": NaN,
+        "ece": 0.38167938931297707,
+        "spread_mae": 0.0
+      },
+      "n_with_line": 1,
+      "head_to_head": {
+        "disagreements": 0,
+        "we_were_right": 0,
+        "vegas_was_right": 0
+      }
+    }
+  },
+  "games": [
+    {
+      "game_id": "2026_01_NE_SEA",
+      "pass": "early",
+      "kickoff_utc": "2026-09-10T00:20:00+00:00",
+      "home_team": "SEA",
+      "away_team": "NE",
+      "home_score": 13,
+      "away_score": 10,
+      "margin": 3.0,
+      "home_win": 1,
+      "winner": "SEA",
+      "pick": "SEA",
+      "model": {
+        "p_home": 0.6701,
+        "pred_margin": 5.09,
+        "pick": "SEA",
+        "correct": 1,
+        "brier": 0.10883400999999998,
+        "abs_error": 2.09,
+        "ats": "push"
+      },
+      "vegas": {
+        "p_home": 0.6183206106870229,
+        "spread_line": 3.0,
+        "correct": 1,
+        "brier": 0.1456791562263271,
+        "abs_error": 0.0
+      }
+    }
+  ]
+}
