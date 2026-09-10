@@ -25,6 +25,8 @@ dev = [
     "pytest",
     "pytest-cov",
     "ruff",
+    # tests/test_workflows.py parses .github/workflows/*.yml
+    "pyyaml",
 ]
 
 [tool.setuptools.packages.find]
