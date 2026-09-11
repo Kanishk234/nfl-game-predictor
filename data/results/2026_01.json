@@ -3,7 +3,7 @@
   "week": 1,
   "n_games": 16,
   "n_predicted": 16,
-  "n_graded": 1,
+  "n_graded": 2,
   "complete": false,
   "passes": [
     "early"
@@ -11,36 +11,36 @@
   "official_rule": "latest pass generated before each game's actual kickoff",
   "rescheduled_games": [],
   "summary": {
-    "n": 1,
+    "n": 2,
     "model": {
-      "n": 1,
-      "accuracy": 1.0,
-      "brier": 0.10883400999999998,
-      "log_loss": 0.400328324003012,
-      "auc": NaN,
-      "ece": 0.32989999999999997,
-      "spread_mae": 2.09,
+      "n": 2,
+      "accuracy": 0.5,
+      "brier": 0.21431213,
+      "log_loss": 0.6169438291398512,
+      "auc": 1.0,
+      "ece": 0.4477,
+      "spread_mae": 12.255,
       "ats": {
-        "n": 1,
-        "mae": 2.09,
-        "rmse": 2.09,
-        "ats_w": 0,
+        "n": 2,
+        "mae": 12.255,
+        "rmse": 15.922068018947792,
+        "ats_w": 1,
         "ats_l": 0,
         "ats_push": 1,
-        "ats_pct": NaN,
+        "ats_pct": 1.0,
         "breakeven": 0.5238
       }
     },
     "vegas": {
-      "n": 1,
-      "accuracy": 1.0,
-      "brier": 0.1456791562263271,
-      "log_loss": 0.4807481685287127,
-      "auc": NaN,
-      "ece": 0.38167938931297707,
-      "spread_mae": 0.0
+      "n": 2,
+      "accuracy": 0.5,
+      "brier": 0.2767153220527774,
+      "log_loss": 0.7491956973315775,
+      "auc": 0.0,
+      "ece": 0.12843741377724638,
+      "spread_mae": 11.75
     },
-    "n_with_line": 1,
+    "n_with_line": 2,
     "head_to_head": {
       "disagreements": 0,
       "we_were_right": 0,
@@ -49,36 +49,36 @@
   },
   "by_pass": {
     "early": {
-      "n": 1,
+      "n": 2,
       "model": {
-        "n": 1,
-        "accuracy": 1.0,
-        "brier": 0.10883400999999998,
-        "log_loss": 0.400328324003012,
-        "auc": NaN,
-        "ece": 0.32989999999999997,
-        "spread_mae": 2.09,
+        "n": 2,
+        "accuracy": 0.5,
+        "brier": 0.21431213,
+        "log_loss": 0.6169438291398512,
+        "auc": 1.0,
+        "ece": 0.4477,
+        "spread_mae": 12.255,
         "ats": {
-          "n": 1,
-          "mae": 2.09,
-          "rmse": 2.09,
-          "ats_w": 0,
+          "n": 2,
+          "mae": 12.255,
+          "rmse": 15.922068018947792,
+          "ats_w": 1,
           "ats_l": 0,
           "ats_push": 1,
-          "ats_pct": NaN,
+          "ats_pct": 1.0,
           "breakeven": 0.5238
         }
       },
       "vegas": {
-        "n": 1,
-        "accuracy": 1.0,
-        "brier": 0.1456791562263271,
-        "log_loss": 0.4807481685287127,
-        "auc": NaN,
-        "ece": 0.38167938931297707,
-        "spread_mae": 0.0
+        "n": 2,
+        "accuracy": 0.5,
+        "brier": 0.2767153220527774,
+        "log_loss": 0.7491956973315775,
+        "auc": 0.0,
+        "ece": 0.12843741377724638,
+        "spread_mae": 11.75
       },
-      "n_with_line": 1,
+      "n_with_line": 2,
       "head_to_head": {
         "disagreements": 0,
         "we_were_right": 0,
@@ -114,6 +114,35 @@
         "correct": 1,
         "brier": 0.1456791562263271,
         "abs_error": 0.0
+      }
+    },
+    {
+      "game_id": "2026_01_SF_LA",
+      "pass": "early",
+      "kickoff_utc": "2026-09-11T00:35:00+00:00",
+      "home_team": "LA",
+      "away_team": "SF",
+      "home_score": 7,
+      "away_score": 27,
+      "margin": -20.0,
+      "home_win": 0,
+      "winner": "SF",
+      "pick": "LA",
+      "model": {
+        "p_home": 0.5655,
+        "pred_margin": 2.42,
+        "pick": "LA",
+        "correct": 0,
+        "brier": 0.31979025,
+        "abs_error": 22.42,
+        "ats": "win"
+      },
+      "vegas": {
+        "p_home": 0.6385542168674698,
+        "spread_line": 3.5,
+        "correct": 0,
+        "brier": 0.40775148787922766,
+        "abs_error": 23.5
       }
     }
   ]
