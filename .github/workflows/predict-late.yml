@@ -3,11 +3,34 @@ name: predict-late
 # Late pass — a fresher pass covering the Sunday/Monday slate, retrained with Thursday's (and
 # any Saturday) results already in the training data.
 #
-# UTC conversion (see predict-early.yml for why one fixed UTC time must cover EDT and EST):
-#   Sunday early slate  1:00 PM ET  =  17:00 UTC (EDT) / 18:00 UTC (EST)
-#   We run              14:00 UTC Sun  =  10:00 AM EDT / 9:00 AM EST
-# Three hours of slack in the tighter (EDT) case, because scheduled runs on free runners get
-# delayed under load and a delayed run breaks the gate, not merely the schedule.
+# SCHEDULING (see predict-early.yml for why one fixed UTC time must cover EDT and EST).
+#
+# A single 14:00 UTC slot was wrong twice over:
+#
+#   1. Scheduled runs on free runners are delayed under load, and a delayed run breaks the gate,
+#      not merely the schedule. Measured on this repo: Thu 21:00 cron started 22:50 (+1h50m),
+#      Fri 12:00 cron started 15:18 (+3h18m), and the 2026-09-13 14:00 cron never fired at all.
+#      GitHub drops scheduled runs outright under load; it does not queue them indefinitely.
+#   2. It was already too late on international weeks regardless of delay. London games kick at
+#      9:30 AM ET = 13:30 UTC (EDT) / 14:30 UTC (EST) — before the cron itself. That is 9-11
+#      games a season since 2022 (2026: wk 4, 5, 6, 7 at 13:30; wk 9, 10 at 14:30), each one
+#      silently falling back to its early-pass prediction with nothing to flag it.
+#
+# So: many attempts, roughly hourly across Sunday morning, off the top of the hour (the busiest
+# slots). Redundancy is free — this repo is public, so Actions minutes are unlimited — and safe,
+# because a week that is already published is a clean no-op (predict.py, `pred_path.exists()`).
+#
+# The attempts are self-scheduling rather than fixed: each no-ops while the week's earliest
+# remaining kickoff is further out than predict.LATE_PASS_LEAD_LIMIT (5h), so the pass publishes
+# as late as it safely can for whatever shape that week is, and the cron needs to know nothing
+# about international games, Saturday slates or byes.
+#
+#   normal week, first kickoff 17:00 UTC   window opens 12:00 -> publishes ~12:23, 4h37m margin,
+#                                          4 spare slots behind it
+#   London week, first kickoff 13:30 UTC   window opens 08:30 -> publishes ~08:47, 4h43m margin,
+#                                          8 spare slots behind it
+#
+# Losing every slot in a window now requires GitHub to drop 5+ consecutive scheduled runs.
 #
 # This pass covers only games that have not yet kicked off. Games already played earlier in the
 # week keep their early-pass prediction, which is immutable. The grader's "official" rule picks
@@ -17,7 +40,15 @@ name: predict-late
 
 on:
   schedule:
-    - cron: "0 14 * * 0"
+    - cron: "47 8 * * 0"
+    - cron: "53 9 * * 0"
+    - cron: "41 10 * * 0"
+    - cron: "37 11 * * 0"
+    - cron: "23 12 * * 0"
+    - cron: "11 13 * * 0"
+    - cron: "7 14 * * 0"
+    - cron: "19 15 * * 0"
+    - cron: "13 16 * * 0"   # last resort; still ahead of a 17:00 UTC slate
   workflow_dispatch:
 
 permissions:

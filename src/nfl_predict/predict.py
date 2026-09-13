@@ -46,12 +46,25 @@ PASSES = ("early", "late")
 
 #: How close the next kickoff must be for the late pass to be a *late* pass.
 #:
-#: The Sunday cron fires every Sunday, including the ones before a week has begun — the Sunday
-#: before the season opener, and the Sunday inside a gap between the regular season and the
-#: playoffs. Without this, that firing targets the coming week and burns its late slot with a
-#: prediction made eight days early; the real Sunday-morning refresh then finds the file already
-#: published and does nothing. A late pass only makes sense once its games are hours away.
-LATE_PASS_LEAD_LIMIT = timedelta(hours=24)
+#: Two jobs, one knob.
+#:
+#: 1. The Sunday crons fire every Sunday, including the ones before a week has begun — the
+#:    Sunday before the season opener, and the Sunday inside a gap between the regular season
+#:    and the playoffs. Without this, that firing targets the coming week and burns its late
+#:    slot with a prediction made eight days early; the real Sunday-morning refresh then finds
+#:    the file already published and does nothing.
+#:
+#: 2. It is what makes the staggered Sunday crons in predict-late.yml self-scheduling. Those
+#:    run roughly hourly from 08:47 to 16:13 UTC; each one no-ops until the week's earliest
+#:    remaining kickoff is inside this window, so the pass publishes as late as it safely can
+#:    *for that week* without the cron knowing anything about the week's shape. A normal 17:00
+#:    UTC slate publishes around 12:23; an international week kicking at 13:30 UTC publishes
+#:    around 08:47.
+#:
+#: Widening this trades baseline quality for margin (the odds snapshot freezes with the
+#: prediction, so an earlier pass compares against a less mature line); narrowing it trades
+#: margin for baseline quality. Five hours leaves at least three spare cron slots either way.
+LATE_PASS_LEAD_LIMIT = timedelta(hours=5)
 
 
 def _utcnow() -> datetime:
