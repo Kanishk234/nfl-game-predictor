@@ -438,3 +438,52 @@ scripts must exist, and the three publishing workflows must invoke the publisher
 they cannot drift. Verified it catches the real bug by reproducing the exact broken state
 (direct invocation + 100644) and watching it fail, then restoring the fix. Also declared pyyaml
 in the dev extra, which the new test needs and CI would otherwise have failed on.
+
+## 2026-09-13 — the Sunday cron did not fire, and was too late anyway
+
+Week 1's late pass had not published by 15:55 UTC, 65 minutes before the 17:00 slate. The Actions
+API showed why: `predict-late` had **zero runs, ever** — not failed, not queued, not disabled.
+The 14:00 UTC cron was simply dropped. Dispatched by hand; published 16:00:20 UTC, 46s end to
+end, an hour ahead of kickoff. Nothing lost.
+
+Two separate defects behind one symptom.
+
+**Delay.** GitHub drops scheduled runs under load rather than queueing them, and delays the ones
+it keeps. Measured on this repo: Thu 21:00 cron started 22:50 (+1h50m), Fri 12:00 cron started
+15:18 (+3h18m), Sun 14:00 cron never ran. A single slot with 3h of nominal slack is inside that
+distribution, so "3 hours is plenty" was never true — it was one dropped run away from failing,
+every week.
+
+**The schedule was already past us on 6 weeks.** Withdrawing the claim in predict-late.yml that
+14:00 UTC gives three hours of slack: international games kick at 9:30 AM ET = 13:30 UTC (EDT) /
+14:30 UTC (EST), *before the cron itself*. 2026 has six (wk 4-7 at 13:30, wk 9-10 at 14:30); it
+is 9-11 games a season since 2022. Those games would have dropped to their early-pass prediction
+on a perfectly punctual run, silently — valid predictions, no hole in the record, but the late
+pass quietly not covering the slate with nothing to flag it. This was never a delay problem.
+
+Fix: many attempts instead of one, self-scheduling. Nine Sunday crons from 08:47 to 16:13 UTC,
+off the top of the hour (the contended slot, and the one that got dropped). Redundancy is free —
+the repo is public, so Actions minutes are unlimited — and safe, because an already-published
+week is a clean no-op. Tightened `LATE_PASS_LEAD_LIMIT` from 24h to 5h so each attempt no-ops
+until the week's earliest *remaining* kickoff is within the window. The pass then publishes as
+late as it safely can for whatever shape the week is, and the cron knows nothing about
+international games or Saturday slates:
+
+    normal week,  first kickoff 17:00 UTC -> publishes ~12:23, 4h37m margin, 4 spare slots
+    London week,  first kickoff 13:30 UTC -> publishes ~08:47, 4h43m margin, 8 spare slots
+
+Losing a week now takes 5+ consecutive dropped runs instead of one.
+
+The cost is deliberate: the odds snapshot freezes with the prediction, so a ~12:23 UTC baseline
+is a less mature line than a 14:00 one. Not measured — worth checking whether the consensus line
+actually moves between those two times before treating the 5h as tuned.
+
+Tests: `test_the_late_pass_has_spare_attempts_in_every_kickoff_window` counts crons falling
+between the window opening and kickoff for all four shapes of Sunday (13:30/14:30/17:00/18:00
+UTC), which couples the schedule to `LATE_PASS_LEAD_LIMIT` — tighten the constant without
+widening the schedule and it fails. Plus a no-crons-on-the-hour check and a too-early-run no-op
+test. Verified by reverting to the old single `0 14 * * 0` cron and watching 5 tests fail,
+including all four window cases, then restoring.
+
+Still open: nothing alerts when a week publishes without a Vegas baseline, or when the late pass
+covers fewer games than the week holds. Both are currently silent-green.
