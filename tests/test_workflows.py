@@ -7,10 +7,13 @@ already been made and with no way to back-date it.
 
 import re
 import subprocess
+from datetime import UTC, datetime, time
 from pathlib import Path
 
 import pytest
 import yaml
+
+from nfl_predict.predict import LATE_PASS_LEAD_LIMIT
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOWS = sorted((ROOT / ".github" / "workflows").glob("*.yml"))
@@ -71,3 +74,64 @@ def test_the_publisher_is_invoked_the_same_way_everywhere():
     assert len(calls) == 3, f"expected three publishing workflows, found {sorted(calls)}"
     prefixes = {c.split("publish.sh")[0] for c in calls.values()}
     assert len(prefixes) == 1, f"publisher invoked inconsistently: {calls}"
+
+
+def schedule_crons(path: Path) -> list[str]:
+    """The cron expressions of one workflow.
+
+    Note the `doc.get(True)`: YAML 1.1 reads a bare `on:` key as the boolean True, so
+    `doc["on"]` is a KeyError on every workflow in this repo.
+    """
+    doc = yaml.safe_load(path.read_text())
+    trigger = doc.get("on", doc.get(True)) or {}
+    return [entry["cron"] for entry in (trigger.get("schedule") or [])]
+
+
+def cron_time(expr: str) -> time:
+    minute, hour = expr.split()[:2]
+    return time(int(hour), int(minute))
+
+
+LATE = ROOT / ".github" / "workflows" / "predict-late.yml"
+
+#: The first Sunday kickoff the late pass has to beat, in UTC. International games are the tight
+#: case and the reason the single 14:00 UTC cron was wrong: 9:30 AM ET is 13:30 UTC in EDT.
+SUNDAY_FIRST_KICKOFFS = {
+    "international, EDT": time(13, 30),
+    "international, EST": time(14, 30),
+    "normal slate, EDT": time(17, 0),
+    "normal slate, EST": time(18, 0),
+}
+
+
+@pytest.mark.parametrize("label,kickoff", SUNDAY_FIRST_KICKOFFS.items(), ids=list(SUNDAY_FIRST_KICKOFFS))
+def test_the_late_pass_has_spare_attempts_in_every_kickoff_window(label: str, kickoff: time):
+    """Redundancy that survives GitHub dropping runs, for each shape of Sunday.
+
+    A cron only publishes inside its window: earlier than `LATE_PASS_LEAD_LIMIT` before the first
+    kickoff it no-ops by design. So the count that matters is not "how many crons" but "how many
+    crons land between the window opening and kickoff" — which couples the schedule to the
+    constant. Tightening one without widening the other silently thins the redundancy out, and
+    that is what this test is here to catch.
+    """
+    day = datetime(2026, 9, 13, tzinfo=UTC)
+    deadline = datetime.combine(day, kickoff, tzinfo=UTC)
+    opens = deadline - LATE_PASS_LEAD_LIMIT
+    usable = [c for c in schedule_crons(LATE)
+              if opens <= datetime.combine(day, cron_time(c), tzinfo=UTC) < deadline]
+    assert len(usable) >= 3, (
+        f"{label}: first kickoff {kickoff}, window opens {opens.time()}, but only "
+        f"{len(usable)} cron slot(s) fall inside it: {usable}. Observed delays on this repo run "
+        f"to 3h18m and runs get dropped entirely, so one or two slots is not a schedule."
+    )
+
+
+def test_the_late_pass_avoids_the_top_of_the_hour():
+    """:00 is the most contended slot on the shared scheduler, and the one that got dropped."""
+    on_the_hour = [c for c in schedule_crons(LATE) if cron_time(c).minute == 0]
+    assert not on_the_hour, f"predict-late crons on the hour: {on_the_hour}"
+
+
+def test_the_late_pass_only_runs_on_sundays():
+    days = {c.split()[4] for c in schedule_crons(LATE)}
+    assert days == {"0"}, f"predict-late is scheduled off-Sunday: {days}"

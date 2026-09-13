@@ -158,6 +158,18 @@ class TestLatePassMustActuallyBeLate:
         assert P.run("late", now=T0 - timedelta(days=7)) is None
         assert not list((tmp_path / "predictions").glob("*.json")) if (tmp_path / "predictions").exists() else True
 
+    def test_a_sunday_morning_run_outside_the_window_leaves_the_slot_for_a_later_cron(
+            self, monkeypatch, tmp_path):
+        """The 08:47 cron on a normal week, eight hours before the slate.
+
+        The staggered Sunday crons in predict-late.yml depend on this: an attempt that fires
+        before the window opens must no-op so a later, fresher one still gets the slot. If this
+        published instead, the first cron of the morning would win every week and freeze the
+        Vegas baseline eight hours early.
+        """
+        self._setup(monkeypatch, tmp_path)
+        assert P.run("late", now=T0 + timedelta(days=3) - timedelta(hours=8)) is None
+
     def test_the_sunday_of_the_week_publishes(self, monkeypatch, tmp_path):
         self._setup(monkeypatch, tmp_path)
         # three hours before the Sunday slate, with the Wed/Thu games already kicked off
