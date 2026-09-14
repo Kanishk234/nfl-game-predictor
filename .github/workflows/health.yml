@@ -1,0 +1,51 @@
+name: health
+
+# The record, watched independently of anything that writes it.
+#
+# `python -m nfl_predict.health` already ran as a step of the grade job, which was a mistake in
+# one specific way: the alarm shared a failure mode with the thing it was watching. When the
+# 2026-09-14 Mon 12:00 grade cron was dropped, the health check was dropped with it. A watchdog
+# that only runs when the job runs cannot tell you the job did not run.
+#
+# So it also runs here, on its own schedule, writing nothing. It only reads committed data and
+# the public schedule, so it cannot corrupt anything and it is not in the `data-writes`
+# concurrency group — it must be able to run *while* a stuck publish is holding that group.
+#
+# TIMING. `health.PREDICTION_DUE_WITHIN` is 3h, so the run has to land inside the last three
+# hours before a kickoff to catch a missing prediction while there is still time to dispatch one
+# by hand. Hence hourly sweeps across the three danger windows rather than one daily check:
+#
+#   Thu 18:31-23:31  ->  TNF at 00:15 UTC Fri
+#   Sun 09:31-16:31  ->  covers both the 13:30 UTC international slot and the 17:00 UTC slate
+#   Mon 18:31-23:31  ->  MNF at 00:15 UTC Tue
+#
+# Plus one daily sweep for the checks that are not time-critical (odds quota, ungraded games).
+# These are cheap and the repo is public, so the minutes are free.
+#
+# A red run here is the notification: GitHub emails the repo owner when a scheduled run fails.
+# Everything it reports is actionable, so do not make this job tolerant of its own findings.
+
+on:
+  schedule:
+    - cron: "31 18-23 * * 4"
+    - cron: "31 9-16 * * 0"
+    - cron: "31 18-23 * * 1"
+    - cron: "17 13 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e .
+      - name: the record has no holes
+        run: python -m nfl_predict.health
