@@ -7,12 +7,13 @@ already been made and with no way to back-date it.
 
 import re
 import subprocess
-from datetime import UTC, datetime, time
+from datetime import time, timedelta
 from pathlib import Path
 
 import pytest
 import yaml
 
+from nfl_predict.health import PREDICTION_DUE_WITHIN
 from nfl_predict.predict import LATE_PASS_LEAD_LIMIT
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -87,25 +88,69 @@ def schedule_crons(path: Path) -> list[str]:
     return [entry["cron"] for entry in (trigger.get("schedule") or [])]
 
 
-def cron_time(expr: str) -> time:
-    minute, hour = expr.split()[:2]
-    return time(int(hour), int(minute))
+def cron_slots(expr: str) -> list[tuple[int, time]]:
+    """(cron weekday, time) pairs one expression fires at, expanding `H-H` hour ranges."""
+    minute, hour, _, _, dow = expr.split()
+    if "-" in hour:
+        lo, hi = (int(x) for x in hour.split("-"))
+        hours = range(lo, hi + 1)
+    else:
+        hours = [int(hour)]
+    days = range(7) if dow == "*" else [int(d) for d in dow.split(",")]
+    return [(d, time(h, int(minute))) for d in days for h in hours]
 
 
+def week_minutes(dow: int, t: time) -> int:
+    """Minutes since Sunday 00:00, so a Thursday cron and a Friday kickoff are comparable."""
+    return dow * 24 * 60 + t.hour * 60 + t.minute
+
+
+def slots_in_window(path: Path, deadline: tuple[int, time], lead: timedelta) -> list[str]:
+    """Cron expressions of `path` that fire within `lead` before `deadline`."""
+    end = week_minutes(*deadline)
+    start = end - lead.total_seconds() / 60
+    return [expr for expr in schedule_crons(path) for d, t in cron_slots(expr)
+            if start <= week_minutes(d, t) < end]
+
+
+EARLY = ROOT / ".github" / "workflows" / "predict-early.yml"
 LATE = ROOT / ".github" / "workflows" / "predict-late.yml"
+GRADE = ROOT / ".github" / "workflows" / "grade.yml"
+HEALTH = ROOT / ".github" / "workflows" / "health.yml"
 
-#: The first Sunday kickoff the late pass has to beat, in UTC. International games are the tight
-#: case and the reason the single 14:00 UTC cron was wrong: 9:30 AM ET is 13:30 UTC in EDT.
-SUNDAY_FIRST_KICKOFFS = {
-    "international, EDT": time(13, 30),
-    "international, EST": time(14, 30),
-    "normal slate, EDT": time(17, 0),
-    "normal slate, EST": time(18, 0),
+#: Kickoffs the unattended season has to beat, as (cron weekday, UTC time). Cron weekdays are
+#: 0=Sunday. Thursday night football is a *Friday* kickoff in UTC, which is exactly the kind of
+#: conversion this table exists to stop anyone re-deriving by hand.
+DEADLINES = {
+    "TNF, EDT": (5, time(0, 15)),
+    "TNF, EST": (5, time(1, 15)),
+    "international Sunday, EDT": (0, time(13, 30)),
+    "international Sunday, EST": (0, time(14, 30)),
+    "Sunday slate, EDT": (0, time(17, 0)),
+    "Sunday slate, EST": (0, time(18, 0)),
+    "MNF, EDT": (2, time(0, 15)),
+    "MNF, EST": (2, time(1, 15)),
 }
 
+SUNDAY_DEADLINES = {k: v for k, v in DEADLINES.items() if "Sunday" in k}
+TNF_DEADLINES = {k: v for k, v in DEADLINES.items() if k.startswith("TNF")}
 
-@pytest.mark.parametrize("label,kickoff", SUNDAY_FIRST_KICKOFFS.items(), ids=list(SUNDAY_FIRST_KICKOFFS))
-def test_the_late_pass_has_spare_attempts_in_every_kickoff_window(label: str, kickoff: time):
+
+def test_no_scheduled_run_is_on_the_hour():
+    """:00 is the most contended minute on the shared scheduler.
+
+    Every slot this repo lost was at :00 — Sun 14:00 predict-late and Mon 12:00 grade dropped
+    outright, Thu 21:00 and Fri 12:00 delayed by 1h50m and 3h18m.
+    """
+    offenders = {p.name: [c for c in schedule_crons(p)
+                          if any(t.minute == 0 for _, t in cron_slots(c))]
+                 for p in WORKFLOWS}
+    offenders = {k: v for k, v in offenders.items() if v}
+    assert not offenders, f"crons on the hour: {offenders}"
+
+
+@pytest.mark.parametrize("label", SUNDAY_DEADLINES, ids=list(SUNDAY_DEADLINES))
+def test_the_late_pass_has_spare_attempts_in_every_kickoff_window(label: str):
     """Redundancy that survives GitHub dropping runs, for each shape of Sunday.
 
     A cron only publishes inside its window: earlier than `LATE_PASS_LEAD_LIMIT` before the first
@@ -114,24 +159,81 @@ def test_the_late_pass_has_spare_attempts_in_every_kickoff_window(label: str, ki
     constant. Tightening one without widening the other silently thins the redundancy out, and
     that is what this test is here to catch.
     """
-    day = datetime(2026, 9, 13, tzinfo=UTC)
-    deadline = datetime.combine(day, kickoff, tzinfo=UTC)
-    opens = deadline - LATE_PASS_LEAD_LIMIT
-    usable = [c for c in schedule_crons(LATE)
-              if opens <= datetime.combine(day, cron_time(c), tzinfo=UTC) < deadline]
+    usable = slots_in_window(LATE, SUNDAY_DEADLINES[label], LATE_PASS_LEAD_LIMIT)
     assert len(usable) >= 3, (
-        f"{label}: first kickoff {kickoff}, window opens {opens.time()}, but only "
-        f"{len(usable)} cron slot(s) fall inside it: {usable}. Observed delays on this repo run "
-        f"to 3h18m and runs get dropped entirely, so one or two slots is not a schedule."
+        f"{label}: only {len(usable)} late-pass slot(s) inside the window: {usable}. Observed "
+        f"delays on this repo run to 3h18m and runs get dropped entirely."
     )
 
 
-def test_the_late_pass_avoids_the_top_of_the_hour():
-    """:00 is the most contended slot on the shared scheduler, and the one that got dropped."""
-    on_the_hour = [c for c in schedule_crons(LATE) if cron_time(c).minute == 0]
-    assert not on_the_hour, f"predict-late crons on the hour: {on_the_hour}"
+@pytest.mark.parametrize("label", TNF_DEADLINES, ids=list(TNF_DEADLINES))
+def test_the_early_pass_has_spare_attempts_before_thursday_night(label: str):
+    """The early pass has no lead-limit gate, so every Thursday slot before kickoff counts.
+
+    This is the highest-stakes schedule in the repo. A dropped late pass costs freshness on games
+    that already have an early-pass prediction; a dropped grade is picked up by the next slot.
+    A dropped early pass means Thursday's game has no prediction at all, ever.
+    """
+    usable = slots_in_window(EARLY, TNF_DEADLINES[label], timedelta(hours=12))
+    assert len(usable) >= 3, (
+        f"{label}: only {len(usable)} early-pass slot(s) before kickoff: {usable}"
+    )
 
 
-def test_the_late_pass_only_runs_on_sundays():
-    days = {c.split()[4] for c in schedule_crons(LATE)}
-    assert days == {"0"}, f"predict-late is scheduled off-Sunday: {days}"
+def test_the_early_pass_does_not_publish_absurdly_early():
+    """The first Thursday slot is the one that wins, so it sets the baseline's freshness.
+
+    Too late and there is no margin; too early and the Vegas line frozen alongside the prediction
+    is a staler comparison. The floor is the point of the stagger; the ceiling is what the
+    stagger quietly costs, and it should not drift without someone choosing it.
+    """
+    thursday = sorted(week_minutes(d, t) for c in schedule_crons(EARLY)
+                      for d, t in cron_slots(c) if d == 4)
+    margin = timedelta(minutes=week_minutes(*DEADLINES["TNF, EDT"]) - thursday[0])
+    assert timedelta(hours=3) <= margin <= timedelta(hours=8), (
+        f"first Thursday slot is {margin} before TNF; expected between 3h and 8h"
+    )
+
+
+def test_grading_does_not_hang_on_one_cron_a_day():
+    """Grading is idempotent and self-healing, but it is also where a red run comes from."""
+    by_day: dict[int, list[str]] = {}
+    for c in schedule_crons(GRADE):
+        for d, _ in cron_slots(c):
+            by_day.setdefault(d, []).append(c)
+    assert by_day, "grade has no scheduled runs"
+    thin = {d: v for d, v in by_day.items() if len(v) < 2}
+    assert not thin, f"grade days with a single attempt: {thin}"
+
+
+@pytest.mark.parametrize("label", DEADLINES, ids=list(DEADLINES))
+def test_health_sweeps_the_hours_before_every_kickoff(label: str):
+    """The alarm has to fire while a human can still dispatch the pass by hand.
+
+    `imminent_problems` only reports a missing prediction once the kickoff is inside
+    `PREDICTION_DUE_WITHIN`, so a health run outside that window cannot see the problem at all.
+    Lengthening the constant without extending these sweeps, or vice versa, leaves the check
+    correct and never actually run — the same shared-failure shape as running it only inside the
+    grade job. This is the test that keeps the two in step.
+    """
+    sweeps = slots_in_window(HEALTH, DEADLINES[label], PREDICTION_DUE_WITHIN)
+    assert len(sweeps) >= 2, (
+        f"{label}: only {len(sweeps)} health sweep(s) in the {PREDICTION_DUE_WITHIN} before "
+        f"kickoff: {sweeps}"
+    )
+
+
+def test_health_runs_outside_the_job_that_writes_the_data():
+    """A watchdog that only runs as a step of the grade job shares its failure mode.
+
+    When the 2026-09-14 Mon 12:00 grade cron was dropped, the health check went with it.
+    """
+    assert schedule_crons(HEALTH), "health has no schedule of its own"
+    doc = yaml.safe_load(HEALTH.read_text())
+    writes = [line for command in run_steps(HEALTH) for line in command.splitlines()
+              if "publish.sh" in line or line.strip().startswith("git ")]
+    assert not writes, f"the health job writes to the repo: {writes}"
+    assert doc.get("concurrency") is None, (
+        "health must not join the data-writes concurrency group; it has to be able to run while "
+        "a stuck publish is holding it"
+    )

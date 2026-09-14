@@ -100,16 +100,16 @@ class TestSafetyNetTiming:
     def test_finds_the_coming_thursday_from_a_tuesday(self):
         from nfl_predict.data.schedule import next_scheduled_early_pass
         tue = datetime(2026, 11, 24, 16, 0, tzinfo=UTC)
-        assert next_scheduled_early_pass(tue) == datetime(2026, 11, 26, 21, 0, tzinfo=UTC)
+        assert next_scheduled_early_pass(tue) == datetime(2026, 11, 26, 18, 29, tzinfo=UTC)
 
     def test_after_thursdays_pass_it_rolls_to_the_next_week(self):
         from nfl_predict.data.schedule import next_scheduled_early_pass
-        just_after = datetime(2026, 11, 26, 21, 30, tzinfo=UTC)
-        assert next_scheduled_early_pass(just_after) == datetime(2026, 12, 3, 21, 0, tzinfo=UTC)
+        just_after = datetime(2026, 11, 26, 18, 35, tzinfo=UTC)
+        assert next_scheduled_early_pass(just_after) == datetime(2026, 12, 3, 18, 29, tzinfo=UTC)
 
     def test_thanksgiving_week_opens_before_the_thursday_pass(self):
         """The case this exists for: 2026 week 12 opens Wed 8pm ET, and Thanksgiving's first
-        game kicks at 12:30pm ET — both before Thursday 21:00 UTC."""
+        game kicks at 12:30pm ET — both before Thursday's first slot at 18:29 UTC."""
         from nfl_predict.data.schedule import next_scheduled_early_pass
         tue = datetime(2026, 11, 24, 16, 0, tzinfo=UTC)
         week_opens = datetime(2026, 11, 26, 1, 0, tzinfo=UTC)   # Wed Nov 25, 8:00 pm ET

@@ -164,6 +164,10 @@ class TestHealthCheck:
                "predictions": [{"game_id": g, "kickoff_utc": k.isoformat()}
                                for g, k in games.filter(pl.col("week") == 1).select("game_id", "kickoff_utc").iter_rows()]}
         (tmp_path / "predictions" / "2026_01_early.json").write_text(json.dumps(rec))
+        # a complete week has both passes; a completed week missing the late one means the
+        # Sunday schedule failed, which is its own finding
+        (tmp_path / "predictions" / "2026_01_late.json").write_text(json.dumps(
+            {**rec, "pass": "late", "generated_at_utc": (T0 - timedelta(hours=3)).isoformat()}))
         (tmp_path / "results" / "2026_01.json").write_text(json.dumps(
             {"games": [{"game_id": g} for g in games.filter(pl.col("week") == 1)["game_id"]]}))
         monkeypatch.setattr(H, "PREDICTIONS_DIR", tmp_path / "predictions")
@@ -209,3 +213,129 @@ class TestQuotaWarning:
         self._snapshot(tmp_path, "2026_01_early.json", "12")
         self._snapshot(tmp_path, "2026_02_early.json", "495")
         assert not any("quota" in p for p in H.problems(self._games(), now=T0 - timedelta(hours=1)))
+
+
+class TestImminentKickoff:
+    """The one check that fires while it can still be acted on.
+
+    Every other check in health.py is an autopsy — it reports a hole after the game was played,
+    when nothing can be done. This one is what would have caught the 2026-09-13 dropped Sunday
+    cron without a human happening to look.
+    """
+
+    def _games(self):
+        rows = []
+        for wk in (1, 2):
+            for i in range(2):
+                rows.append({"game_id": f"2026_{wk:02d}_G{i}", "season": 2026, "week": wk,
+                             "kickoff_utc": T0 + timedelta(days=7 * (wk - 1), hours=i)})
+        return pl.DataFrame(rows).with_columns(pl.col("kickoff_utc").cast(pl.Datetime("us", "UTC")))
+
+    def _dirs(self, monkeypatch, tmp_path, *, published_week_2=False):
+        for d in ("predictions", "results", "odds"):
+            (tmp_path / d).mkdir()
+        # week 1 published, so 2026 is a season we are keeping complete
+        (tmp_path / "predictions" / "2026_01_early.json").write_text(json.dumps(
+            {"season": 2026, "week": 1, "pass": "early",
+             "generated_at_utc": (T0 - timedelta(days=1)).isoformat(), "predictions": []}))
+        if published_week_2:
+            wk2 = self._games().filter(pl.col("week") == 2)
+            (tmp_path / "predictions" / "2026_02_early.json").write_text(json.dumps(
+                {"season": 2026, "week": 2, "pass": "early",
+                 "generated_at_utc": (T0 + timedelta(days=6)).isoformat(),
+                 "predictions": [{"game_id": g, "kickoff_utc": k.isoformat()}
+                                 for g, k in wk2.select("game_id", "kickoff_utc").iter_rows()]}))
+        monkeypatch.setattr(H, "PREDICTIONS_DIR", tmp_path / "predictions")
+        monkeypatch.setattr(H, "RESULTS_DIR", tmp_path / "results")
+        monkeypatch.setattr("nfl_predict.grade.PREDICTIONS_DIR", tmp_path / "predictions")
+
+    def test_a_kickoff_two_hours_out_with_nothing_published_is_an_emergency(
+            self, monkeypatch, tmp_path):
+        self._dirs(monkeypatch, tmp_path)
+        found = H.problems(self._games(), now=T0 + timedelta(days=7) - timedelta(hours=2))
+        assert any("2026_02_G0" in p and "no prediction" in p for p in found), found
+
+    def test_it_says_to_act_rather_than_merely_recording_the_hole(self, monkeypatch, tmp_path):
+        """A red run at 3am is only useful if it says what to do about it."""
+        self._dirs(monkeypatch, tmp_path)
+        found = H.problems(self._games(), now=T0 + timedelta(days=7) - timedelta(hours=2))
+        assert any("dispatch" in p.lower() for p in found), found
+
+    def test_a_published_week_is_silent(self, monkeypatch, tmp_path):
+        self._dirs(monkeypatch, tmp_path, published_week_2=True)
+        found = H.problems(self._games(), now=T0 + timedelta(days=7) - timedelta(hours=2))
+        assert not any("no prediction published" in p for p in found), found
+
+    def test_it_stays_quiet_while_the_pass_still_has_slots_left(self, monkeypatch, tmp_path):
+        """Ten hours out, the early pass legitimately has not run yet.
+
+        The window is deliberately tighter than the margin the passes are scheduled to leave, so
+        a normal week never trips this. An alarm that cries wolf every Thursday is an alarm
+        nobody reads by November.
+        """
+        self._dirs(monkeypatch, tmp_path)
+        found = H.problems(self._games(), now=T0 + timedelta(days=7) - timedelta(hours=10))
+        assert not any("no prediction published" in p for p in found), found
+
+    def test_a_season_we_never_ran_does_not_trip_it(self, monkeypatch, tmp_path):
+        """The off-season must be silent, like every other check here."""
+        for d in ("predictions", "results", "odds"):
+            (tmp_path / d).mkdir()
+        monkeypatch.setattr(H, "PREDICTIONS_DIR", tmp_path / "predictions")
+        monkeypatch.setattr(H, "RESULTS_DIR", tmp_path / "results")
+        monkeypatch.setattr("nfl_predict.grade.PREDICTIONS_DIR", tmp_path / "predictions")
+        assert H.problems(self._games(), now=T0 + timedelta(days=7) - timedelta(hours=2)) == []
+
+
+class TestDroppedLatePass:
+    """The trace a dropped Sunday cron leaves.
+
+    On 2026-09-13 the late cron never fired and nothing noticed, because every game in the week
+    still had a valid early-pass prediction. The record was intact and the system was broken at
+    the same time, which is the combination that hides for a whole season.
+    """
+
+    def _games(self):
+        rows = [{"game_id": f"2026_01_G{i}", "season": 2026, "week": 1,
+                 "kickoff_utc": T0 + timedelta(hours=i)} for i in range(2)]
+        return pl.DataFrame(rows).with_columns(pl.col("kickoff_utc").cast(pl.Datetime("us", "UTC")))
+
+    def _publish(self, monkeypatch, tmp_path, passes):
+        for d in ("predictions", "results", "odds"):
+            (tmp_path / d).mkdir()
+        games = self._games()
+        rows = [{"game_id": g, "kickoff_utc": k.isoformat()}
+                for g, k in games.select("game_id", "kickoff_utc").iter_rows()]
+        for name in passes:
+            (tmp_path / "predictions" / f"2026_01_{name}.json").write_text(json.dumps(
+                {"season": 2026, "week": 1, "pass": name,
+                 "generated_at_utc": (T0 - timedelta(days=1)).isoformat(), "predictions": rows}))
+        (tmp_path / "results" / "2026_01.json").write_text(json.dumps(
+            {"games": [{"game_id": g} for g in games["game_id"]]}))
+        monkeypatch.setattr(H, "PREDICTIONS_DIR", tmp_path / "predictions")
+        monkeypatch.setattr(H, "RESULTS_DIR", tmp_path / "results")
+        monkeypatch.setattr("nfl_predict.grade.PREDICTIONS_DIR", tmp_path / "predictions")
+
+    def test_a_completed_week_with_no_late_pass_is_reported(self, monkeypatch, tmp_path):
+        self._publish(monkeypatch, tmp_path, ["early"])
+        found = H.problems(self._games(), now=T0 + timedelta(days=1))
+        assert any("no late pass" in p for p in found), found
+
+    def test_it_does_not_call_the_record_broken(self, monkeypatch, tmp_path):
+        """The early-pass predictions are valid and immutable. Say so, or the next person to
+        read this reaches for a retroactive 'fix' that would be far worse than the gap."""
+        self._publish(monkeypatch, tmp_path, ["early"])
+        found = [p for p in H.problems(self._games(), now=T0 + timedelta(days=1))
+                 if "no late pass" in p]
+        assert any("record is intact" in p for p in found), found
+
+    def test_both_passes_present_is_silent(self, monkeypatch, tmp_path):
+        self._publish(monkeypatch, tmp_path, ["early", "late"])
+        found = H.problems(self._games(), now=T0 + timedelta(days=1))
+        assert not any("late pass" in p for p in found), found
+
+    def test_a_week_still_in_progress_is_not_judged_yet(self, monkeypatch, tmp_path):
+        """Thursday night is over, Sunday has not happened. The late pass is not late yet."""
+        self._publish(monkeypatch, tmp_path, ["early"])
+        found = H.problems(self._games(), now=T0 + timedelta(minutes=30))
+        assert not any("no late pass" in p for p in found), found
