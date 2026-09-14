@@ -16,7 +16,7 @@ import polars as pl
 
 #: When the regular early pass runs: Thursday 21:00 UTC (see .github/workflows/predict-early.yml).
 #: The Tuesday safety-net run uses this to decide whether a week opens too early for it.
-EARLY_PASS_WEEKDAY, EARLY_PASS_HOUR = 3, 21
+EARLY_PASS_WEEKDAY, EARLY_PASS_HOUR, EARLY_PASS_MINUTE = 3, 18, 29
 
 #: Conservative upper bound on wall-clock game length (regulation + overtime + stoppages).
 #: A game's *result* is not knowable until roughly this long after its kickoff, so this is what
@@ -90,12 +90,16 @@ def assert_before_kickoff(target: WeekTarget, now: datetime | None = None) -> No
 
 
 def next_scheduled_early_pass(now: datetime) -> datetime:
-    """The next Thursday 21:00 UTC at or after `now`.
+    """The next Thursday early-pass slot at or after `now`.
 
     Used by the Tuesday safety-net run: if the target week's first kickoff is later than this,
     the regular Thursday pass will cover the whole week and Tuesday should stay out of the way.
+
+    This is the *first* of Thursday's staggered slots, not the last, because the first one to
+    survive is the one that publishes. Pointing it at a later slot would make Tuesday stand
+    aside for a pass that may already have happened hours earlier.
     """
-    d = now.replace(hour=EARLY_PASS_HOUR, minute=0, second=0, microsecond=0)
+    d = now.replace(hour=EARLY_PASS_HOUR, minute=EARLY_PASS_MINUTE, second=0, microsecond=0)
     if d < now:
         d += timedelta(days=1)
     while d.weekday() != EARLY_PASS_WEEKDAY:

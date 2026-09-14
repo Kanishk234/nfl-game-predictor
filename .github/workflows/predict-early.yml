@@ -5,10 +5,30 @@ name: predict-early
 #
 # UTC conversion (Actions cron is UTC and has no DST awareness, so one fixed time must be safe
 # in both EDT (UTC-4) and EST (UTC-5)):
-#   We run           21:00 UTC Thu  =  5:00 PM EDT / 4:00 PM EST
 #   TNF kickoff      8:15 PM ET     =  00:15 UTC Fri (EDT) / 01:15 UTC Fri (EST)
-# That leaves 3h15m of slack in the tighter (EDT) case. Slack is deliberate: scheduled runs on
-# free runners get delayed under load.
+#
+# SCHEDULING. This used to be a single 21:00 UTC Thursday cron, described here as leaving "3h15m
+# of slack". Withdrawing that: 3h15m was never slack, it was the entire margin, and it is inside
+# the delay distribution this repo actually sees. Measured: Thu 21:00 cron started 22:50
+# (+1h50m), Fri 12:00 cron started 15:18 (+3h18m), and the Sun 14:00 and Mon 12:00 crons were
+# dropped outright — GitHub sheds scheduled runs under load rather than queueing them. Every one
+# of those slots was at :00, the most contended minute on the shared scheduler.
+#
+# A dropped run here is the worst case in the whole system. The late pass only refreshes Sun/Mon
+# games that already have an early-pass prediction, and a missed grade is picked up by the next
+# grade slot. But if the early pass never runs, Thursday night's game has no prediction at all,
+# and a prediction made after kickoff is not a prediction — that game is gone from the record
+# permanently.
+#
+# So: six Thursday attempts, roughly hourly, none on the hour. The first one to survive wins and
+# the rest are clean no-ops (predict.py, `pred_path.exists()`). Redundancy is free — the repo is
+# public, so Actions minutes are unlimited.
+#
+#   first slot 18:29 UTC, TNF 00:15 UTC  ->  5h46m margin, 5 spare slots behind it
+#
+# Losing the week now takes six consecutive dropped runs instead of one. The cost is that the
+# Vegas baseline freezes ~2.5h earlier than it used to, since the baseline is frozen with the
+# prediction; that is the price of the margin and it is deliberate.
 #
 # The gate is per game, enforced in code: the pass predicts only games whose kickoff is still
 # ahead and refuses to run once the whole week has started.
@@ -20,17 +40,31 @@ name: predict-early
 #   Christmas         e.g. 2025 week 17, 1:00 PM ET
 #   Wednesday openers 2012 and 2026 week 1; 2026 week 12 (Thanksgiving eve)
 #
-# Left alone that is one lost game a year, every year. The Tuesday run passes
-# `--only-early-openers`, so it publishes ONLY when the week's first kickoff falls before the
-# next scheduled Thursday pass, and otherwise exits without touching anything. Normal weeks are
+# Left alone that is one lost game a year, every year. The Tuesday runs pass
+# `--only-early-openers`, so they publish ONLY when the week's first kickoff falls before the
+# next scheduled Thursday pass, and otherwise exit without touching anything. Normal weeks are
 # still predicted Thursday with the freshest possible model.
+#
+# The Tuesday net is staggered for the same reason as Thursday: it is the only thing standing
+# between a Thanksgiving or Wednesday-opener game and a permanent hole, so it cannot hang on one
+# cron either.
 #
 # Re-running for a week that is already published is a clean no-op, not a failure.
 
 on:
   schedule:
-    - cron: "0 21 * * 4"   # every Thursday: the regular pass
-    - cron: "0 16 * * 2"   # every Tuesday: publishes only if the week opens before Thursday
+    # every Thursday: the regular pass. First slot wins, the rest are no-ops.
+    - cron: "29 18 * * 4"
+    - cron: "11 19 * * 4"
+    - cron: "7 20 * * 4"
+    - cron: "23 21 * * 4"
+    - cron: "11 22 * * 4"
+    - cron: "3 23 * * 4"    # last resort; still ahead of a 00:15 UTC TNF
+    # every Tuesday: publishes only if the week opens before Thursday's first slot
+    - cron: "41 15 * * 2"
+    - cron: "23 16 * * 2"
+    - cron: "11 17 * * 2"
+    - cron: "7 18 * * 2"
   workflow_dispatch:
 
 permissions:
@@ -62,7 +96,11 @@ jobs:
           # file; see odds/fetch.py for the scrubbing on the code side.
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
         run: |
-          if [ "${{ github.event.schedule }}" = "0 16 * * 2" ]; then
+          # Which pass this is depends on the day, not on one exact cron string: there are
+          # several Tuesday slots and several Thursday slots, and matching a literal expression
+          # would silently turn every Tuesday run into a regular pass the moment the schedule
+          # was restaggered. Tuesday crons are the ones ending in "* * 2".
+          if [[ "${{ github.event.schedule }}" == *"* * 2" ]]; then
             python -m nfl_predict.predict --pass early --only-early-openers
           else
             python -m nfl_predict.predict --pass early

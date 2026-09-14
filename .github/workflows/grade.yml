@@ -1,11 +1,18 @@
 name: grade
 
-# Grading — pulls final scores, updates results + season history, rebuilds the site. Runs three
-# times a week so cards update as the week's games finish, not only on Tuesday:
+# Grading — pulls final scores, updates results + season history, rebuilds the site. Runs on
+# three days so cards update as the week's games finish, not only on Tuesday:
 #
-#   Fri 12:00 UTC  after Thursday night        (8 AM EDT / 7 AM EST)
-#   Mon 12:00 UTC  after the Sunday slate
-#   Tue 12:00 UTC  after Monday night          -> the week is complete
+#   Fri  after Thursday night        (first slot 12:19 UTC = 8:19 AM EDT / 7:19 AM EST)
+#   Mon  after the Sunday slate
+#   Tue  after Monday night          -> the week is complete
+#
+# Three attempts per day, none on the hour. The 2026-09-14 Mon 12:00 slot was dropped outright
+# and the 2026-09-11 Fri 12:00 slot started at 15:18 (+3h18m); GitHub sheds scheduled runs at
+# :00 under load. Grading is the mildest of the three failure modes — it is idempotent, rewrites
+# result files from facts, and a missed day is picked up by the next slot, so nothing is lost
+# permanently. It is staggered anyway for a second reason: the health check runs as a step of
+# this job (see below), so a dropped grade run also drops the only alarm watching the record.
 #
 # Monday Night Football ends ~11:30 PM ET = ~03:30 UTC Tue (EDT) / ~04:30 UTC Tue (EST); noon
 # UTC leaves hours for the box scores to settle upstream. The model itself retrains at every
@@ -17,9 +24,15 @@ name: grade
 
 on:
   schedule:
-    - cron: "0 12 * * 5"
-    - cron: "0 12 * * 1"
-    - cron: "0 12 * * 2"
+    - cron: "19 12 * * 5"   # Friday, after Thursday night
+    - cron: "41 13 * * 5"
+    - cron: "7 15 * * 5"
+    - cron: "19 12 * * 1"   # Monday, after the Sunday slate
+    - cron: "41 13 * * 1"
+    - cron: "7 15 * * 1"
+    - cron: "19 12 * * 2"   # Tuesday, after Monday night
+    - cron: "41 13 * * 2"
+    - cron: "7 15 * * 2"
   workflow_dispatch:
 
 permissions:
