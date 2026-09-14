@@ -568,3 +568,29 @@ widening the schedule and it fails rather than silently thinning the redundancy 
 Still open: the early pass's baseline now freezes ~2.5h earlier (18:29 rather than 21:00), and
 the late pass's ~4h37m out rather than 3h. Still unmeasured whether the consensus line actually
 moves over those hours — the margin was bought with baseline freshness and nobody has priced it.
+
+## 2026-09-14 (later) — a way to see the slots that never ran
+
+The new schedules went live at 16:37 UTC; the Monday grade backlog was dispatched by hand and
+week 1 is now 15/16 graded (MNF outstanding).
+
+Added `tools/schedule_report.py`. A dropped scheduled run leaves *no trace* — the Actions tab
+only lists what ran, so both this week's failures were invisible until someone went looking for
+something that should have been there. The tool reconstructs the expected slots from the cron
+expressions, matches them against `event=schedule` runs from the public API, and names what is
+missing, with the delay on each one that fired.
+
+Read-only, stdlib only, no auth (the repo is public). Window defaults to the last commit that
+touched `.github/workflows/`, because comparing today's crons against runs from before they
+existed reports the entire history as dropped.
+
+Validated against known ground truth rather than trusted: replayed from a worktree at the old
+schedule, where it reproduced Friday's `0 12 * * 5` firing at +3h18m and the Sunday
+`0 14 * * 0` slot as DROPPED — both matching what was found by hand from the API. It also
+correctly declined to count Sunday's manual dispatch as filling that slot.
+
+It exists to answer one question the redundancy work cannot answer on its own: whether drops
+correlate with the top of the hour (in which case staggering is the fix) or with the repo (in
+which case more slots change nothing and the answer is an external trigger). The summary prints
+the on-the-hour vs off-the-hour fire rate for exactly that. There is not enough data yet to say;
+ask again after a few weeks.
