@@ -3,86 +3,124 @@
   "week": 1,
   "n_games": 16,
   "n_predicted": 16,
-  "n_graded": 2,
+  "n_graded": 15,
   "complete": false,
   "passes": [
-    "early"
+    "early",
+    "late"
   ],
   "official_rule": "latest pass generated before each game's actual kickoff",
   "rescheduled_games": [],
   "summary": {
-    "n": 2,
+    "n": 15,
     "model": {
-      "n": 2,
-      "accuracy": 0.5,
-      "brier": 0.21431213,
-      "log_loss": 0.6169438291398512,
-      "auc": 1.0,
-      "ece": 0.4477,
-      "spread_mae": 12.255,
+      "n": 15,
+      "accuracy": 0.6666666666666666,
+      "brier": 0.2005035313333333,
+      "log_loss": 0.590004672203685,
+      "auc": 0.8148148148148149,
+      "ece": 0.15879333333333331,
+      "spread_mae": 10.892666666666667,
       "ats": {
-        "n": 2,
-        "mae": 12.255,
-        "rmse": 15.922068018947792,
-        "ats_w": 1,
-        "ats_l": 0,
+        "n": 15,
+        "mae": 10.892666666666667,
+        "rmse": 13.016470335693928,
+        "ats_w": 7,
+        "ats_l": 7,
         "ats_push": 1,
-        "ats_pct": 1.0,
+        "ats_pct": 0.5,
         "breakeven": 0.5238
       }
     },
     "vegas": {
-      "n": 2,
-      "accuracy": 0.5,
-      "brier": 0.2767153220527774,
-      "log_loss": 0.7491956973315775,
-      "auc": 0.0,
-      "ece": 0.12843741377724638,
-      "spread_mae": 11.75
+      "n": 15,
+      "accuracy": 0.7333333333333333,
+      "brier": 0.2103158697885427,
+      "log_loss": 0.615259779491492,
+      "auc": 0.6851851851851852,
+      "ece": 0.10012353137887883,
+      "spread_mae": 10.866666666666667
     },
-    "n_with_line": 2,
+    "n_with_line": 15,
     "head_to_head": {
-      "disagreements": 0,
-      "we_were_right": 0,
-      "vegas_was_right": 0
+      "disagreements": 3,
+      "we_were_right": 1,
+      "vegas_was_right": 2
     }
   },
   "by_pass": {
     "early": {
-      "n": 2,
+      "n": 15,
       "model": {
-        "n": 2,
-        "accuracy": 0.5,
-        "brier": 0.21431213,
-        "log_loss": 0.6169438291398512,
-        "auc": 1.0,
-        "ece": 0.4477,
-        "spread_mae": 12.255,
+        "n": 15,
+        "accuracy": 0.6666666666666666,
+        "brier": 0.20869915000000003,
+        "log_loss": 0.6080507800710186,
+        "auc": 0.7592592592592593,
+        "ece": 0.14164666666666673,
+        "spread_mae": 11.275333333333332,
         "ats": {
-          "n": 2,
-          "mae": 12.255,
-          "rmse": 15.922068018947792,
-          "ats_w": 1,
-          "ats_l": 0,
+          "n": 15,
+          "mae": 11.275333333333332,
+          "rmse": 13.098388450492678,
+          "ats_w": 6,
+          "ats_l": 8,
           "ats_push": 1,
-          "ats_pct": 1.0,
+          "ats_pct": 0.42857142857142855,
           "breakeven": 0.5238
         }
       },
       "vegas": {
-        "n": 2,
-        "accuracy": 0.5,
-        "brier": 0.2767153220527774,
-        "log_loss": 0.7491956973315775,
-        "auc": 0.0,
-        "ece": 0.12843741377724638,
-        "spread_mae": 11.75
+        "n": 15,
+        "accuracy": 0.7333333333333333,
+        "brier": 0.21601538006176116,
+        "log_loss": 0.6290472879929204,
+        "auc": 0.6851851851851852,
+        "ece": 0.21395394159751288,
+        "spread_mae": 10.966666666666667
       },
-      "n_with_line": 2,
+      "n_with_line": 15,
       "head_to_head": {
-        "disagreements": 0,
-        "we_were_right": 0,
-        "vegas_was_right": 0
+        "disagreements": 3,
+        "we_were_right": 1,
+        "vegas_was_right": 2
+      }
+    },
+    "late": {
+      "n": 13,
+      "model": {
+        "n": 13,
+        "accuracy": 0.6923076923076923,
+        "brier": 0.1983791315384615,
+        "log_loss": 0.585860186521198,
+        "auc": 0.825,
+        "ece": 0.11434615384615386,
+        "spread_mae": 10.683076923076923,
+        "ats": {
+          "n": 13,
+          "mae": 10.683076923076923,
+          "rmse": 12.509697776586709,
+          "ats_w": 6,
+          "ats_l": 7,
+          "ats_push": 0,
+          "ats_pct": 0.46153846153846156,
+          "breakeven": 0.5238
+        }
+      },
+      "vegas": {
+        "n": 13,
+        "accuracy": 0.7692307692307693,
+        "brier": 0.20010056944019894,
+        "log_loss": 0.5946542536699403,
+        "auc": 0.7000000000000001,
+        "ece": 0.1352867537105904,
+        "spread_mae": 10.73076923076923
+      },
+      "n_with_line": 13,
+      "head_to_head": {
+        "disagreements": 3,
+        "we_were_right": 1,
+        "vegas_was_right": 2
       }
     }
   },
@@ -143,6 +181,383 @@
         "correct": 0,
         "brier": 0.40775148787922766,
         "abs_error": 23.5
+      }
+    },
+    {
+      "game_id": "2026_01_ATL_PIT",
+      "pass": "late",
+      "kickoff_utc": "2026-09-13T17:00:00+00:00",
+      "home_team": "PIT",
+      "away_team": "ATL",
+      "home_score": 20,
+      "away_score": 13,
+      "margin": 7.0,
+      "home_win": 1,
+      "winner": "PIT",
+      "pick": "PIT",
+      "model": {
+        "p_home": 0.7347,
+        "pred_margin": 6.96,
+        "pick": "PIT",
+        "correct": 1,
+        "brier": 0.07038409,
+        "abs_error": 0.040000000000000036,
+        "ats": "win"
+      },
+      "vegas": {
+        "p_home": 0.7212543554006969,
+        "spread_line": 6.5,
+        "correct": 1,
+        "brier": 0.07769913438308097,
+        "abs_error": 0.5
+      }
+    },
+    {
+      "game_id": "2026_01_BAL_IND",
+      "pass": "late",
+      "kickoff_utc": "2026-09-13T17:00:00+00:00",
+      "home_team": "IND",
+      "away_team": "BAL",
+      "home_score": 23,
+      "away_score": 41,
+      "margin": -18.0,
+      "home_win": 0,
+      "winner": "BAL",
+      "pick": "IND",
+      "model": {
+        "p_home": 0.5236,
+        "pred_margin": 0.77,
+        "pick": "IND",
+        "correct": 0,
+        "brier": 0.27415695999999995,
+        "abs_error": 18.77,
+        "ats": "loss"
+      },
+      "vegas": {
+        "p_home": 0.4066302458405761,
+        "spread_line": -3.0,
+        "correct": 1,
+        "brier": 0.16534815683236737,
+        "abs_error": 15.0
+      }
+    },
+    {
+      "game_id": "2026_01_BUF_HOU",
+      "pass": "late",
+      "kickoff_utc": "2026-09-13T17:00:00+00:00",
+      "home_team": "HOU",
+      "away_team": "BUF",
+      "home_score": 31,
+      "away_score": 36,
+      "margin": -5.0,
+      "home_win": 0,
+      "winner": "BUF",
+      "pick": "HOU",
+      "model": {
+        "p_home": 0.5579,
+        "pred_margin": 1.7,
+        "pick": "HOU",
+        "correct": 0,
+        "brier": 0.3112524099999999,
+        "abs_error": 6.7,
+        "ats": "loss"
+      },
+      "vegas": {
+        "p_home": 0.48017621145374445,
+        "spread_line": -1.5,
+        "correct": 1,
+        "brier": 0.2305691940460711,
+        "abs_error": 3.5
+      }
+    },
+    {
+      "game_id": "2026_01_CHI_CAR",
+      "pass": "late",
+      "kickoff_utc": "2026-09-13T17:00:00+00:00",
+      "home_team": "CAR",
+      "away_team": "CHI",
+      "home_score": 37,
+      "away_score": 59,
+      "margin": -22.0,
+      "home_win": 0,
+      "winner": "CHI",
+      "pick": "CHI",
+      "model": {
+        "p_home": 0.4309,
+        "pred_margin": -2.35,
+        "pick": "CHI",
+        "correct": 1,
+        "brier": 0.18567481,
+        "abs_error": 19.65,
+        "ats": "loss"
+      },
+      "vegas": {
+        "p_home": 0.4034723071280108,
+        "spread_line": -3.0,
+        "correct": 1,
+        "brier": 0.16278990261919987,
+        "abs_error": 19.0
+      }
+    },
+    {
+      "game_id": "2026_01_CLE_JAX",
+      "pass": "late",
+      "kickoff_utc": "2026-09-13T17:00:00+00:00",
+      "home_team": "JAX",
+      "away_team": "CLE",
+      "home_score": 34,
+      "away_score": 10,
+      "margin": 24.0,
+      "home_win": 1,
+      "winner": "JAX",
+      "pick": "JAX",
+      "model": {
+        "p_home": 0.7494,
+        "pred_margin": 6.43,
+        "pick": "JAX",
+        "correct": 1,
+        "brier": 0.06280036000000003,
+        "abs_error": 17.57,
+        "ats": "loss"
+      },
+      "vegas": {
+        "p_home": 0.7864077669902912,
+        "spread_line": 8.5,
+        "correct": 1,
+        "brier": 0.04562164200207372,
+        "abs_error": 15.5
+      }
+    },
+    {
+      "game_id": "2026_01_NO_DET",
+      "pass": "late",
+      "kickoff_utc": "2026-09-13T17:00:00+00:00",
+      "home_team": "DET",
+      "away_team": "NO",
+      "home_score": 31,
+      "away_score": 30,
+      "margin": 1.0,
+      "home_win": 1,
+      "winner": "DET",
+      "pick": "DET",
+      "model": {
+        "p_home": 0.7511,
+        "pred_margin": 8.14,
+        "pick": "DET",
+        "correct": 1,
+        "brier": 0.06195121000000001,
+        "abs_error": 7.140000000000001,
+        "ats": "loss"
+      },
+      "vegas": {
+        "p_home": 0.7369226063016213,
+        "spread_line": 7.0,
+        "correct": 1,
+        "brier": 0.06920971507513174,
+        "abs_error": 6.0
+      }
+    },
+    {
+      "game_id": "2026_01_NYJ_TEN",
+      "pass": "late",
+      "kickoff_utc": "2026-09-13T17:00:00+00:00",
+      "home_team": "TEN",
+      "away_team": "NYJ",
+      "home_score": 10,
+      "away_score": 23,
+      "margin": -13.0,
+      "home_win": 0,
+      "winner": "NYJ",
+      "pick": "NYJ",
+      "model": {
+        "p_home": 0.3875,
+        "pred_margin": -3.54,
+        "pick": "NYJ",
+        "correct": 1,
+        "brier": 0.15015625000000002,
+        "abs_error": 9.46,
+        "ats": "win"
+      },
+      "vegas": {
+        "p_home": 0.5198237885462554,
+        "spread_line": 1.5,
+        "correct": 0,
+        "brier": 0.2702167711385821,
+        "abs_error": 14.5
+      }
+    },
+    {
+      "game_id": "2026_01_TB_CIN",
+      "pass": "late",
+      "kickoff_utc": "2026-09-13T17:00:00+00:00",
+      "home_team": "CIN",
+      "away_team": "TB",
+      "home_score": 33,
+      "away_score": 27,
+      "margin": 6.0,
+      "home_win": 1,
+      "winner": "CIN",
+      "pick": "CIN",
+      "model": {
+        "p_home": 0.5682,
+        "pred_margin": 1.8,
+        "pick": "CIN",
+        "correct": 1,
+        "brier": 0.18645123999999996,
+        "abs_error": 4.2,
+        "ats": "loss"
+      },
+      "vegas": {
+        "p_home": 0.6465222348916762,
+        "spread_line": 3.5,
+        "correct": 1,
+        "brier": 0.12494653042597537,
+        "abs_error": 2.5
+      }
+    },
+    {
+      "game_id": "2026_01_ARI_LAC",
+      "pass": "late",
+      "kickoff_utc": "2026-09-13T20:25:00+00:00",
+      "home_team": "LAC",
+      "away_team": "ARI",
+      "home_score": 14,
+      "away_score": 26,
+      "margin": -12.0,
+      "home_win": 0,
+      "winner": "ARI",
+      "pick": "LAC",
+      "model": {
+        "p_home": 0.7267,
+        "pred_margin": 6.85,
+        "pick": "LAC",
+        "correct": 0,
+        "brier": 0.52809289,
+        "abs_error": 18.85,
+        "ats": "win"
+      },
+      "vegas": {
+        "p_home": 0.7999999999999999,
+        "spread_line": 9.5,
+        "correct": 0,
+        "brier": 0.6399999999999999,
+        "abs_error": 21.5
+      }
+    },
+    {
+      "game_id": "2026_01_GB_MIN",
+      "pass": "late",
+      "kickoff_utc": "2026-09-13T20:25:00+00:00",
+      "home_team": "MIN",
+      "away_team": "GB",
+      "home_score": 39,
+      "away_score": 22,
+      "margin": 17.0,
+      "home_win": 1,
+      "winner": "MIN",
+      "pick": "MIN",
+      "model": {
+        "p_home": 0.6342,
+        "pred_margin": 3.62,
+        "pick": "MIN",
+        "correct": 1,
+        "brier": 0.13380964,
+        "abs_error": 13.379999999999999,
+        "ats": "win"
+      },
+      "vegas": {
+        "p_home": 0.5427435387673957,
+        "spread_line": 1.5,
+        "correct": 1,
+        "brier": 0.20908347133896418,
+        "abs_error": 15.5
+      }
+    },
+    {
+      "game_id": "2026_01_MIA_LV",
+      "pass": "late",
+      "kickoff_utc": "2026-09-13T20:25:00+00:00",
+      "home_team": "LV",
+      "away_team": "MIA",
+      "home_score": 27,
+      "away_score": 13,
+      "margin": 14.0,
+      "home_win": 1,
+      "winner": "LV",
+      "pick": "LV",
+      "model": {
+        "p_home": 0.5652,
+        "pred_margin": 0.92,
+        "pick": "LV",
+        "correct": 1,
+        "brier": 0.18905103999999998,
+        "abs_error": 13.08,
+        "ats": "loss"
+      },
+      "vegas": {
+        "p_home": 0.6037569709421778,
+        "spread_line": 3.0,
+        "correct": 1,
+        "brier": 0.15700853807691809,
+        "abs_error": 11.0
+      }
+    },
+    {
+      "game_id": "2026_01_WAS_PHI",
+      "pass": "late",
+      "kickoff_utc": "2026-09-13T20:25:00+00:00",
+      "home_team": "PHI",
+      "away_team": "WAS",
+      "home_score": 24,
+      "away_score": 22,
+      "margin": 2.0,
+      "home_win": 1,
+      "winner": "PHI",
+      "pick": "PHI",
+      "model": {
+        "p_home": 0.6155,
+        "pred_margin": 3.25,
+        "pick": "PHI",
+        "correct": 1,
+        "brier": 0.14784024999999995,
+        "abs_error": 1.25,
+        "ats": "win"
+      },
+      "vegas": {
+        "p_home": 0.7001620745542949,
+        "spread_line": 6.0,
+        "correct": 1,
+        "brier": 0.0899027815355842,
+        "abs_error": 4.0
+      }
+    },
+    {
+      "game_id": "2026_01_DAL_NYG",
+      "pass": "late",
+      "kickoff_utc": "2026-09-14T00:20:00+00:00",
+      "home_team": "NYG",
+      "away_team": "DAL",
+      "home_score": 28,
+      "away_score": 20,
+      "margin": 8.0,
+      "home_win": 1,
+      "winner": "NYG",
+      "pick": "DAL",
+      "model": {
+        "p_home": 0.4734,
+        "pred_margin": -0.79,
+        "pick": "DAL",
+        "correct": 0,
+        "brier": 0.27730755999999995,
+        "abs_error": 8.79,
+        "ats": "win"
+      },
+      "vegas": {
+        "p_home": 0.40090771558245086,
+        "spread_line": -3.0,
+        "correct": 0,
+        "brier": 0.3589115652486376,
+        "abs_error": 11.0
       }
     }
   ]
