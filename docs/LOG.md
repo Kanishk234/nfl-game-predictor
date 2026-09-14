@@ -487,3 +487,84 @@ including all four window cases, then restoring.
 
 Still open: nothing alerts when a week publishes without a Vegas baseline, or when the late pass
 covers fewer games than the week holds. Both are currently silent-green.
+
+## 2026-09-14 — the Monday cron went too; scheduling made redundant everywhere
+
+Monday's 12:00 UTC grade cron did not fire either. Same signature as Sunday: no run recorded,
+nothing queued, workflow `active`. Season to date, every scheduled slot was at `:00`:
+
+    Thu 21:00  predict-early   fired +1h50m
+    Fri 12:00  grade           fired +3h18m
+    Sun 14:00  predict-late    dropped
+    Mon 12:00  grade           dropped
+
+Half dropped, half late. `:00` is the most contended minute on the shared scheduler and GitHub
+sheds scheduled runs under load rather than queueing them. Sunday's fix covered `predict-late`
+only; `grade` and `predict-early` still hung on single `:00` crons.
+
+Monday's miss itself cost nothing: grading is idempotent, Tuesday's slot picks up the same games,
+and `data/results` is read only by grade, health and site_build — never by train or predict,
+which retrain from nflverse directly. A missed grade is a stale site, not a worse model.
+
+**predict-early** was the real exposure and had no deadline pressure behind it until now: week 2
+TNF is 2026-09-18 00:15 UTC against a single Thu 21:00 cron. A dropped early pass is the worst
+failure in the system — the late pass only refreshes games that already have an early-pass pick,
+and a missed grade self-heals, but if the early pass never runs, Thursday's game has no
+prediction at all and cannot be back-dated. Now six Thursday slots, 18:29 to 23:03 (first slot
+5h46m before kickoff, five spares), plus four Tuesday slots for the `--only-early-openers` safety
+net, which was equally single-threaded and is the only thing standing between a Thanksgiving or
+Wednesday-opener game and a permanent hole.
+
+Withdrawing the claim in predict-early.yml that 21:00 UTC "leaves 3h15m of slack". It was never
+slack, it was the whole margin, and it sits inside the delay distribution above.
+
+Two follow-on fixes the stagger forced:
+
+- The workflow chose its pass by matching one exact cron string (`= "0 16 * * 2"`). With four
+  Tuesday slots that would have silently turned every Tuesday run into a regular early pass.
+  Now matches the day-of-week field instead.
+- `next_scheduled_early_pass` returned Thursday 21:00, which the Tuesday net uses to decide
+  whether to stand aside. Repointed at the *first* Thursday slot (18:29) — the first to survive
+  is the one that publishes, so deferring to a later slot would have Tuesday stand aside for a
+  pass that may already have happened.
+
+**grade** now runs three times on each of its three days, none on the hour.
+
+### The watchdog shared a failure mode with the thing it watched
+
+Correcting yesterday's entry, which said nothing alerts when a week publishes without a baseline.
+Wrong — `health.py` has covered that, plus missed pre-kickoff predictions and ungraded games,
+since the readiness audit. I said it without looking.
+
+The real defect is narrower and worse: `health` ran *only as a step of the grade job*. When
+Monday's grade cron was dropped, the alarm was dropped with it. A watchdog that only runs when
+the job runs cannot tell you the job did not run. It now also runs as its own workflow, writing
+nothing, outside the `data-writes` concurrency group so it can still run while a stuck publish
+holds that group.
+
+Two new checks:
+
+- **`imminent_problems`** — a game kicking off inside 3h with nothing published for it. This is
+  the only check here that can still be acted on; every other one is an autopsy that reports a
+  hole after the game was played. The 3h window is deliberately tighter than the margin the
+  passes leave (5h46m early, 4h37m late) so a normal week never trips it. health.yml sweeps
+  hourly across the three danger windows (Thu 18:31-23:31, Sun 09:31-16:31, Mon 18:31-23:31),
+  because a check that can only see a problem inside a 3h window is useless if it runs daily.
+- **missing late pass** — a completed week with no `_late.json`. Worth recording that this is
+  what would have caught Sunday, and that `imminent_problems` would *not* have: week 1's early
+  pass already covered every Sunday game, so there was no hole and nothing to alarm on. The
+  record was intact and the schedule was broken at the same time, which is the combination that
+  hides for a season. Phrased to say the record is intact, so nobody reads it as licence to
+  retroactively "fix" a past prediction.
+
+Verified by replaying real week 1 data with the late pass removed: silent as things actually
+stand, fires on the counterfactual. Workflow tests verified the same way — reverted grade to its
+three `:00` crons and health to one daily sweep, watched 10 tests fail, restored.
+
+Tests now couple each schedule to the constant that makes it correct: late-pass slots to
+`LATE_PASS_LEAD_LIMIT`, health sweeps to `PREDICTION_DUE_WITHIN`. Tighten a constant without
+widening the schedule and it fails rather than silently thinning the redundancy out.
+
+Still open: the early pass's baseline now freezes ~2.5h earlier (18:29 rather than 21:00), and
+the late pass's ~4h37m out rather than 3h. Still unmeasured whether the consensus line actually
+moves over those hours — the margin was bought with baseline freshness and nobody has priced it.
