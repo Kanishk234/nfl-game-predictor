@@ -7,12 +7,20 @@ already been made and with no way to back-date it.
 
 import re
 import subprocess
-from datetime import time, timedelta
+from datetime import timedelta
 from pathlib import Path
 
 import pytest
 import yaml
 
+from _cron_helpers import (
+    DEADLINES,
+    SUNDAY_DEADLINES,
+    TNF_DEADLINES,
+    cron_slots,
+    slots_in_window,
+    week_minutes,
+)
 from nfl_predict.health import PREDICTION_DUE_WITHIN
 from nfl_predict.predict import LATE_PASS_LEAD_LIMIT
 
@@ -88,52 +96,10 @@ def schedule_crons(path: Path) -> list[str]:
     return [entry["cron"] for entry in (trigger.get("schedule") or [])]
 
 
-def cron_slots(expr: str) -> list[tuple[int, time]]:
-    """(cron weekday, time) pairs one expression fires at, expanding `H-H` hour ranges."""
-    minute, hour, _, _, dow = expr.split()
-    if "-" in hour:
-        lo, hi = (int(x) for x in hour.split("-"))
-        hours = range(lo, hi + 1)
-    else:
-        hours = [int(hour)]
-    days = range(7) if dow == "*" else [int(d) for d in dow.split(",")]
-    return [(d, time(h, int(minute))) for d in days for h in hours]
-
-
-def week_minutes(dow: int, t: time) -> int:
-    """Minutes since Sunday 00:00, so a Thursday cron and a Friday kickoff are comparable."""
-    return dow * 24 * 60 + t.hour * 60 + t.minute
-
-
-def slots_in_window(path: Path, deadline: tuple[int, time], lead: timedelta) -> list[str]:
-    """Cron expressions of `path` that fire within `lead` before `deadline`."""
-    end = week_minutes(*deadline)
-    start = end - lead.total_seconds() / 60
-    return [expr for expr in schedule_crons(path) for d, t in cron_slots(expr)
-            if start <= week_minutes(d, t) < end]
-
-
 EARLY = ROOT / ".github" / "workflows" / "predict-early.yml"
 LATE = ROOT / ".github" / "workflows" / "predict-late.yml"
 GRADE = ROOT / ".github" / "workflows" / "grade.yml"
 HEALTH = ROOT / ".github" / "workflows" / "health.yml"
-
-#: Kickoffs the unattended season has to beat, as (cron weekday, UTC time). Cron weekdays are
-#: 0=Sunday. Thursday night football is a *Friday* kickoff in UTC, which is exactly the kind of
-#: conversion this table exists to stop anyone re-deriving by hand.
-DEADLINES = {
-    "TNF, EDT": (5, time(0, 15)),
-    "TNF, EST": (5, time(1, 15)),
-    "international Sunday, EDT": (0, time(13, 30)),
-    "international Sunday, EST": (0, time(14, 30)),
-    "Sunday slate, EDT": (0, time(17, 0)),
-    "Sunday slate, EST": (0, time(18, 0)),
-    "MNF, EDT": (2, time(0, 15)),
-    "MNF, EST": (2, time(1, 15)),
-}
-
-SUNDAY_DEADLINES = {k: v for k, v in DEADLINES.items() if "Sunday" in k}
-TNF_DEADLINES = {k: v for k, v in DEADLINES.items() if k.startswith("TNF")}
 
 
 def test_no_scheduled_run_is_on_the_hour():
@@ -159,7 +125,7 @@ def test_the_late_pass_has_spare_attempts_in_every_kickoff_window(label: str):
     constant. Tightening one without widening the other silently thins the redundancy out, and
     that is what this test is here to catch.
     """
-    usable = slots_in_window(LATE, SUNDAY_DEADLINES[label], LATE_PASS_LEAD_LIMIT)
+    usable = slots_in_window(schedule_crons(LATE), SUNDAY_DEADLINES[label], LATE_PASS_LEAD_LIMIT)
     assert len(usable) >= 3, (
         f"{label}: only {len(usable)} late-pass slot(s) inside the window: {usable}. Observed "
         f"delays on this repo run to 3h18m and runs get dropped entirely."
@@ -174,7 +140,7 @@ def test_the_early_pass_has_spare_attempts_before_thursday_night(label: str):
     that already have an early-pass prediction; a dropped grade is picked up by the next slot.
     A dropped early pass means Thursday's game has no prediction at all, ever.
     """
-    usable = slots_in_window(EARLY, TNF_DEADLINES[label], timedelta(hours=12))
+    usable = slots_in_window(schedule_crons(EARLY), TNF_DEADLINES[label], timedelta(hours=12))
     assert len(usable) >= 3, (
         f"{label}: only {len(usable)} early-pass slot(s) before kickoff: {usable}"
     )
@@ -216,7 +182,7 @@ def test_health_sweeps_the_hours_before_every_kickoff(label: str):
     correct and never actually run — the same shared-failure shape as running it only inside the
     grade job. This is the test that keeps the two in step.
     """
-    sweeps = slots_in_window(HEALTH, DEADLINES[label], PREDICTION_DUE_WITHIN)
+    sweeps = slots_in_window(schedule_crons(HEALTH), DEADLINES[label], PREDICTION_DUE_WITHIN)
     assert len(sweeps) >= 2, (
         f"{label}: only {len(sweeps)} health sweep(s) in the {PREDICTION_DUE_WITHIN} before "
         f"kickoff: {sweeps}"
