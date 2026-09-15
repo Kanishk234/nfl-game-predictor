@@ -171,12 +171,26 @@ class TestBar:
 
 
 def test_real_build_writes_pages_without_secrets(tmp_path, monkeypatch):
+    """Runs against whatever is actually committed under data/predictions/ right now.
+
+    "The current week" advances every time a real predict pass publishes — this must not
+    hardcode which week that is (2026_01, say) and then silently start asserting a stale
+    week ever after. The 2026-09-15 week-2 early pass broke exactly that hardcoding, two days
+    sooner than it would have anyway once the real Thursday cron published week 2 for real.
+    """
     monkeypatch.setattr(S, "SITE_DIR", tmp_path)
     S.main()
     index = (tmp_path / "index.html").read_text(encoding="utf-8")
-    assert (tmp_path / "weeks" / "2026_01.html").exists() and (tmp_path / "season.html").exists()
+
+    # Whatever site_build.py itself considers "current" — the latest (season, week) with a
+    # prediction file — derived the same way it derives it, not re-guessed here.
+    latest = max(
+        (p.stem.rsplit("_", 1)[0] for p in S.PREDICTIONS_DIR.glob("*_*_*.json")),
+        key=lambda s: tuple(int(x) for x in s.split("_")),
+    )
+    assert (tmp_path / "weeks" / f"{latest}.html").exists() and (tmp_path / "season.html").exists()
     assert "apiKey" not in index and "<script" not in index and "http://" not in index
-    assert "2026_01_early.json" in index
+    assert f"{latest}_early.json" in index or f"{latest}_late.json" in index
 
 
 class TestSeasonChartHonesty:
