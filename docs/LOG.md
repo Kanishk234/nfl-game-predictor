@@ -594,3 +594,82 @@ correlate with the top of the hour (in which case staggering is the fix) or with
 which case more slots change nothing and the answer is an external trigger). The summary prints
 the on-the-hour vs off-the-hour fire rate for exactly that. There is not enough data yet to say;
 ask again after a few weeks.
+
+## 2026-09-15 — the question got answered fast, and the answer was "not the hour"
+
+Didn't take weeks. `tools/schedule_report.py` against the first day of real data under the new
+staggered schedules:
+
+    health  (6 slots decided so far)
+      Mon 18:31  DROPPED
+      Mon 19:31  DROPPED
+      Mon 20:31  DROPPED
+      Mon 21:31  fired +0h24m
+      Mon 22:31  DROPPED
+      Mon 23:31  fired +1h13m
+    off the hour       fired 2/6
+
+    grade  (3 Tuesday slots, all at non-:00 minutes)
+      all three DROPPED — MNF sat ungraded until dispatched by hand
+
+Withdrawing the working theory from the last two sessions: staggering off `:00` was not the fix.
+Every one of those slots avoided the hour and two thirds still dropped. GitHub's `schedule`
+trigger just sheds runs under load, on this repo, regardless of the minute — the earlier
+Thu 21:00 / Fri 12:00 data made `:00` *look* guilty by coincidence, and Monday's data cleared it.
+
+What the same data shows working: every `workflow_dispatch` in the repo's history — every manual
+run, every dispatch used to unstick a Monday backlog — fired immediately, every time. GitHub
+queues dispatched runs; it drops scheduled ones. That is the actual lever.
+
+Added a Cloudflare Worker (`tools/cloudflare-worker/`) that calls `workflow_dispatch` on
+`predict-early.yml`, `predict-late.yml` and `grade.yml` from Cloudflare's Cron Triggers — a
+scheduler GitHub does not control — rather than from GitHub's own. It does not replace the
+staggered crons in `.github/workflows/`; both run, and a week only fails to publish if every slot
+in both systems misses in the same week.
+
+Design choices, and why:
+
+- **One tick dispatches all three workflows**, rather than mapping each cron to one target. Every
+  publishing pipeline is already gated to no-op safely when there is nothing to do (the
+  `pred_path.exists()` check in predict.py, `LATE_PASS_LEAD_LIMIT`, grade.py rewriting nothing
+  when no game has finished), so firing the "wrong" one costs a few seconds, not a bug — and it
+  means the day-of-week logic lives in exactly one place (Python) instead of being re-derived in
+  JavaScript too, which is exactly the kind of two-copies-that-can-drift problem this session
+  keeps finding.
+- **Five triggers, the Cloudflare free-plan cap** (5 per *account*, not per Worker — verified via
+  Cloudflare's own docs before committing to the number). Two Thursday, two Sunday — one each
+  timed for the international-kickoff case and the normal-slate case — and one Tuesday, placed
+  after every GitHub grade slot rather than overlapping one.
+- **A season guard in the Worker**, not in Python. Dispatching outside Sep-Feb would hit
+  `next_week_target`'s `LateRunError` (no game left in the loaded schedule) on every single tick,
+  seven months a year, for no reason. This is a latent gap in the *existing* GitHub-native crons
+  too (they have no season guard either) — deliberately not fixed here, since it is a different
+  piece of work than "make dispatch reliable," and the Worker's own guard makes it not urgent.
+- **A GitHub token that never touches this repo.** Fine-grained PAT, scoped to this repo only,
+  Actions: read-and-write and nothing else, stored via `wrangler secret put` — never in
+  `wrangler.toml`'s `[vars]`, same rule as `ODDS_API_KEY`. It expires and does not auto-renew;
+  the setup guide (`tools/cloudflare-worker/README.md`) says to log the expiry date here when it
+  is created, so a silent expiry doesn't repeat the same "nothing red, nothing published" failure
+  shape from a different cause.
+
+Verified three ways before calling it done:
+1. Behaviorally, under real Node — not just read. Faked `fetch` and drove `worker.js` directly:
+   an in-season tick dispatches all three workflows with correct URLs, headers and auth; an
+   off-season tick dispatches nothing; `/dispatch-now` bypasses the season guard for manual
+   testing; a partial failure (one 404 among three) surfaces as a 502 with per-workflow detail
+   rather than swallowing it; a plain `GET /` dispatches nothing.
+2. `tests/test_cloudflare_worker.py` — the same discipline `test_workflows.py` already applies to
+   the GitHub crons, applied to the Worker: every dispatched name is a real workflow file and
+   vice versa, the trigger count is within Cloudflare's cap, every cron expression parses, the
+   Thursday/Sunday ticks land inside the same deadline windows (and the same
+   `LATE_PASS_LEAD_LIMIT`) the GitHub-side tests already check, the grade tick lands after every
+   GitHub grade slot rather than duplicating one, and no token-shaped string is committed.
+3. Extracted the cron-window arithmetic the GitHub tests already had into `tests/_cron_helpers.py`
+   so both test files check the *same* deadlines the *same* way — the two schedules can now only
+   drift from the games' actual kickoff times, never from each other.
+
+Also dispatched `grade` by hand to close out MNF: week 1 is now 16/16 graded.
+
+Still open: no scheduled Cloudflare tick has fired yet (deployment happens outside this session,
+by hand — see the README). The behavioral tests prove the code is correct; they cannot prove
+Cloudflare's own scheduler is reliable for this account. First real evidence is this Thursday.
