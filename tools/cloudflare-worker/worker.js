@@ -11,13 +11,17 @@
  * on. It does not replace the GitHub-native crons in .github/workflows/ — both keep running, and
  * a week only fails to publish if every slot in both systems misses.
  *
- * All three publishing pipelines are dispatched on every tick, not mapped one cron-to-one
- * workflow. This is deliberate, not lazy: predict.py and grade.py are already gated to no-op
- * when there is nothing to do (predict.py, `pred_path.exists()`; the late pass additionally
- * checks LATE_PASS_LEAD_LIMIT; grade.py rewrites nothing when no game has finished), so
- * triggering the "wrong" one at the "wrong" time costs a few seconds of a no-op job, not a bug.
- * Encoding day-of-week logic here as well as in predict.py's own gate would just be two places
- * that can drift out of sync with each other.
+ * Each tick dispatches exactly ONE workflow — the one CRON_TARGETS maps its own cron expression
+ * to — not all three. An earlier version dispatched all three on every tick, on the theory that
+ * predict.py/grade.py's own no-op gates made triggering the "wrong" one at the "wrong" time
+ * harmless. That missed a real interaction: all three workflows share the `data-writes`
+ * concurrency group (so a predict pass and a grade run can never race on `git push`), and GitHub
+ * Actions concurrency groups hold at most one running run plus one queued run — a *third*
+ * simultaneous dispatch in the same group is cancelled outright, not queued. Verified live: the
+ * first `/dispatch-now` test after deploying fired all three, and `grade` came back
+ * `"conclusion": "cancelled"` with zero jobs ever created — cancelled before it started, on
+ * every single tick, not just that one test. CRON_TARGETS removes the contention instead of
+ * living with it: nothing this Worker fires ever collides with anything else it fires.
  *
  * SEASON GUARD: dispatching outside Sep-Feb would hit predict.py's `next_week_target`, which
  * raises when there is no game left in the loaded schedule — a red run, every tick, for seven
@@ -32,10 +36,24 @@ const OWNER = "Kanishk234";
 const REPO = "nfl-game-predictor";
 const REF = "main";
 
-// The three workflows that write to data/ and publish the site. Kept as filenames, not workflow
-// IDs, so this stays readable next to .github/workflows/ and a rename there is easy to catch —
-// tests/test_cloudflare_worker.py asserts every name here is a real file in that directory.
-const WORKFLOWS = ["predict-early.yml", "predict-late.yml", "grade.yml"];
+// Every cron in wrangler.toml, mapped to the one workflow it exists to trigger — see the header
+// comment above for why this is a 1:1 map rather than "dispatch all three every tick". Kept as
+// filenames, not workflow IDs, so a rename in .github/workflows/ is easy to catch; kept as exact
+// cron-string keys (Cloudflare's own weekday convention, matching wrangler.toml verbatim) so
+// tests/test_cloudflare_worker.py can assert this map and wrangler.toml's `crons` list never
+// drift apart — a cron declared in one without an entry in the other is either a silent gap (a
+// tick that dispatches nothing) or dead code (a mapping nothing ever triggers).
+const CRON_TARGETS = {
+  "11 20 * * 5": "predict-early.yml",
+  "37 22 * * 5": "predict-early.yml",
+  "35 9 * * 1": "predict-late.yml",
+  "51 14 * * 1": "predict-late.yml",
+  "13 16 * * 3": "grade.yml",
+};
+
+// The full set, for the /dispatch-now manual check only — see fetch() below for why that path
+// still fires all three despite the contention CRON_TARGETS exists to avoid on real ticks.
+const ALL_WORKFLOWS = ["predict-early.yml", "predict-late.yml", "grade.yml"];
 
 /** True for the months an NFL season can have a game still to predict: kickoff week 1 in
  * September through the Super Bowl in February. */
@@ -62,8 +80,18 @@ async function dispatchOne(env, workflow) {
   return { workflow, status: res.status, ok: res.status === 204, detail };
 }
 
-async function dispatchAll(env) {
-  return Promise.all(WORKFLOWS.map((w) => dispatchOne(env, w)));
+async function dispatchMany(env, workflows) {
+  return Promise.all(workflows.map((w) => dispatchOne(env, w)));
+}
+
+function logResults(results) {
+  for (const r of results) {
+    if (r.ok) {
+      console.log(`dispatched ${r.workflow}`);
+    } else {
+      console.error(`dispatch failed: ${r.workflow} -> HTTP ${r.status} ${r.detail ?? ""}`);
+    }
+  }
 }
 
 export default {
@@ -72,33 +100,37 @@ export default {
       console.log("off-season; skipping dispatch");
       return;
     }
-    ctx.waitUntil(
-      (async () => {
-        const results = await dispatchAll(env);
-        for (const r of results) {
-          if (r.ok) {
-            console.log(`dispatched ${r.workflow}`);
-          } else {
-            console.error(`dispatch failed: ${r.workflow} -> HTTP ${r.status} ${r.detail ?? ""}`);
-          }
-        }
-      })(),
-    );
+    // event.cron is the exact matched expression from wrangler.toml. A miss here means the two
+    // files have drifted (see tests/test_cloudflare_worker.py) — dispatch nothing rather than
+    // guess and reintroduce the concurrency contention CRON_TARGETS exists to avoid.
+    const workflow = CRON_TARGETS[event.cron];
+    if (!workflow) {
+      console.error(`no CRON_TARGETS entry for cron "${event.cron}" — dispatching nothing`);
+      return;
+    }
+    ctx.waitUntil(dispatchOne(env, workflow).then((r) => logResults([r])));
   },
 
   // A plain GET so the wiring (token, permissions, workflow names) can be checked from a
   // browser without waiting for a cron tick. Ignores the season guard on purpose — this is a
-  // manual, deliberate call, the same as clicking "Run workflow" in the GitHub UI.
+  // manual, deliberate call, the same as clicking "Run workflow" in the GitHub UI. Fires all
+  // three at once, unlike a real tick: this is a one-off wiring check, not a production
+  // dispatch, so the `data-writes` concurrency group cancelling one of the three (see the header
+  // comment) is an expected, harmless side effect here — what this endpoint verifies is that all
+  // three dispatch *calls* succeed (right token, right permissions, right workflow names), not
+  // that all three runs complete.
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname !== "/dispatch-now") {
       return new Response(
         "nfl-predict cron worker.\nGET /dispatch-now to trigger predict-early, predict-late " +
-          "and grade by hand (bypasses the season guard, same as a manual run in the GitHub UI).\n",
+          "and grade by hand (bypasses the season guard, same as a manual run in the GitHub UI; " +
+          "may show one of the three as GitHub-cancelled afterward — that is the shared " +
+          "concurrency group, not a dispatch failure — see worker.js).\n",
         { status: 200 },
       );
     }
-    const results = await dispatchAll(env);
+    const results = await dispatchMany(env, ALL_WORKFLOWS);
     return new Response(JSON.stringify(results, null, 2), {
       status: results.every((r) => r.ok) ? 200 : 502,
       headers: { "Content-Type": "application/json" },
