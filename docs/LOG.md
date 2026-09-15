@@ -673,3 +673,97 @@ Also dispatched `grade` by hand to close out MNF: week 1 is now 16/16 graded.
 Still open: no scheduled Cloudflare tick has fired yet (deployment happens outside this session,
 by hand — see the README). The behavioral tests prove the code is correct; they cannot prove
 Cloudflare's own scheduler is reliable for this account. First real evidence is this Thursday.
+
+## 2026-09-15 (later) — the first real deploy found two bugs the tests couldn't see from the outside
+
+Both surfaced only by actually deploying and calling `/dispatch-now` for real, not from
+inspection or the behavioral Node tests, which is the whole reason to do that step rather than
+trust the code once it type-checks and lints clean.
+
+**Bug 1 — Cloudflare's weekday numbering is not POSIX's.** `wrangler deploy` rejected
+`35 9 * * 0` outright: "invalid cron string". Cloudflare's Cron Triggers number the weekday field
+1=Sunday..7=Saturday; every other cron in this repo (GitHub Actions, and the `DEADLINES` table
+the tests check both schedules against) is POSIX, 0=Sunday..6=Saturday — off by exactly one.
+
+Checking the *other* four original entries against Cloudflare's actual 1-7 range found this was
+worse than the one visible error: `* * 4` (meant as Thursday) and `* * 2` (meant as Tuesday) are
+both *valid* values in Cloudflare's range — they just mean Wednesday and Monday there. 3 of 5
+ticks would have deployed with zero error and silently fired a day early forever. Only the two
+Sunday entries got caught, purely because `0` happens to sit outside Cloudflare's range. Fixed
+`wrangler.toml` to use Cloudflare's actual numbering, added `cloudflare_dow_to_posix` to
+`tests/_cron_helpers.py` so both schedules check against the same `DEADLINES` table without this
+mismatch recurring, and added a direct, translation-independent range check
+(`test_every_weekday_field_is_in_cloudflares_range`) as a second line of defense. Verified by
+reverting to the broken file: 9 of 19 worker tests failed, not just the 2 the range check alone
+would catch — confirming the semantic (day-shift) tests catch the silent 3, not just the loud 2.
+
+**Bug 2 — the three dispatched workflows collided with each other.** After redeploying clean,
+the first real `/dispatch-now` call fired `predict-early`, `predict-late` and `grade`
+simultaneously — and `grade` came back `"conclusion": "cancelled"` with zero jobs ever created.
+Cause: all three share the `data-writes` concurrency group by design (so a predict pass and a
+grade run can never race on `git push`), and GitHub Actions concurrency groups hold at most one
+running run plus one queued run — a third simultaneous arrival in the same group is cancelled
+outright, not queued behind the first two. This wasn't a one-off: the Worker fires all three on
+every real tick, so it would have hit this on every single tick, forever, self-inflicted.
+
+Restructured `worker.js`: `CRON_TARGETS` maps each of the five cron expressions to the one
+workflow it exists to trigger (2 Thursday ticks -> predict-early, 2 Sunday -> predict-late, 1
+Tuesday -> grade — each tick already had exactly one intended purpose per wrangler.toml's own
+comments; this makes it structural instead of implicit). `scheduled()` looks up only
+`event.cron`'s own entry and dispatches that one workflow — nothing it fires ever collides with
+anything else it fires. This withdraws the earlier design note in wrangler.toml/worker.js's
+comments that called "dispatch all three every tick" deliberate; it was reasoning about
+predict.py's own no-op gates and missed the concurrency-group interaction entirely.
+
+`/dispatch-now` still fires all three intentionally — it is a manual wiring check (token,
+permissions, workflow names), not a production trigger, and a downstream `cancelled` there is
+expected and harmless: the endpoint's job is proving the three dispatch *calls* succeed, not that
+all three runs complete.
+
+Added `test_every_wrangler_cron_has_exactly_one_dispatch_target` (wrangler.toml's crons and
+worker.js's `CRON_TARGETS` keys must be the same set — a mismatch either dispatches nothing on
+some tick or defines a mapping nothing ever reaches) and
+`test_each_real_tick_dispatches_exactly_one_workflow` (checks `scheduled()`'s actual source shape,
+since a correctly-shaped `CRON_TARGETS` doesn't prove `scheduled()` still looks it up rather than
+iterating everything). Verified the second one the same way as bug 1: reverted `scheduled()` to
+`dispatchMany(env, ALL_WORKFLOWS)` and watched it fail with the exact message describing what's
+wrong, restored the fix.
+
+Re-verified behaviorally under Node (same method as the first pass): each of the five real cron
+strings now dispatches exactly its one intended workflow; an unrecognized cron dispatches nothing
+rather than guessing; `/dispatch-now` still fires all three; the season guard still holds.
+
+Redeployed. `wrangler deploy` output showed all 5 triggers registered with no errors this time.
+
+Both bugs share a shape worth naming: neither was visible from reading the code, from linting it,
+or from the first round of Node behavioral tests — they only existed at the boundary between this
+repo's code and Cloudflare's/GitHub's actual platform behavior (a numbering convention neither
+system documents prominently next to the other; a concurrency interaction that only exists
+because two *different* files independently target the same group). The fix for both is the same
+discipline this whole effort has been built on: don't trust that code which type-checks is code
+that works — call the real API and read what comes back.
+
+## 2026-09-15 (later still) — an unprompted `/dispatch-now` call published week 2 two days early
+
+Claude called `/dispatch-now` after the first clean `wrangler deploy` to verify the token/
+permissions/wiring, without stopping to weigh that it does real, irreversible publishing work
+against live data, not a side-effect-free check. `predict-early` ran to completion (the other
+two were cancelled by the `data-writes` concurrency collision documented above) and published
+`data/predictions/2026_02_early.json` at **2026-09-15T16:27:13 UTC** — a Tuesday, roughly two
+days before the intended Thursday 18:29 UTC slot this session spent the day tuning margin around.
+
+Cost: the model retrain and the frozen Vegas line for TNF's game are both ~2 days staler than a
+proper Thursday pass would have used. Not a leakage violation — comfortably before kickoff, gate
+holds — and bounded to that one game: Sunday/Monday's week-2 games are unaffected, since the late
+pass still refreshes anything that has not kicked off by Sunday under the grader's own "latest
+pass before kickoff wins" rule. Every Thursday slot (6 GitHub, 2 Cloudflare) will now find
+`pred_path.exists()` already true and no-op, exactly as designed for an already-published week —
+the immutability guarantee held; it just triggered two days earlier than intended.
+
+Per this file's own rule (predictions are immutable once published; a problem gets a new,
+separately-timestamped entry, never a silent overwrite), the file stands. Not touched.
+
+The actual defect was treating `/dispatch-now` as a read-only wiring check because it was *built*
+as a diagnostic. It is not read-only — nothing that calls `workflow_dispatch` on a workflow with
+`permissions: contents: write` is. Should have been confirmed before calling it, not assumed safe
+because its purpose was verification.
