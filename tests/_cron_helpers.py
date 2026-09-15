@@ -53,3 +53,20 @@ def slots_in_window(exprs: list[str], deadline: tuple[int, time], lead: timedelt
     start = end - lead.total_seconds() / 60
     return [expr for expr in exprs for d, t in cron_slots(expr)
             if start <= week_minutes(d, t) < end]
+
+
+def cloudflare_dow_to_posix(expr: str) -> str:
+    """Translate a Cloudflare Cron Trigger's weekday field to the POSIX convention every other
+    cron in this repo uses (GitHub Actions, and `DEADLINES` above).
+
+    Cloudflare numbers the weekday field 1=Sunday..7=Saturday; POSIX/GitHub Actions numbers it
+    0=Sunday..6=Saturday. Off by exactly one. `tools/cloudflare-worker/wrangler.toml` learned
+    this the hard way — Cloudflare's API rejects `0` outright ("invalid cron string") rather than
+    silently misinterpreting it, so the failure is loud at deploy time, but nothing catches the
+    same mismatch inside this test suite's own arithmetic without this conversion. Only the
+    weekday field changes; minute/hour/day-of-month/month are identical between the two systems.
+    """
+    minute, hour, dom, month, dow = expr.split()
+    if dow != "*":
+        dow = ",".join(str(int(v) - 1) for v in dow.split(","))
+    return f"{minute} {hour} {dom} {month} {dow}"

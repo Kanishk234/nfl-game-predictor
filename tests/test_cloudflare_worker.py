@@ -17,6 +17,7 @@ from _cron_helpers import (
     DEADLINES,
     SUNDAY_DEADLINES,
     TNF_DEADLINES,
+    cloudflare_dow_to_posix,
     cron_slots,
     slots_in_window,
     week_minutes,
@@ -39,10 +40,13 @@ def worker_source() -> str:
 
 
 def wrangler_crons() -> list[str]:
-    """The cron expressions inside wrangler.toml's `[triggers]` block.
+    """The cron expressions inside wrangler.toml's `[triggers]` block, exactly as declared.
 
-    Regex rather than a TOML parser: this is a two-file diagnostic, not worth a new dependency
-    for. The pattern only has to survive this one file, which is short and reviewed by hand.
+    In Cloudflare's own weekday convention (1=Sunday..7=Saturday) — Cloudflare's API rejects
+    anything else at deploy time (see wrangler.toml's own comment; this repo found out the hard
+    way, deploying `* * 0` for Sunday: "invalid cron string"). Regex rather than a TOML parser:
+    this is a two-file diagnostic, not worth a new dependency for. The pattern only has to
+    survive this one file, which is short and reviewed by hand.
     """
     text = WRANGLER_TOML.read_text(encoding="utf-8")
     m = re.search(r"crons\s*=\s*\[(.*?)\]", text, re.DOTALL)
@@ -50,10 +54,18 @@ def wrangler_crons() -> list[str]:
     return re.findall(r'"([^"]+)"', m.group(1))
 
 
-def worker_workflow_list() -> list[str]:
-    m = re.search(r"const WORKFLOWS\s*=\s*\[(.*?)\];", worker_source(), re.DOTALL)
-    assert m, "no `const WORKFLOWS = [...]` found in worker.js"
-    return re.findall(r'"([^"]+)"', m.group(1))
+def wrangler_crons_posix() -> list[str]:
+    """The same expressions, translated to the POSIX weekday convention `DEADLINES` and every
+    other cron helper in this repo uses. Use this, not `wrangler_crons()`, for anything that
+    compares a tick's weekday against a real calendar day."""
+    return [cloudflare_dow_to_posix(e) for e in wrangler_crons()]
+
+
+def cron_targets() -> dict[str, str]:
+    """worker.js's `CRON_TARGETS` map: cron expression -> the one workflow it dispatches."""
+    m = re.search(r"const CRON_TARGETS\s*=\s*\{(.*?)\};", worker_source(), re.DOTALL)
+    assert m, "no `const CRON_TARGETS = {...}` found in worker.js"
+    return dict(re.findall(r'"([^"]+)"\s*:\s*"([^"]+)"', m.group(1)))
 
 
 def test_the_worker_files_exist():
@@ -62,14 +74,14 @@ def test_the_worker_files_exist():
 
 
 def test_the_worker_dispatches_the_real_publishing_workflows():
-    """Every name in worker.js's WORKFLOWS list must be a workflow that actually exists.
+    """Every value in worker.js's CRON_TARGETS map must be a workflow that actually exists.
 
     A rename in .github/workflows/ silently breaks the Worker's dispatch calls — GitHub's API
     returns 404 for an unknown workflow file, which the Worker only surfaces as a log line nobody
     is watching. This is the check that would have caught it instead.
     """
-    listed = worker_workflow_list()
-    assert listed, "worker.js lists no workflows to dispatch"
+    listed = set(cron_targets().values())
+    assert listed, "worker.js's CRON_TARGETS maps no cron to any workflow"
     for name in listed:
         assert (ROOT / ".github" / "workflows" / name).exists(), (
             f"worker.js dispatches {name}, which does not exist in .github/workflows/"
@@ -78,9 +90,51 @@ def test_the_worker_dispatches_the_real_publishing_workflows():
 
 def test_the_worker_covers_every_publishing_workflow():
     """The reverse of the check above: nothing that publishes is missing from the Worker."""
-    listed = set(worker_workflow_list())
+    listed = set(cron_targets().values())
     assert listed == {"predict-early.yml", "predict-late.yml", "grade.yml"}, (
         f"worker.js dispatches {sorted(listed)}; expected exactly the three publishing workflows"
+    )
+
+
+def test_every_wrangler_cron_has_exactly_one_dispatch_target():
+    """wrangler.toml's declared crons and worker.js's CRON_TARGETS keys must be the same set.
+
+    A cron declared in wrangler.toml with no entry in CRON_TARGETS dispatches nothing on that
+    tick — the Worker logs an error nobody is watching and silently does not back up whatever
+    that tick existed to cover. An entry in CRON_TARGETS with no matching cron in wrangler.toml
+    is dead code that nothing ever triggers. Both are silent by construction; this is the test
+    that isn't.
+    """
+    assert set(cron_targets()) == set(wrangler_crons()), (
+        f"CRON_TARGETS keys {sorted(cron_targets())} != wrangler.toml crons "
+        f"{sorted(wrangler_crons())}"
+    )
+
+
+def test_each_real_tick_dispatches_exactly_one_workflow():
+    """A cron mapping to one workflow (CRON_TARGETS) is one part of this; the other is that
+    `scheduled()` actually looks up only its own tick's entry rather than iterating every target.
+
+    This is the whole point of CRON_TARGETS over the earlier "dispatch all three every tick"
+    design: all three publishing workflows share the `data-writes` concurrency group (so a
+    predict pass and a grade run never race on `git push`), and GitHub Actions concurrency groups
+    hold at most one running run plus one queued run — a third simultaneous dispatch in the same
+    group is cancelled outright. Verified live on this repo's own account: the first
+    `/dispatch-now` call after deploying fired all three at once, and `grade` came back
+    `"conclusion": "cancelled"` with zero jobs ever created. `test_every_wrangler_cron_has_
+    exactly_one_dispatch_target` covers the data side (CRON_TARGETS' shape); this covers the
+    behavioral side — a future edit could restore CRON_TARGETS' one-key-one-value shape and still
+    reintroduce the incident by having `scheduled()` iterate every target regardless of
+    `event.cron`, which no purely data-shaped check would catch.
+    """
+    src = worker_source()
+    assert "dispatchMany(env, ALL_WORKFLOWS)" in src, (
+        "expected dispatchMany(env, ALL_WORKFLOWS) inside fetch() (the manual /dispatch-now "
+        "check) and nowhere else"
+    )
+    assert re.search(r"scheduled\(event, env, ctx\)\s*\{.*?CRON_TARGETS\[event\.cron\]", src, re.DOTALL), (
+        "scheduled() should look up CRON_TARGETS[event.cron] and dispatch only that one "
+        "workflow — not iterate every target on every tick"
     )
 
 
@@ -99,6 +153,29 @@ def test_every_cron_expression_is_well_formed():
         cron_slots(expr)  # raises if a field cannot be parsed
 
 
+def test_every_weekday_field_is_in_cloudflares_range():
+    """Cheap, direct, and deliberately independent of `cloudflare_dow_to_posix`.
+
+    The first deploy of this file used POSIX weekday numbers (0=Sunday) instead of Cloudflare's
+    (1=Sunday). Only the Sunday entries (`0`) got caught — Cloudflare's API rejects an
+    out-of-range value outright ("invalid cron string"). The Thursday and Tuesday entries (`4`
+    and `2`) were silently *accepted*, because both are valid values in Cloudflare's own 1-7
+    range — they just meant Wednesday and Monday instead. Three of five ticks would have fired
+    on the wrong day with no error at all; only bad luck on the other two surfaced anything. This
+    test would have caught all five before the first `wrangler deploy`, without needing a real
+    deploy to find out: any weekday field outside 1-7 fails loudly, right here.
+    """
+    for expr in wrangler_crons():
+        dow = expr.split()[-1]
+        if dow == "*":
+            continue
+        for value in dow.split(","):
+            assert 1 <= int(value) <= 7, (
+                f"{expr!r}: weekday {value} is outside Cloudflare's 1=Sunday..7=Saturday range "
+                f"— did this get written in the POSIX convention (0=Sunday) by mistake?"
+            )
+
+
 @pytest.mark.parametrize("label", TNF_DEADLINES, ids=list(TNF_DEADLINES))
 def test_at_least_one_worker_tick_precedes_thursday_night(label: str):
     """The Worker exists to backstop the highest-stakes deadline in the repo.
@@ -107,8 +184,10 @@ def test_at_least_one_worker_tick_precedes_thursday_night(label: str):
     (test_workflows.py::test_the_early_pass_has_spare_attempts_before_thursday_night), so
     tightening one without the other is caught the same way.
     """
-    usable = slots_in_window(wrangler_crons(), TNF_DEADLINES[label], timedelta(hours=12))
-    assert usable, f"{label}: no Worker cron tick falls in the 12h before TNF: {wrangler_crons()}"
+    usable = slots_in_window(wrangler_crons_posix(), TNF_DEADLINES[label], timedelta(hours=12))
+    assert usable, (
+        f"{label}: no Worker cron tick falls in the 12h before TNF: {wrangler_crons_posix()}"
+    )
 
 
 @pytest.mark.parametrize("label", SUNDAY_DEADLINES, ids=list(SUNDAY_DEADLINES))
@@ -116,23 +195,24 @@ def test_at_least_one_worker_tick_precedes_every_shape_of_sunday(label: str):
     """Both the international and the normal Sunday case need their own covering tick — a
     Worker schedule that only ever fires after 13:30 UTC would silently stop backstopping the
     six-to-eleven international games a season that predict-late.yml's own comments describe."""
-    usable = slots_in_window(wrangler_crons(), SUNDAY_DEADLINES[label], LATE_PASS_LEAD_LIMIT)
+    usable = slots_in_window(wrangler_crons_posix(), SUNDAY_DEADLINES[label], LATE_PASS_LEAD_LIMIT)
     assert usable, (
         f"{label}: no Worker cron tick falls within LATE_PASS_LEAD_LIMIT "
-        f"({LATE_PASS_LEAD_LIMIT}) of kickoff: {wrangler_crons()}"
+        f"({LATE_PASS_LEAD_LIMIT}) of kickoff: {wrangler_crons_posix()}"
     )
 
 
-#: Cron expressions in wrangler.toml that exist to precede a kickoff. The grade tick is
-#: deliberately not one of these — grading has no kickoff deadline, only "after MNF ends" — so
-#: it is checked on its own terms below rather than forced through the kickoff-margin test.
-KICKOFF_TICKS = ["11 20 * * 4", "37 22 * * 4", "35 9 * * 0", "51 14 * * 0"]
+#: Cron expressions in wrangler.toml (Cloudflare's own weekday convention, 1=Sunday) that exist
+#: to precede a kickoff. The grade tick is deliberately not one of these — grading has no
+#: kickoff deadline, only "after MNF ends" — so it is checked on its own terms below rather than
+#: forced through the kickoff-margin test.
+KICKOFF_TICKS = ["11 20 * * 5", "37 22 * * 5", "35 9 * * 1", "51 14 * * 1"]
 
 
 def test_every_declared_tick_is_accounted_for():
     """KICKOFF_TICKS plus the grade tick must be the whole schedule, or a newly added tick
     would silently skip every check below it instead of failing one."""
-    assert set(wrangler_crons()) - set(KICKOFF_TICKS) == {"13 16 * * 2"}, (
+    assert set(wrangler_crons()) - set(KICKOFF_TICKS) == {"13 16 * * 3"}, (
         f"wrangler.toml has a tick this test suite does not know how to classify: "
         f"{wrangler_crons()}. Add it to KICKOFF_TICKS or extend this test."
     )
@@ -142,7 +222,7 @@ def test_no_kickoff_tick_is_absurdly_early():
     """A tick more than a day ahead of every deadline in the table is not backstopping anything
     kickoff-shaped — it is either a mistake or dead weight against the 5-trigger cap."""
     for expr in KICKOFF_TICKS:
-        d, t = cron_slots(expr)[0]
+        d, t = cron_slots(cloudflare_dow_to_posix(expr))[0]
         wm = week_minutes(d, t)
         margins = [week_minutes(*dl) - wm for dl in DEADLINES.values()]
         soonest = min(((m if m > 0 else m + 7 * 24 * 60) for m in margins), default=None)
@@ -155,8 +235,8 @@ def test_the_grade_tick_lands_after_the_github_grade_slots():
     """The grade tick's whole point is to close the gap *after* GitHub's own nine grade slots —
     a copy of one of those slots would be redundant in time, not extra coverage."""
     grade_tick = next(c for c in wrangler_crons() if c not in KICKOFF_TICKS)
-    d, t = cron_slots(grade_tick)[0]
-    assert d == 2, f"expected the grade tick on Tuesday (2), got weekday {d}"
+    d, t = cron_slots(cloudflare_dow_to_posix(grade_tick))[0]
+    assert d == 2, f"expected the grade tick on Tuesday (POSIX weekday 2), got {d}"
     # The last GitHub grade slot this repo schedules, Tuesday 15:07 UTC (see grade.yml).
     last_github_slot = week_minutes(2, time(15, 7))
     assert week_minutes(d, t) > last_github_slot, (

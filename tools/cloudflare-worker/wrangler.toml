@@ -10,20 +10,32 @@ compatibility_date = "2026-09-01"
 # Five is the Cloudflare free-plan cap — 5 Cron Triggers *per account*, not per Worker. Each tick
 # dispatches all three publishing workflows (see worker.js), so which slot fires does not matter:
 # every tick gives every pipeline a chance. Verified against the same deadline table the GitHub
-# workflow tests use (tests/test_cloudflare_worker.py), with margin to spare in every case:
+# workflow tests use (tests/test_cloudflare_worker.py, via a weekday-convention translation — see
+# the next paragraph), with margin to spare in every case:
 #
 #   Thu 20:11 UTC   4h04m before TNF (EDT) / 5h04m (EST)      — mid predict-early's GH window
 #   Thu 22:37 UTC   1h38m before TNF (EDT) / 2h38m (EST)      — last-resort, near the window's end
 #   Sun 09:35 UTC   3h55m before the 13:30 UTC int'l kickoff  — covers a London/Frankfurt week
 #   Sun 14:51 UTC   2h09m before the 17:00 UTC normal slate   — covers a normal week
 #   Tue 16:13 UTC   after MNF, after every GH grade slot      — closes the residual grade gap
+#
+# WEEKDAY NUMBERING — READ THIS BEFORE EDITING THE LIST BELOW. Cloudflare's Cron Triggers number
+# the weekday field 1=Sunday..7=Saturday. Every other cron in this repo (GitHub Actions, and the
+# `DEADLINES` table the tests check both schedules against) uses the POSIX convention,
+# 0=Sunday..6=Saturday — the two differ by exactly 1. The first deploy of this file used the
+# POSIX numbering by mistake (`* * 0` for Sunday) and Cloudflare's API rejected it outright:
+# "invalid cron string: 35 9 * * 0" — 0 is out of Cloudflare's 1-7 range, so nothing with a
+# POSIX-style Sunday or the days after it will validate. The weekday field below is Cloudflare's
+# numbering (Thu=5, Sun=1, Tue=3); tests/_cron_helpers.py's `cloudflare_dow_to_posix` converts it
+# back to POSIX before comparing against DEADLINES, so the two schedules stay checkable against
+# the same table without silently drifting into this mismatch again.
 [triggers]
 crons = [
-  "11 20 * * 4",
-  "37 22 * * 4",
-  "35 9 * * 0",
-  "51 14 * * 0",
-  "13 16 * * 2",
+  "11 20 * * 5",
+  "37 22 * * 5",
+  "35 9 * * 1",
+  "51 14 * * 1",
+  "13 16 * * 3",
 ]
 
 # GITHUB_TOKEN is a secret, not a var: `wrangler secret put GITHUB_TOKEN` (see README.md). Never
