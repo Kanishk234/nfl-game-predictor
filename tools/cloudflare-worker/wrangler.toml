@@ -1,0 +1,30 @@
+name = "nfl-predict-cron"
+main = "worker.js"
+compatibility_date = "2026-09-01"
+
+# See worker.js for why this exists: GitHub's own `schedule` trigger dropped 4 of 6 firings on
+# this repo on 2026-09-14/15 (tools/schedule_report.py), while every `workflow_dispatch` call in
+# the same window fired immediately. This backstops the GitHub-native crons in
+# .github/workflows/ with a scheduler GitHub does not control; both keep running.
+#
+# Five is the Cloudflare free-plan cap — 5 Cron Triggers *per account*, not per Worker. Each tick
+# dispatches all three publishing workflows (see worker.js), so which slot fires does not matter:
+# every tick gives every pipeline a chance. Verified against the same deadline table the GitHub
+# workflow tests use (tests/test_cloudflare_worker.py), with margin to spare in every case:
+#
+#   Thu 20:11 UTC   4h04m before TNF (EDT) / 5h04m (EST)      — mid predict-early's GH window
+#   Thu 22:37 UTC   1h38m before TNF (EDT) / 2h38m (EST)      — last-resort, near the window's end
+#   Sun 09:35 UTC   3h55m before the 13:30 UTC int'l kickoff  — covers a London/Frankfurt week
+#   Sun 14:51 UTC   2h09m before the 17:00 UTC normal slate   — covers a normal week
+#   Tue 16:13 UTC   after MNF, after every GH grade slot      — closes the residual grade gap
+[triggers]
+crons = [
+  "11 20 * * 4",
+  "37 22 * * 4",
+  "35 9 * * 0",
+  "51 14 * * 0",
+  "13 16 * * 2",
+]
+
+# GITHUB_TOKEN is a secret, not a var: `wrangler secret put GITHUB_TOKEN` (see README.md). Never
+# add it here — anything in [vars] is plaintext in the dashboard and in `wrangler deploy` output.
