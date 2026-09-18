@@ -10,17 +10,27 @@ and whether it was right.
 
 ## When the site updates
 
-| day | time (ET) | what changes |
-|---|---|---|
-| **Thursday** | 5 PM | New picks for the whole week appear, before that night's game |
-| **Friday** | 8 AM | Thursday night's result and verdict |
-| **Sunday** | 10 AM | Fresher picks for the Sunday and Monday games |
-| **Monday** | 8 AM | The Sunday slate's results |
-| **Tuesday** | 8 AM | Monday night's result — the week is complete |
+GitHub Actions' own `schedule` trigger drops runs under load — measured on this repo at a
+2-in-6 fire rate on 2026-09-14/15, and again on 2026-09-18 when all three Friday grading attempts
+missed outright. Each publishing job still has several staggered GitHub attempts per day (see
+[`docs/WEEKLY_FLOW.md`](docs/WEEKLY_FLOW.md) for the full list), so the site often updates earlier
+than the times below. But the only *guaranteed* floor is a small [Cloudflare
+Worker](tools/cloudflare-worker) that calls the same jobs on a schedule GitHub does not control.
+These are its times — the latest the site should ever update by, not the typical case:
 
-Times shift by an hour with daylight saving; the schedule is set in UTC so it stays before
-kickoff either way. A few weeks open earlier than Thursday — Thanksgiving, Christmas, the odd
-Wednesday opener — and those get their picks on the Tuesday instead.
+| day | time (UTC) | time (ET) | what changes |
+|---|---|---|---|
+| **Thursday** | 20:11 | 4:11 PM EDT / 3:11 PM EST | New picks for the whole week appear, before that night's game |
+| **Thursday** | 22:37 | 6:37 PM EDT / 5:37 PM EST | Last-resort retry of the above, still ahead of an 8:15 PM ET kickoff |
+| **Sunday** | 09:35 | 5:35 AM EDT / 4:35 AM EST | Fresher picks for the Sunday and Monday games (covers early international kickoffs) |
+| **Sunday** | 14:51 | 10:51 AM EDT / 9:51 AM EST | Same, timed for a normal 1 PM ET slate |
+| **Tuesday** | 16:13 | 12:13 PM EDT / 11:13 AM EST | Every result for the week, including Monday night — the week is complete |
+
+Grading (Friday/Monday's results) has no dedicated Cloudflare backstop yet — it relies on
+GitHub's own nine staggered attempts across those two days, with the Tuesday slot above as the
+final catch-all if every one of those misses. A few weeks open earlier than Thursday —
+Thanksgiving, Christmas, the odd Wednesday opener — and those get their picks on the preceding
+Tuesday instead.
 
 Games already played keep the pick they were given. The Sunday pass only re-predicts games that
 have not started.
