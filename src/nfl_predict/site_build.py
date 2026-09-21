@@ -15,11 +15,15 @@ are inline SVG drawn here. All links are relative so the site works under a sub-
 
 from __future__ import annotations
 
+import base64
 import html
+import io
 import json
 from datetime import UTC, datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
+
+from PIL import Image, ImageDraw
 
 from nfl_predict.grade import HISTORY_PATH, RESULTS_DIR
 from nfl_predict.model.train import BACKTEST_PATH
@@ -28,6 +32,51 @@ from nfl_predict.predict import PREDICTIONS_DIR
 SITE_DIR = Path("site")
 REPO_URL = "https://github.com/Kanishk234/nfl-game-predictor"
 ET = ZoneInfo("America/New_York")
+
+#: Source art for the tab icon: a football drawn by hand, committed to the repo rather than
+#: pulled from a stock icon set (avoids the attribution/licensing question entirely).
+FOOTBALL_SOURCE = Path("assets/football.png")
+
+#: Bright green, not the muted CSS panel green, on purpose: at favicon size (16-32px) a subtle
+#: shade reads as grey-brown mush next to a browser tab bar. This one still reads as "field"
+#: at that size.
+FAVICON_BG = (56, 168, 76, 255)
+
+
+def build_favicon() -> str:
+    """Composite the football onto a rounded green square and return it as a data URI.
+
+    Baked into the HTML rather than written as a separate site/ file so the tab icon can never
+    404 independently of the page — the same reasoning as the SVG favicon this replaced.
+    """
+    football = Image.open(FOOTBALL_SOURCE).convert("RGBA")
+    bbox = football.getbbox()
+    if bbox:
+        football = football.crop(bbox)
+
+    size = 256
+    canvas = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    mask = Image.new("L", (size, size), 0)
+    ImageDraw.Draw(mask).rounded_rectangle([0, 0, size - 1, size - 1], radius=size // 5, fill=255)
+    bg = Image.new("RGBA", (size, size), FAVICON_BG)
+    canvas.paste(bg, (0, 0), mask)
+
+    # Fit the football inside a margin, preserving aspect ratio.
+    pad = int(size * 0.09)
+    target = size - 2 * pad
+    scale = min(target / football.width, target / football.height)
+    football = football.resize((round(football.width * scale), round(football.height * scale)), Image.LANCZOS)
+    offset = ((size - football.width) // 2, (size - football.height) // 2)
+    canvas.paste(football, offset, football)
+
+    buf = io.BytesIO()
+    canvas.save(buf, format="PNG", optimize=True)
+    return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
+
+
+#: Built once at import time, not per page — `page()` is called once per site page and the
+#: composite is identical every time.
+FAVICON = build_favicon()
 
 #: Chart colours, validated for colour-vision-deficiency separation and contrast on both
 #: surfaces with the dataviz validator.
@@ -785,6 +834,7 @@ def page(title: str, body: str, weeks: list[tuple[int, int]], current: tuple[int
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark">
 <title>{e(title)}</title>
+<link rel="icon" href="{FAVICON}">
 <meta name="description" content="NFL picks, win probabilities and spreads, published before kickoff and graded against the Vegas line.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;600&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
@@ -792,7 +842,7 @@ def page(title: str, body: str, weeks: list[tuple[int, int]], current: tuple[int
 </head>
 <body>
 <main>
-<div class="top"><h1><a href="{root}index.html">nfl-predict</a></h1>
+<div class="top"><h1><a href="{root}index.html">Gridcast</a></h1>
 <p class="lede">Every NFL game picked before kickoff, written down where it cannot be changed, graded against Vegas.</p></div>
 {week_strip(weeks, current, root)}
 {body}
@@ -812,13 +862,13 @@ def render_site(predictions: list[dict], results: dict, history: dict | None, ba
     season = latest[0] if latest else None
     pages = {}
     for s, w in weeks:
-        pages[f"weeks/{s}_{w:02d}.html"] = page(f"Week {w}, {s}", week_body(s, w, by_week[(s, w)], results.get((s, w))), weeks, (s, w), "../", now)
+        pages[f"weeks/{s}_{w:02d}.html"] = page(f"Week {w}, {s} · Gridcast", week_body(s, w, by_week[(s, w)], results.get((s, w))), weeks, (s, w), "../", now)
     if latest:
-        pages["index.html"] = page("nfl-predict", week_body(*latest, by_week[latest], results.get(latest)), weeks, latest, "", now)
+        pages["index.html"] = page("Gridcast", week_body(*latest, by_week[latest], results.get(latest)), weeks, latest, "", now)
     else:
-        pages["index.html"] = page("nfl-predict", "<h2>No predictions published yet</h2><p>The first pass runs the Tuesday before Week 1.</p>",
+        pages["index.html"] = page("Gridcast", "<h2>No predictions published yet</h2><p>The first pass runs the Tuesday before Week 1.</p>",
                                    weeks, None, "", now)
-    pages["season.html"] = page("Season", season_body(history, season, backtest), weeks, None, "", now)
+    pages["season.html"] = page("Season · Gridcast", season_body(history, season, backtest), weeks, None, "", now)
     return pages
 
 

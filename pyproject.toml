@@ -18,6 +18,7 @@ dependencies = [
     "requests",
     "tzdata",
     "joblib",
+    "pillow",
 ]
 
 [project.optional-dependencies]
