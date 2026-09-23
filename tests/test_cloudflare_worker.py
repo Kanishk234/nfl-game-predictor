@@ -203,16 +203,23 @@ def test_at_least_one_worker_tick_precedes_every_shape_of_sunday(label: str):
 
 
 #: Cron expressions in wrangler.toml (Cloudflare's own weekday convention, 1=Sunday) that exist
-#: to precede a kickoff. The grade tick is deliberately not one of these — grading has no
-#: kickoff deadline, only "after MNF ends" — so it is checked on its own terms below rather than
-#: forced through the kickoff-margin test.
-KICKOFF_TICKS = ["11 20 * * 5", "37 22 * * 5", "35 9 * * 1", "51 14 * * 1"]
+#: to precede a *fixed weekly* kickoff (TNF, Sunday, MNF) and so are checked against DEADLINES
+#: below. Two ticks are deliberately not in this list, each checked on its own terms instead:
+#: the grade tick (no kickoff deadline, only "after MNF ends") and the Tuesday early-opener tick
+#: (its deadline is an irregular, occasional kickoff — Thanksgiving/Christmas/a Wednesday
+#: opener — not a fixed weekly one DEADLINES can model).
+KICKOFF_TICKS = ["11 20 * * 5", "35 9 * * 1", "51 14 * * 1"]
+
+#: The two Tuesday ticks, by what they dispatch rather than by position — see
+#: test_the_grade_tick_lands_after_the_github_grade_slots for why position isn't safe to assume.
+GRADE_TICK = "13 16 * * 3"
+EARLY_OPENER_TICK = "35 18 * * 3"
 
 
 def test_every_declared_tick_is_accounted_for():
-    """KICKOFF_TICKS plus the grade tick must be the whole schedule, or a newly added tick
-    would silently skip every check below it instead of failing one."""
-    assert set(wrangler_crons()) - set(KICKOFF_TICKS) == {"13 16 * * 3"}, (
+    """KICKOFF_TICKS plus the grade and early-opener ticks must be the whole schedule, or a
+    newly added tick would silently skip every check below it instead of failing one."""
+    assert set(wrangler_crons()) - set(KICKOFF_TICKS) == {GRADE_TICK, EARLY_OPENER_TICK}, (
         f"wrangler.toml has a tick this test suite does not know how to classify: "
         f"{wrangler_crons()}. Add it to KICKOFF_TICKS or extend this test."
     )
@@ -234,13 +241,43 @@ def test_no_kickoff_tick_is_absurdly_early():
 def test_the_grade_tick_lands_after_the_github_grade_slots():
     """The grade tick's whole point is to close the gap *after* GitHub's own nine grade slots —
     a copy of one of those slots would be redundant in time, not extra coverage."""
-    grade_tick = next(c for c in wrangler_crons() if c not in KICKOFF_TICKS)
-    d, t = cron_slots(cloudflare_dow_to_posix(grade_tick))[0]
+    assert GRADE_TICK in wrangler_crons()
+    d, t = cron_slots(cloudflare_dow_to_posix(GRADE_TICK))[0]
     assert d == 2, f"expected the grade tick on Tuesday (POSIX weekday 2), got {d}"
     # The last GitHub grade slot this repo schedules, Tuesday 15:07 UTC (see grade.yml).
     last_github_slot = week_minutes(2, time(15, 7))
     assert week_minutes(d, t) > last_github_slot, (
-        f"{grade_tick} does not land after grade.yml's last Tuesday slot (15:07 UTC)"
+        f"{GRADE_TICK} does not land after grade.yml's last Tuesday slot (15:07 UTC)"
+    )
+
+
+def test_the_early_opener_tick_lands_after_githubs_own_tuesday_attempts():
+    """Same reasoning as the grade tick: this exists to catch the case where all four of
+    GitHub's native Tuesday early-opener attempts (predict-early.yml) miss, so it should be
+    positioned after the last of them, not duplicate one in time."""
+    assert EARLY_OPENER_TICK in wrangler_crons()
+    d, t = cron_slots(cloudflare_dow_to_posix(EARLY_OPENER_TICK))[0]
+    assert d == 2, f"expected the early-opener tick on Tuesday (POSIX weekday 2), got {d}"
+    # The last GitHub early-opener slot this repo schedules, Tuesday 18:07 UTC (predict-early.yml).
+    last_github_slot = week_minutes(2, time(18, 7))
+    assert week_minutes(d, t) > last_github_slot, (
+        f"{EARLY_OPENER_TICK} does not land after predict-early.yml's last Tuesday slot (18:07 UTC)"
+    )
+
+
+def test_the_early_opener_tick_dispatches_predict_early():
+    assert cron_targets()[EARLY_OPENER_TICK] == "predict-early.yml"
+
+
+def test_the_early_opener_tick_passes_the_only_early_openers_input():
+    """Without this input, a plain workflow_dispatch call has no `github.event.schedule` to
+    match predict-early.yml's Tuesday-detection logic against, so it would fall through to the
+    default branch and publish the full week unconditionally — every Tuesday, not just
+    early-opener ones. See worker.js's CRON_INPUTS comment."""
+    m = re.search(r"const CRON_INPUTS\s*=\s*\{(.*?)\};", worker_source(), re.DOTALL)
+    assert m, "no `const CRON_INPUTS = {...}` found in worker.js"
+    assert EARLY_OPENER_TICK in m.group(1) and "only_early_openers" in m.group(1) and '"true"' in m.group(1), (
+        f"CRON_INPUTS does not appear to map {EARLY_OPENER_TICK!r} to only_early_openers: true"
     )
 
 

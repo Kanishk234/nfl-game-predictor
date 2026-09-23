@@ -23,6 +23,17 @@
  * every single tick, not just that one test. CRON_TARGETS removes the contention instead of
  * living with it: nothing this Worker fires ever collides with anything else it fires.
  *
+ * TUESDAY EARLY-OPENER TICK ("35 18 * * 3"): predict-early.yml's Tuesday safety net (for
+ * Thanksgiving/Christmas/Wednesday-opener weeks) is the one failure mode in this whole system
+ * with no fallback if GitHub drops it — a missed early game is gone from the record permanently,
+ * unlike a missed grade (self-heals) or a missed regular Thursday pass (has 6 GitHub attempts
+ * plus this Worker's own Thursday tick behind it). This tick closes that gap, timed after
+ * GitHub's own four Tuesday attempts as the final catch-all, same reasoning as the grade tick
+ * below. It needs `CRON_INPUTS` because a plain workflow_dispatch call has no
+ * `github.event.schedule` to match against predict-early.yml's Tuesday-detection logic — without
+ * the `only_early_openers: true` input, this tick would hit the *default* branch instead and
+ * publish the full week unconditionally, every single Tuesday, not just early-opener ones.
+ *
  * SEASON GUARD: dispatching outside Sep-Feb would hit predict.py's `next_week_target`, which
  * raises when there is no game left in the loaded schedule — a red run, every tick, for seven
  * months a year, for no reason. Skipped here rather than in Python so the existing GitHub-native
@@ -45,10 +56,19 @@ const REF = "main";
 // tick that dispatches nothing) or dead code (a mapping nothing ever triggers).
 const CRON_TARGETS = {
   "11 20 * * 5": "predict-early.yml",
-  "37 22 * * 5": "predict-early.yml",
   "35 9 * * 1": "predict-late.yml",
   "51 14 * * 1": "predict-late.yml",
   "13 16 * * 3": "grade.yml",
+  "35 18 * * 3": "predict-early.yml",
+};
+
+// Extra `workflow_dispatch` inputs for the one tick that needs them, keyed the same as
+// CRON_TARGETS. Without this, "35 18 * * 3" would hit predict-early.yml's default branch (a
+// full, unconditional publish) instead of the Tuesday-only-if-the-week-opens-early gate — see
+// predict-early.yml's own `only_early_openers` input for why plain workflow_dispatch calls
+// can't reach that gate any other way (there is no `github.event.schedule` to match on).
+const CRON_INPUTS = {
+  "35 18 * * 3": { only_early_openers: "true" },
 };
 
 // The full set, for the /dispatch-now manual check only — see fetch() below for why that path
@@ -62,7 +82,7 @@ function inSeason(now) {
   return month >= 9 || month <= 2;
 }
 
-async function dispatchOne(env, workflow) {
+async function dispatchOne(env, workflow, inputs = {}) {
   const url = `https://api.github.com/repos/${OWNER}/${REPO}/actions/workflows/${workflow}/dispatches`;
   const res = await fetch(url, {
     method: "POST",
@@ -73,7 +93,7 @@ async function dispatchOne(env, workflow) {
       "User-Agent": "nfl-predict-cron-worker",
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ ref: REF }),
+    body: JSON.stringify({ ref: REF, inputs }),
   });
   // A successful dispatch is 204 No Content and has no body to read.
   const detail = res.ok ? null : await res.text();
@@ -108,7 +128,8 @@ export default {
       console.error(`no CRON_TARGETS entry for cron "${event.cron}" — dispatching nothing`);
       return;
     }
-    ctx.waitUntil(dispatchOne(env, workflow).then((r) => logResults([r])));
+    const inputs = CRON_INPUTS[event.cron] ?? {};
+    ctx.waitUntil(dispatchOne(env, workflow, inputs).then((r) => logResults([r])));
   },
 
   // A plain GET so the wiring (token, permissions, workflow names) can be checked from a

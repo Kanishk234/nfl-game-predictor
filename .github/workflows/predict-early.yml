@@ -66,6 +66,17 @@ on:
     - cron: "11 17 * * 2"
     - cron: "7 18 * * 2"
   workflow_dispatch:
+    inputs:
+      only_early_openers:
+        description: >-
+          Only publish if the week's first kickoff is before Thursday's regular pass (same gate
+          as the Tuesday schedule crons above). Set by the Cloudflare Worker's Tuesday backstop
+          tick (tools/cloudflare-worker) so a manual dispatch from a script behaves like a
+          Tuesday run instead of the default Thursday-style full publish. Leave unset/false for
+          an ordinary manual run.
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -99,8 +110,10 @@ jobs:
           # Which pass this is depends on the day, not on one exact cron string: there are
           # several Tuesday slots and several Thursday slots, and matching a literal expression
           # would silently turn every Tuesday run into a regular pass the moment the schedule
-          # was restaggered. Tuesday crons are the ones ending in "* * 2".
-          if [[ "${{ github.event.schedule }}" == *"* * 2" ]]; then
+          # was restaggered. Tuesday crons are the ones ending in "* * 2". `only_early_openers`
+          # is the same gate, reachable from workflow_dispatch (e.g. the Cloudflare Worker's
+          # Tuesday tick), which has no `github.event.schedule` to match on.
+          if [[ "${{ github.event.schedule }}" == *"* * 2" || "${{ github.event.inputs.only_early_openers }}" == "true" ]]; then
             python -m nfl_predict.predict --pass early --only-early-openers
           else
             python -m nfl_predict.predict --pass early

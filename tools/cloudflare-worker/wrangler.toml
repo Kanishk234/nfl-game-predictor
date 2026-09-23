@@ -5,20 +5,33 @@ compatibility_date = "2026-09-01"
 # See worker.js for why this exists: GitHub's own `schedule` trigger dropped 4 of 6 firings on
 # this repo on 2026-09-14/15 (tools/schedule_report.py), while every `workflow_dispatch` call in
 # the same window fired immediately. This backstops the GitHub-native crons in
-# .github/workflows/ with a scheduler GitHub does not control; both keep running.
+# .github/workflows/ with a scheduler GitHub does not control; both keep running. Confirmed live
+# again on 2026-09-22: GitHub's own grade.yml dropped all three of that day's native Tuesday
+# attempts outright (zero runs, not late ones) — the "13 16 * * 3" tick below was the only thing
+# that graded Monday night's game.
 #
 # Five is the Cloudflare free-plan cap — 5 Cron Triggers *per account*, not per Worker. Each tick
-# dispatches all three publishing workflows (see worker.js), so which slot fires does not matter:
-# every tick gives every pipeline a chance. Verified against the same deadline table the GitHub
-# workflow tests use (tests/test_cloudflare_worker.py, via a weekday-convention translation — see
-# the next paragraph), with margin to spare in every case:
+# dispatches exactly the one workflow CRON_TARGETS maps it to (see worker.js) — not all three;
+# an earlier version of this comment described "dispatch all three" as deliberate, which was
+# withdrawn once the `data-writes` concurrency-group collision that design caused was found (see
+# docs/LOG.md). Verified against the same deadline table the GitHub workflow tests use
+# (tests/test_cloudflare_worker.py, via a weekday-convention translation — see the next
+# paragraph), with margin to spare in every case:
 #
-#   Thu 20:11 UTC   4h04m before TNF (EDT) / 5h04m (EST)      — mid predict-early's GH window
-#   Thu 22:37 UTC   1h38m before TNF (EDT) / 2h38m (EST)      — last-resort, near the window's end
-#   Sun 09:35 UTC   3h55m before the 13:30 UTC int'l kickoff  — covers a London/Frankfurt week
-#   Sun 14:51 UTC   2h09m before the 17:00 UTC normal slate   — covers a normal week
-#   Tue 16:13 UTC   after MNF, after every GH grade slot      — closes the residual grade gap
+#   Thu 20:11 UTC   4h04m before TNF (EDT) / 5h04m (EST)      — predict-early, mid GH's own window
+#   Sun 09:35 UTC   3h55m before the 13:30 UTC int'l kickoff  — predict-late, covers a London week
+#   Sun 14:51 UTC   2h09m before the 17:00 UTC normal slate   — predict-late, covers a normal week
+#   Tue 16:13 UTC   after MNF, after every GH grade slot      — grade, closes the residual gap
+#   Tue 18:35 UTC   after GH's own 4 early-opener slots       — predict-early's Tuesday safety
+#                   (15:41-18:07 UTC), which have no          net, gated by the `only_early_
+#                   Cloudflare backstop otherwise              openers` workflow_dispatch input
 #
+# The Tuesday 18:35 tick is the only one that protects an unrecoverable failure mode: a missed
+# Thanksgiving/Christmas/Wednesday-opener kickoff is gone from the record permanently (the leakage
+# gate rejects a prediction made after kickoff), where a missed grade just runs late and a missed
+# regular Thursday pass still has 6 GitHub attempts plus this file's own Thursday tick behind it.
+# See worker.js's own comment on `CRON_INPUTS` for why this tick cannot be a plain dispatch like
+# the other four — predict-early.yml only takes the Tuesday-safe branch when told to.
 # WEEKDAY NUMBERING — READ THIS BEFORE EDITING THE LIST BELOW. Cloudflare's Cron Triggers number
 # the weekday field 1=Sunday..7=Saturday. Every other cron in this repo (GitHub Actions, and the
 # `DEADLINES` table the tests check both schedules against) uses the POSIX convention,
@@ -32,10 +45,10 @@ compatibility_date = "2026-09-01"
 [triggers]
 crons = [
   "11 20 * * 5",
-  "37 22 * * 5",
   "35 9 * * 1",
   "51 14 * * 1",
   "13 16 * * 3",
+  "35 18 * * 3",
 ]
 
 # GITHUB_TOKEN is a secret, not a var: `wrangler secret put GITHUB_TOKEN` (see README.md). Never
