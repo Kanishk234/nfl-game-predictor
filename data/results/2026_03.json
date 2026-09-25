@@ -1,0 +1,120 @@
+{
+  "season": 2026,
+  "week": 3,
+  "n_games": 16,
+  "n_predicted": 16,
+  "n_graded": 1,
+  "complete": false,
+  "passes": [
+    "early"
+  ],
+  "official_rule": "latest pass generated before each game's actual kickoff",
+  "rescheduled_games": [],
+  "summary": {
+    "n": 1,
+    "model": {
+      "n": 1,
+      "accuracy": 0.0,
+      "brier": 0.60730849,
+      "log_loss": 1.5109509657194462,
+      "auc": NaN,
+      "ece": 0.7793,
+      "spread_mae": 30.25,
+      "ats": {
+        "n": 1,
+        "mae": 30.25,
+        "rmse": 30.25,
+        "ats_w": 0,
+        "ats_l": 1,
+        "ats_push": 0,
+        "ats_pct": 0.0,
+        "breakeven": 0.5238
+      }
+    },
+    "vegas": {
+      "n": 1,
+      "accuracy": 0.0,
+      "brier": 0.4745679012345679,
+      "log_loss": 1.1676051601550612,
+      "auc": NaN,
+      "ece": 0.6888888888888889,
+      "spread_mae": 25.5
+    },
+    "n_with_line": 1,
+    "head_to_head": {
+      "disagreements": 0,
+      "we_were_right": 0,
+      "vegas_was_right": 0
+    }
+  },
+  "by_pass": {
+    "early": {
+      "n": 1,
+      "model": {
+        "n": 1,
+        "accuracy": 0.0,
+        "brier": 0.60730849,
+        "log_loss": 1.5109509657194462,
+        "auc": NaN,
+        "ece": 0.7793,
+        "spread_mae": 30.25,
+        "ats": {
+          "n": 1,
+          "mae": 30.25,
+          "rmse": 30.25,
+          "ats_w": 0,
+          "ats_l": 1,
+          "ats_push": 0,
+          "ats_pct": 0.0,
+          "breakeven": 0.5238
+        }
+      },
+      "vegas": {
+        "n": 1,
+        "accuracy": 0.0,
+        "brier": 0.4745679012345679,
+        "log_loss": 1.1676051601550612,
+        "auc": NaN,
+        "ece": 0.6888888888888889,
+        "spread_mae": 25.5
+      },
+      "n_with_line": 1,
+      "head_to_head": {
+        "disagreements": 0,
+        "we_were_right": 0,
+        "vegas_was_right": 0
+      }
+    }
+  },
+  "games": [
+    {
+      "game_id": "2026_03_ATL_GB",
+      "pass": "early",
+      "kickoff_utc": "2026-09-25T00:15:00+00:00",
+      "home_team": "GB",
+      "away_team": "ATL",
+      "home_score": 14,
+      "away_score": 35,
+      "margin": -21.0,
+      "home_win": 0,
+      "winner": "ATL",
+      "pick": "GB",
+      "model": {
+        "p_home": 0.7793,
+        "pred_margin": 9.25,
+        "pick": "GB",
+        "correct": 0,
+        "brier": 0.60730849,
+        "abs_error": 30.25,
+        "ats": "loss"
+      },
+      "vegas": {
+        "p_home": 0.6888888888888889,
+        "spread_line": 4.5,
+        "correct": 0,
+        "brier": 0.4745679012345679,
+        "abs_error": 25.5
+      }
+    }
+  ]
+}
