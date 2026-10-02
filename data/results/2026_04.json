@@ -1,0 +1,120 @@
+{
+  "season": 2026,
+  "week": 4,
+  "n_games": 16,
+  "n_predicted": 16,
+  "n_graded": 1,
+  "complete": false,
+  "passes": [
+    "early"
+  ],
+  "official_rule": "latest pass generated before each game's actual kickoff",
+  "rescheduled_games": [],
+  "summary": {
+    "n": 1,
+    "model": {
+      "n": 1,
+      "accuracy": 1.0,
+      "brier": 0.21977344,
+      "log_loss": 0.632616680819913,
+      "auc": NaN,
+      "ece": 0.4688,
+      "spread_mae": 2.2,
+      "ats": {
+        "n": 1,
+        "mae": 2.2,
+        "rmse": 2.2,
+        "ats_w": 1,
+        "ats_l": 0,
+        "ats_push": 0,
+        "ats_pct": 1.0,
+        "breakeven": 0.5238
+      }
+    },
+    "vegas": {
+      "n": 1,
+      "accuracy": 0.0,
+      "brier": 0.3272522266375708,
+      "log_loss": 0.8487714285300665,
+      "auc": NaN,
+      "ece": 0.5720596355604639,
+      "spread_mae": 5.5
+    },
+    "n_with_line": 1,
+    "head_to_head": {
+      "disagreements": 1,
+      "we_were_right": 1,
+      "vegas_was_right": 0
+    }
+  },
+  "by_pass": {
+    "early": {
+      "n": 1,
+      "model": {
+        "n": 1,
+        "accuracy": 1.0,
+        "brier": 0.21977344,
+        "log_loss": 0.632616680819913,
+        "auc": NaN,
+        "ece": 0.4688,
+        "spread_mae": 2.2,
+        "ats": {
+          "n": 1,
+          "mae": 2.2,
+          "rmse": 2.2,
+          "ats_w": 1,
+          "ats_l": 0,
+          "ats_push": 0,
+          "ats_pct": 1.0,
+          "breakeven": 0.5238
+        }
+      },
+      "vegas": {
+        "n": 1,
+        "accuracy": 0.0,
+        "brier": 0.3272522266375708,
+        "log_loss": 0.8487714285300665,
+        "auc": NaN,
+        "ece": 0.5720596355604639,
+        "spread_mae": 5.5
+      },
+      "n_with_line": 1,
+      "head_to_head": {
+        "disagreements": 1,
+        "we_were_right": 1,
+        "vegas_was_right": 0
+      }
+    }
+  },
+  "games": [
+    {
+      "game_id": "2026_04_PIT_CLE",
+      "pass": "early",
+      "kickoff_utc": "2026-10-02T00:15:00+00:00",
+      "home_team": "CLE",
+      "away_team": "PIT",
+      "home_score": 27,
+      "away_score": 24,
+      "margin": 3.0,
+      "home_win": 1,
+      "winner": "CLE",
+      "pick": "CLE",
+      "model": {
+        "p_home": 0.5312,
+        "pred_margin": 0.8,
+        "pick": "CLE",
+        "correct": 1,
+        "brier": 0.21977344,
+        "abs_error": 2.2,
+        "ats": "win"
+      },
+      "vegas": {
+        "p_home": 0.42794036443953615,
+        "spread_line": -2.5,
+        "correct": 0,
+        "brier": 0.3272522266375708,
+        "abs_error": 5.5
+      }
+    }
+  ]
+}

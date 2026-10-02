@@ -2,39 +2,39 @@
   "seasons": {
     "2026": {
       "summary": {
-        "n": 48,
+        "n": 49,
         "model": {
-          "n": 48,
-          "accuracy": 0.6458333333333334,
-          "brier": 0.22695766104166668,
-          "log_loss": 0.6453733008326655,
-          "auc": 0.6375000000000001,
-          "ece": 0.07273541666666668,
-          "spread_mae": 10.778333333333334,
+          "n": 49,
+          "accuracy": 0.6530612244897959,
+          "brier": 0.2268110442857143,
+          "log_loss": 0.6451129616487318,
+          "auc": 0.6310344827586206,
+          "ece": 0.08081836734693879,
+          "spread_mae": 10.60326530612245,
           "ats": {
-            "n": 48,
-            "mae": 10.778333333333334,
-            "rmse": 13.803074385802606,
-            "ats_w": 25,
+            "n": 49,
+            "mae": 10.60326530612245,
+            "rmse": 13.66511527614034,
+            "ats_w": 26,
             "ats_l": 21,
             "ats_push": 2,
-            "ats_pct": 0.5434782608695652,
+            "ats_pct": 0.5531914893617021,
             "breakeven": 0.5238
           }
         },
         "vegas": {
-          "n": 48,
-          "accuracy": 0.6458333333333334,
-          "brier": 0.23226627967352784,
-          "log_loss": 0.6590528098842724,
-          "auc": 0.6178571428571429,
-          "ece": 0.06672648312986118,
-          "spread_mae": 10.432291666666666
+          "n": 49,
+          "accuracy": 0.6326530612244898,
+          "brier": 0.2342047683870797,
+          "log_loss": 0.6629246184280642,
+          "auc": 0.6103448275862069,
+          "ece": 0.07703940460803674,
+          "spread_mae": 10.331632653061224
         },
-        "n_with_line": 48,
+        "n_with_line": 49,
         "head_to_head": {
-          "disagreements": 6,
-          "we_were_right": 3,
+          "disagreements": 7,
+          "we_were_right": 4,
           "vegas_was_right": 3
         }
       },
@@ -170,6 +170,50 @@
               "vegas_was_right": 0
             }
           }
+        },
+        {
+          "season": 2026,
+          "week": 4,
+          "n_games": 16,
+          "n_graded": 1,
+          "complete": false,
+          "summary": {
+            "n": 1,
+            "model": {
+              "n": 1,
+              "accuracy": 1.0,
+              "brier": 0.21977344,
+              "log_loss": 0.632616680819913,
+              "auc": NaN,
+              "ece": 0.4688,
+              "spread_mae": 2.2,
+              "ats": {
+                "n": 1,
+                "mae": 2.2,
+                "rmse": 2.2,
+                "ats_w": 1,
+                "ats_l": 0,
+                "ats_push": 0,
+                "ats_pct": 1.0,
+                "breakeven": 0.5238
+              }
+            },
+            "vegas": {
+              "n": 1,
+              "accuracy": 0.0,
+              "brier": 0.3272522266375708,
+              "log_loss": 0.8487714285300665,
+              "auc": NaN,
+              "ece": 0.5720596355604639,
+              "spread_mae": 5.5
+            },
+            "n_with_line": 1,
+            "head_to_head": {
+              "disagreements": 1,
+              "we_were_right": 1,
+              "vegas_was_right": 0
+            }
+          }
         }
       ],
       "calibration": {
@@ -212,9 +256,9 @@
           {
             "bin_low": 0.5,
             "bin_high": 0.6000000000000001,
-            "n": 11,
-            "mean_predicted": 0.5423818181818182,
-            "observed": 0.6363636363636364
+            "n": 12,
+            "mean_predicted": 0.54145,
+            "observed": 0.6666666666666666
           },
           {
             "bin_low": 0.6000000000000001,
@@ -277,9 +321,9 @@
           {
             "bin_low": 0.4,
             "bin_high": 0.5,
-            "n": 9,
-            "mean_predicted": 0.4437457703964363,
-            "observed": 0.4444444444444444
+            "n": 10,
+            "mean_predicted": 0.4421652298007463,
+            "observed": 0.5
           },
           {
             "bin_low": 0.5,
