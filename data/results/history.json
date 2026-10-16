@@ -2,39 +2,39 @@
   "seasons": {
     "2026": {
       "summary": {
-        "n": 79,
+        "n": 80,
         "model": {
-          "n": 79,
-          "accuracy": 0.6455696202531646,
-          "brier": 0.22089591911392403,
-          "log_loss": 0.6311706408895833,
-          "auc": 0.7008985879332478,
-          "ece": 0.07701392405063293,
-          "spread_mae": 9.863417721518987,
+          "n": 80,
+          "accuracy": 0.65,
+          "brier": 0.22113719525,
+          "log_loss": 0.6317002660149764,
+          "auc": 0.6948621553884712,
+          "ece": 0.069925,
+          "spread_mae": 9.777000000000001,
           "ats": {
-            "n": 79,
-            "mae": 9.863417721518987,
-            "rmse": 12.658241274043512,
-            "ats_w": 42,
+            "n": 80,
+            "mae": 9.777000000000001,
+            "rmse": 12.583201699090738,
+            "ats_w": 43,
             "ats_l": 32,
             "ats_push": 5,
-            "ats_pct": 0.5675675675675675,
+            "ats_pct": 0.5733333333333334,
             "breakeven": 0.5238
           }
         },
         "vegas": {
-          "n": 79,
-          "accuracy": 0.620253164556962,
-          "brier": 0.23075237588270012,
-          "log_loss": 0.6544148551281056,
-          "auc": 0.6594993581514762,
-          "ece": 0.07249409155886008,
-          "spread_mae": 9.787974683544304
+          "n": 80,
+          "accuracy": 0.6125,
+          "brier": 0.23183701250439812,
+          "log_loss": 0.6565965284604918,
+          "auc": 0.6538220551378446,
+          "ece": 0.07863156620802512,
+          "spread_mae": 9.734375
         },
-        "n_with_line": 79,
+        "n_with_line": 80,
         "head_to_head": {
-          "disagreements": 12,
-          "we_were_right": 7,
+          "disagreements": 13,
+          "we_were_right": 8,
           "vegas_was_right": 5
         }
       },
@@ -258,6 +258,50 @@
               "vegas_was_right": 1
             }
           }
+        },
+        {
+          "season": 2026,
+          "week": 6,
+          "n_games": 14,
+          "n_graded": 1,
+          "complete": false,
+          "summary": {
+            "n": 1,
+            "model": {
+              "n": 1,
+              "accuracy": 1.0,
+              "brier": 0.24019801,
+              "log_loss": 0.673540650921027,
+              "auc": NaN,
+              "ece": 0.4901,
+              "spread_mae": 2.95,
+              "ats": {
+                "n": 1,
+                "mae": 2.95,
+                "rmse": 2.95,
+                "ats_w": 1,
+                "ats_l": 0,
+                "ats_push": 0,
+                "ats_pct": 1.0,
+                "breakeven": 0.5238
+              }
+            },
+            "vegas": {
+              "n": 1,
+              "accuracy": 0.0,
+              "brier": 0.3175233056185437,
+              "log_loss": 0.8289487217190072,
+              "auc": NaN,
+              "ece": 0.5634920634920635,
+              "spread_mae": 5.5
+            },
+            "n_with_line": 1,
+            "head_to_head": {
+              "disagreements": 1,
+              "we_were_right": 1,
+              "vegas_was_right": 0
+            }
+          }
         }
       ],
       "calibration": {
@@ -300,9 +344,9 @@
           {
             "bin_low": 0.5,
             "bin_high": 0.6000000000000001,
-            "n": 20,
-            "mean_predicted": 0.54491,
-            "observed": 0.5
+            "n": 21,
+            "mean_predicted": 0.5432428571428571,
+            "observed": 0.5238095238095238
           },
           {
             "bin_low": 0.6000000000000001,
@@ -365,9 +409,9 @@
           {
             "bin_low": 0.4,
             "bin_high": 0.5,
-            "n": 13,
-            "mean_predicted": 0.44507985835187436,
-            "observed": 0.5384615384615384
+            "n": 14,
+            "mean_predicted": 0.4444675782201645,
+            "observed": 0.5714285714285714
           },
           {
             "bin_low": 0.5,

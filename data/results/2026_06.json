@@ -1,0 +1,120 @@
+{
+  "season": 2026,
+  "week": 6,
+  "n_games": 14,
+  "n_predicted": 14,
+  "n_graded": 1,
+  "complete": false,
+  "passes": [
+    "early"
+  ],
+  "official_rule": "latest pass generated before each game's actual kickoff",
+  "rescheduled_games": [],
+  "summary": {
+    "n": 1,
+    "model": {
+      "n": 1,
+      "accuracy": 1.0,
+      "brier": 0.24019801,
+      "log_loss": 0.673540650921027,
+      "auc": NaN,
+      "ece": 0.4901,
+      "spread_mae": 2.95,
+      "ats": {
+        "n": 1,
+        "mae": 2.95,
+        "rmse": 2.95,
+        "ats_w": 1,
+        "ats_l": 0,
+        "ats_push": 0,
+        "ats_pct": 1.0,
+        "breakeven": 0.5238
+      }
+    },
+    "vegas": {
+      "n": 1,
+      "accuracy": 0.0,
+      "brier": 0.3175233056185437,
+      "log_loss": 0.8289487217190072,
+      "auc": NaN,
+      "ece": 0.5634920634920635,
+      "spread_mae": 5.5
+    },
+    "n_with_line": 1,
+    "head_to_head": {
+      "disagreements": 1,
+      "we_were_right": 1,
+      "vegas_was_right": 0
+    }
+  },
+  "by_pass": {
+    "early": {
+      "n": 1,
+      "model": {
+        "n": 1,
+        "accuracy": 1.0,
+        "brier": 0.24019801,
+        "log_loss": 0.673540650921027,
+        "auc": NaN,
+        "ece": 0.4901,
+        "spread_mae": 2.95,
+        "ats": {
+          "n": 1,
+          "mae": 2.95,
+          "rmse": 2.95,
+          "ats_w": 1,
+          "ats_l": 0,
+          "ats_push": 0,
+          "ats_pct": 1.0,
+          "breakeven": 0.5238
+        }
+      },
+      "vegas": {
+        "n": 1,
+        "accuracy": 0.0,
+        "brier": 0.3175233056185437,
+        "log_loss": 0.8289487217190072,
+        "auc": NaN,
+        "ece": 0.5634920634920635,
+        "spread_mae": 5.5
+      },
+      "n_with_line": 1,
+      "head_to_head": {
+        "disagreements": 1,
+        "we_were_right": 1,
+        "vegas_was_right": 0
+      }
+    }
+  },
+  "games": [
+    {
+      "game_id": "2026_06_SEA_DEN",
+      "pass": "early",
+      "kickoff_utc": "2026-10-16T00:15:00+00:00",
+      "home_team": "DEN",
+      "away_team": "SEA",
+      "home_score": 17,
+      "away_score": 14,
+      "margin": 3.0,
+      "home_win": 1,
+      "winner": "DEN",
+      "pick": "DEN",
+      "model": {
+        "p_home": 0.5099,
+        "pred_margin": 0.05,
+        "pick": "DEN",
+        "correct": 1,
+        "brier": 0.24019801,
+        "abs_error": 2.95,
+        "ats": "win"
+      },
+      "vegas": {
+        "p_home": 0.43650793650793646,
+        "spread_line": -2.5,
+        "correct": 0,
+        "brier": 0.3175233056185437,
+        "abs_error": 5.5
+      }
+    }
+  ]
+}
