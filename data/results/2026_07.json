@@ -1,0 +1,120 @@
+{
+  "season": 2026,
+  "week": 7,
+  "n_games": 14,
+  "n_predicted": 14,
+  "n_graded": 1,
+  "complete": false,
+  "passes": [
+    "early"
+  ],
+  "official_rule": "latest pass generated before each game's actual kickoff",
+  "rescheduled_games": [],
+  "summary": {
+    "n": 1,
+    "model": {
+      "n": 1,
+      "accuracy": 0.0,
+      "brier": 0.26656568999999997,
+      "log_loss": 0.7262903991531995,
+      "auc": NaN,
+      "ece": 0.5163,
+      "spread_mae": 6.19,
+      "ats": {
+        "n": 1,
+        "mae": 6.19,
+        "rmse": 6.19,
+        "ats_w": 0,
+        "ats_l": 1,
+        "ats_push": 0,
+        "ats_pct": 0.0,
+        "breakeven": 0.5238
+      }
+    },
+    "vegas": {
+      "n": 1,
+      "accuracy": 1.0,
+      "brier": 0.17389513742128426,
+      "log_loss": 0.5395807152728765,
+      "auc": NaN,
+      "ece": 0.41700735895339336,
+      "spread_mae": 3.0
+    },
+    "n_with_line": 1,
+    "head_to_head": {
+      "disagreements": 1,
+      "we_were_right": 0,
+      "vegas_was_right": 1
+    }
+  },
+  "by_pass": {
+    "early": {
+      "n": 1,
+      "model": {
+        "n": 1,
+        "accuracy": 0.0,
+        "brier": 0.26656568999999997,
+        "log_loss": 0.7262903991531995,
+        "auc": NaN,
+        "ece": 0.5163,
+        "spread_mae": 6.19,
+        "ats": {
+          "n": 1,
+          "mae": 6.19,
+          "rmse": 6.19,
+          "ats_w": 0,
+          "ats_l": 1,
+          "ats_push": 0,
+          "ats_pct": 0.0,
+          "breakeven": 0.5238
+        }
+      },
+      "vegas": {
+        "n": 1,
+        "accuracy": 1.0,
+        "brier": 0.17389513742128426,
+        "log_loss": 0.5395807152728765,
+        "auc": NaN,
+        "ece": 0.41700735895339336,
+        "spread_mae": 3.0
+      },
+      "n_with_line": 1,
+      "head_to_head": {
+        "disagreements": 1,
+        "we_were_right": 0,
+        "vegas_was_right": 1
+      }
+    }
+  },
+  "games": [
+    {
+      "game_id": "2026_07_NE_CHI",
+      "pass": "early",
+      "kickoff_utc": "2026-10-23T00:15:00+00:00",
+      "home_team": "CHI",
+      "away_team": "NE",
+      "home_score": 30,
+      "away_score": 24,
+      "margin": 6.0,
+      "home_win": 1,
+      "winner": "CHI",
+      "pick": "NE",
+      "model": {
+        "p_home": 0.4837,
+        "pred_margin": -0.19,
+        "pick": "NE",
+        "correct": 0,
+        "brier": 0.26656568999999997,
+        "abs_error": 6.19,
+        "ats": "loss"
+      },
+      "vegas": {
+        "p_home": 0.5829926410466066,
+        "spread_line": 3.0,
+        "correct": 1,
+        "brier": 0.17389513742128426,
+        "abs_error": 3.0
+      }
+    }
+  ]
+}
