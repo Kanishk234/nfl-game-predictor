@@ -3,8 +3,8 @@
   "week": 7,
   "n_games": 14,
   "n_predicted": 14,
-  "n_graded": 13,
-  "complete": false,
+  "n_graded": 14,
+  "complete": true,
   "passes": [
     "early",
     "late"
@@ -12,115 +12,115 @@
   "official_rule": "latest pass generated before each game's actual kickoff",
   "rescheduled_games": [],
   "summary": {
-    "n": 13,
+    "n": 14,
     "model": {
-      "n": 13,
-      "accuracy": 0.6153846153846154,
-      "brier": 0.23698343384615386,
-      "log_loss": 0.6709469069167426,
-      "auc": 0.675,
-      "ece": 0.18820000000000003,
-      "spread_mae": 10.422307692307696,
+      "n": 14,
+      "accuracy": 0.5714285714285714,
+      "brier": 0.2476373285714286,
+      "log_loss": 0.6923989164374691,
+      "auc": 0.6444444444444445,
+      "ece": 0.17062857142857146,
+      "spread_mae": 11.172857142857145,
       "ats": {
-        "n": 13,
-        "mae": 10.422307692307696,
-        "rmse": 14.07220036372859,
+        "n": 14,
+        "mae": 11.172857142857145,
+        "rmse": 14.668755911801108,
         "ats_w": 5,
-        "ats_l": 8,
+        "ats_l": 9,
         "ats_push": 0,
-        "ats_pct": 0.38461538461538464,
+        "ats_pct": 0.35714285714285715,
         "breakeven": 0.5238
       }
     },
     "vegas": {
-      "n": 13,
-      "accuracy": 0.6923076923076923,
-      "brier": 0.23965584156261815,
-      "log_loss": 0.6807335922672813,
-      "auc": 0.675,
-      "ece": 0.23498089953663565,
-      "spread_mae": 10.0
+      "n": 14,
+      "accuracy": 0.7142857142857143,
+      "brier": 0.23061846604813988,
+      "log_loss": 0.6613957073493791,
+      "auc": 0.7111111111111111,
+      "ece": 0.24222168355605722,
+      "spread_mae": 10.178571428571429
     },
-    "n_with_line": 13,
+    "n_with_line": 14,
     "head_to_head": {
-      "disagreements": 1,
+      "disagreements": 2,
       "we_were_right": 0,
-      "vegas_was_right": 1
+      "vegas_was_right": 2
     }
   },
   "by_pass": {
     "early": {
+      "n": 14,
+      "model": {
+        "n": 14,
+        "accuracy": 0.5714285714285714,
+        "brier": 0.2499869307142857,
+        "log_loss": 0.6974777017140917,
+        "auc": 0.6222222222222222,
+        "ece": 0.16740714285714287,
+        "spread_mae": 11.264285714285716,
+        "ats": {
+          "n": 14,
+          "mae": 11.264285714285716,
+          "rmse": 14.745716084922524,
+          "ats_w": 6,
+          "ats_l": 7,
+          "ats_push": 1,
+          "ats_pct": 0.46153846153846156,
+          "breakeven": 0.5238
+        }
+      },
+      "vegas": {
+        "n": 14,
+        "accuracy": 0.6428571428571429,
+        "brier": 0.2408787543219595,
+        "log_loss": 0.683375658313837,
+        "auc": 0.7,
+        "ece": 0.24739131182268517,
+        "spread_mae": 10.428571428571429
+      },
+      "n_with_line": 14,
+      "head_to_head": {
+        "disagreements": 3,
+        "we_were_right": 1,
+        "vegas_was_right": 2
+      }
+    },
+    "late": {
       "n": 13,
       "model": {
         "n": 13,
         "accuracy": 0.6153846153846154,
-        "brier": 0.23949465153846153,
-        "log_loss": 0.676375721707144,
-        "auc": 0.675,
-        "ece": 0.1916076923076923,
-        "spread_mae": 10.52076923076923,
+        "brier": 0.24618130076923078,
+        "log_loss": 0.68979187930549,
+        "auc": 0.6666666666666667,
+        "ece": 0.2234692307692308,
+        "spread_mae": 11.556153846153848,
         "ats": {
           "n": 13,
-          "mae": 10.52076923076923,
-          "rmse": 14.158555717303937,
-          "ats_w": 6,
-          "ats_l": 6,
-          "ats_push": 1,
-          "ats_pct": 0.5,
+          "mae": 11.556153846153848,
+          "rmse": 15.125367128411488,
+          "ats_w": 5,
+          "ats_l": 8,
+          "ats_push": 0,
+          "ats_pct": 0.38461538461538464,
           "breakeven": 0.5238
         }
       },
       "vegas": {
         "n": 13,
-        "accuracy": 0.6153846153846154,
-        "brier": 0.24979661769857364,
-        "log_loss": 0.7023931944422528,
-        "auc": 0.6625000000000001,
-        "ece": 0.23923081541609756,
-        "spread_mae": 10.26923076923077
+        "accuracy": 0.6923076923076923,
+        "brier": 0.23498179901943644,
+        "log_loss": 0.670766091355264,
+        "auc": 0.7222222222222222,
+        "ece": 0.25346206948747446,
+        "spread_mae": 10.73076923076923
       },
       "n_with_line": 13,
       "head_to_head": {
-        "disagreements": 2,
-        "we_were_right": 1,
-        "vegas_was_right": 1
-      }
-    },
-    "late": {
-      "n": 12,
-      "model": {
-        "n": 12,
-        "accuracy": 0.6666666666666666,
-        "brier": 0.23451824583333333,
-        "log_loss": 0.6663349492303713,
-        "auc": 0.6875,
-        "ece": 0.24690833333333334,
-        "spread_mae": 10.775,
-        "ats": {
-          "n": 12,
-          "mae": 10.775,
-          "rmse": 14.537401762350795,
-          "ats_w": 5,
-          "ats_l": 7,
-          "ats_push": 0,
-          "ats_pct": 0.4166666666666667,
-          "breakeven": 0.5238
-        }
-      },
-      "vegas": {
-        "n": 12,
-        "accuracy": 0.6666666666666666,
-        "brier": 0.2451359002410626,
-        "log_loss": 0.692496332016815,
-        "auc": 0.6875,
-        "ece": 0.2465545856273858,
-        "spread_mae": 10.583333333333334
-      },
-      "n_with_line": 12,
-      "head_to_head": {
-        "disagreements": 0,
+        "disagreements": 1,
         "we_were_right": 0,
-        "vegas_was_right": 0
+        "vegas_was_right": 1
       }
     }
   },
@@ -500,6 +500,35 @@
         "correct": 1,
         "brier": 0.18107741059302848,
         "abs_error": 14.0
+      }
+    },
+    {
+      "game_id": "2026_07_DAL_PHI",
+      "pass": "late",
+      "kickoff_utc": "2026-10-27T00:15:00+00:00",
+      "home_team": "PHI",
+      "away_team": "DAL",
+      "home_score": 21,
+      "away_score": 38,
+      "margin": -17.0,
+      "home_win": 0,
+      "winner": "DAL",
+      "pick": "PHI",
+      "model": {
+        "p_home": 0.6214,
+        "pred_margin": 3.93,
+        "pick": "PHI",
+        "correct": 0,
+        "brier": 0.38613795999999995,
+        "abs_error": 20.93,
+        "ats": "loss"
+      },
+      "vegas": {
+        "p_home": 0.33635187580853815,
+        "spread_line": -4.5,
+        "correct": 1,
+        "brier": 0.11313258435992227,
+        "abs_error": 12.5
       }
     }
   ]
