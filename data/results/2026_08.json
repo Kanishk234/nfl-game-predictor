@@ -1,0 +1,120 @@
+{
+  "season": 2026,
+  "week": 8,
+  "n_games": 14,
+  "n_predicted": 14,
+  "n_graded": 1,
+  "complete": false,
+  "passes": [
+    "early"
+  ],
+  "official_rule": "latest pass generated before each game's actual kickoff",
+  "rescheduled_games": [],
+  "summary": {
+    "n": 1,
+    "model": {
+      "n": 1,
+      "accuracy": 1.0,
+      "brier": 0.08643600000000003,
+      "log_loss": 0.34814004148889505,
+      "auc": NaN,
+      "ece": 0.29400000000000004,
+      "spread_mae": 1.3399999999999999,
+      "ats": {
+        "n": 1,
+        "mae": 1.3399999999999999,
+        "rmse": 1.3399999999999999,
+        "ats_w": 1,
+        "ats_l": 0,
+        "ats_push": 0,
+        "ats_pct": 1.0,
+        "breakeven": 0.5238
+      }
+    },
+    "vegas": {
+      "n": 1,
+      "accuracy": 1.0,
+      "brier": 0.13064305414428803,
+      "log_loss": 0.4485486942444762,
+      "auc": NaN,
+      "ece": 0.3614457831325302,
+      "spread_mae": 4.5
+    },
+    "n_with_line": 1,
+    "head_to_head": {
+      "disagreements": 0,
+      "we_were_right": 0,
+      "vegas_was_right": 0
+    }
+  },
+  "by_pass": {
+    "early": {
+      "n": 1,
+      "model": {
+        "n": 1,
+        "accuracy": 1.0,
+        "brier": 0.08643600000000003,
+        "log_loss": 0.34814004148889505,
+        "auc": NaN,
+        "ece": 0.29400000000000004,
+        "spread_mae": 1.3399999999999999,
+        "ats": {
+          "n": 1,
+          "mae": 1.3399999999999999,
+          "rmse": 1.3399999999999999,
+          "ats_w": 1,
+          "ats_l": 0,
+          "ats_push": 0,
+          "ats_pct": 1.0,
+          "breakeven": 0.5238
+        }
+      },
+      "vegas": {
+        "n": 1,
+        "accuracy": 1.0,
+        "brier": 0.13064305414428803,
+        "log_loss": 0.4485486942444762,
+        "auc": NaN,
+        "ece": 0.3614457831325302,
+        "spread_mae": 4.5
+      },
+      "n_with_line": 1,
+      "head_to_head": {
+        "disagreements": 0,
+        "we_were_right": 0,
+        "vegas_was_right": 0
+      }
+    }
+  },
+  "games": [
+    {
+      "game_id": "2026_08_CAR_GB",
+      "pass": "early",
+      "kickoff_utc": "2026-10-30T00:15:00+00:00",
+      "home_team": "GB",
+      "away_team": "CAR",
+      "home_score": 27,
+      "away_score": 19,
+      "margin": 8.0,
+      "home_win": 1,
+      "winner": "GB",
+      "pick": "GB",
+      "model": {
+        "p_home": 0.706,
+        "pred_margin": 6.66,
+        "pick": "GB",
+        "correct": 1,
+        "brier": 0.08643600000000003,
+        "abs_error": 1.3399999999999999,
+        "ats": "win"
+      },
+      "vegas": {
+        "p_home": 0.6385542168674698,
+        "spread_line": 3.5,
+        "correct": 1,
+        "brier": 0.13064305414428803,
+        "abs_error": 4.5
+      }
+    }
+  ]
+}
