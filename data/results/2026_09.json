@@ -10,7 +10,9 @@
     "late"
   ],
   "official_rule": "latest pass generated before each game's actual kickoff",
-  "rescheduled_games": [],
+  "rescheduled_games": [
+    "2026_09_LV_SF"
+  ],
   "summary": {
     "n": 15,
     "model": {
