@@ -1,0 +1,265 @@
+{
+  "season": 2026,
+  "week": 10,
+  "pass": "early",
+  "generated_at_utc": "2026-11-12T20:12:18.517894+00:00",
+  "gate": {
+    "earliest_kickoff_utc": "2026-11-13T01:15:00+00:00",
+    "seconds_before_first_kickoff": 18161
+  },
+  "model": {
+    "learner": "linear",
+    "params": {
+      "C": 0.1,
+      "alpha": 10.0
+    },
+    "n_features": 30,
+    "feature_hash": "1a05ece3a281",
+    "n_train": 6635,
+    "trained_through_game": "2026_09_BUF_MIN",
+    "trained_through_utc": "2026-11-10T01:15:00+00:00",
+    "trained_at_utc": "2026-11-12T20:12:18.510910+00:00",
+    "code_version": "7ac4ffb"
+  },
+  "n_games": 14,
+  "predictions": [
+    {
+      "game_id": "2026_10_WAS_NYG",
+      "kickoff_utc": "2026-11-13T01:15:00+00:00",
+      "home_team": "NYG",
+      "away_team": "WAS",
+      "p_home": 0.5658,
+      "pred_margin": 2.4,
+      "pick": "NYG",
+      "vegas": {
+        "spread_line": 2.0,
+        "total_line": 40.5,
+        "p_home_moneyline": 0.5427435387673957,
+        "p_home_from_spread": 0.5616021235556082,
+        "n_books": 3
+      },
+      "feature_as_of_utc": "2026-11-10T05:15:00+00:00"
+    },
+    {
+      "game_id": "2026_10_NE_DET",
+      "kickoff_utc": "2026-11-15T14:30:00+00:00",
+      "home_team": "DET",
+      "away_team": "NE",
+      "p_home": 0.4848,
+      "pred_margin": 0.67,
+      "pick": "NE",
+      "vegas": {
+        "spread_line": 2.5,
+        "total_line": 51.0,
+        "p_home_moneyline": 0.5829926410466066,
+        "p_home_from_spread": 0.5794819292826922,
+        "n_books": 3
+      },
+      "feature_as_of_utc": "2026-11-10T05:15:00+00:00"
+    },
+    {
+      "game_id": "2026_10_BUF_NYJ",
+      "kickoff_utc": "2026-11-15T18:00:00+00:00",
+      "home_team": "NYJ",
+      "away_team": "BUF",
+      "p_home": 0.1706,
+      "pred_margin": -11.77,
+      "pick": "BUF",
+      "vegas": {
+        "spread_line": -8.0,
+        "total_line": 50.5,
+        "p_home_moneyline": 0.21359223300970873,
+        "p_home_from_spread": 0.22935815829459527,
+        "n_books": 3
+      },
+      "feature_as_of_utc": "2026-11-10T05:15:00+00:00"
+    },
+    {
+      "game_id": "2026_10_CAR_NO",
+      "kickoff_utc": "2026-11-15T18:00:00+00:00",
+      "home_team": "NO",
+      "away_team": "CAR",
+      "p_home": 0.5374,
+      "pred_margin": 2.16,
+      "pick": "NO",
+      "vegas": {
+        "spread_line": 2.5,
+        "total_line": 48.5,
+        "p_home_moneyline": 0.5467333541731791,
+        "p_home_from_spread": 0.5794819292826922,
+        "n_books": 3
+      },
+      "feature_as_of_utc": "2026-11-10T05:15:00+00:00"
+    },
+    {
+      "game_id": "2026_10_HOU_CLE",
+      "kickoff_utc": "2026-11-15T18:00:00+00:00",
+      "home_team": "CLE",
+      "away_team": "HOU",
+      "p_home": 0.5535,
+      "pred_margin": 1.45,
+      "pick": "CLE",
+      "vegas": {
+        "spread_line": -4.5,
+        "total_line": 40.5,
+        "p_home_moneyline": 0.3295622233152976,
+        "p_home_from_spread": 0.33157349765017,
+        "n_books": 3
+      },
+      "feature_as_of_utc": "2026-11-10T05:15:00+00:00"
+    },
+    {
+      "game_id": "2026_10_JAX_TEN",
+      "kickoff_utc": "2026-11-15T18:00:00+00:00",
+      "home_team": "TEN",
+      "away_team": "JAX",
+      "p_home": 0.1454,
+      "pred_margin": -12.36,
+      "pick": "JAX",
+      "vegas": {
+        "spread_line": -10.5,
+        "total_line": 46.5,
+        "p_home_moneyline": 0.17500000000000002,
+        "p_home_from_spread": 0.17124343020529786,
+        "n_books": 3
+      },
+      "feature_as_of_utc": "2026-11-10T05:15:00+00:00"
+    },
+    {
+      "game_id": "2026_10_KC_ATL",
+      "kickoff_utc": "2026-11-15T18:00:00+00:00",
+      "home_team": "ATL",
+      "away_team": "KC",
+      "p_home": 0.3677,
+      "pred_margin": -3.4,
+      "pick": "KC",
+      "vegas": {
+        "spread_line": -3.5,
+        "total_line": 47.0,
+        "p_home_moneyline": 0.3835616438356164,
+        "p_home_from_spread": 0.36467818615284164,
+        "n_books": 3
+      },
+      "feature_as_of_utc": "2026-11-10T05:15:00+00:00"
+    },
+    {
+      "game_id": "2026_10_MIA_IND",
+      "kickoff_utc": "2026-11-15T18:00:00+00:00",
+      "home_team": "IND",
+      "away_team": "MIA",
+      "p_home": 0.6394,
+      "pred_margin": 4.09,
+      "pick": "IND",
+      "vegas": {
+        "spread_line": 3.5,
+        "total_line": 37.5,
+        "p_home_moneyline": 0.6465222348916762,
+        "p_home_from_spread": 0.6145805057489108,
+        "n_books": 3
+      },
+      "feature_as_of_utc": "2026-11-10T05:15:00+00:00"
+    },
+    {
+      "game_id": "2026_10_MIN_GB",
+      "kickoff_utc": "2026-11-15T18:00:00+00:00",
+      "home_team": "GB",
+      "away_team": "MIN",
+      "p_home": 0.5759,
+      "pred_margin": 2.33,
+      "pick": "GB",
+      "vegas": {
+        "spread_line": 3.0,
+        "total_line": 42.0,
+        "p_home_moneyline": 0.5911949685534592,
+        "p_home_from_spread": 0.5971555945424938,
+        "n_books": 3
+      },
+      "feature_as_of_utc": "2026-11-10T05:15:00+00:00"
+    },
+    {
+      "game_id": "2026_10_LA_ARI",
+      "kickoff_utc": "2026-11-15T21:05:00+00:00",
+      "home_team": "ARI",
+      "away_team": "LA",
+      "p_home": 0.2421,
+      "pred_margin": -7.91,
+      "pick": "LA",
+      "vegas": {
+        "spread_line": -9.5,
+        "total_line": 39.5,
+        "p_home_moneyline": 0.19570707070707072,
+        "p_home_from_spread": 0.1929616400365291,
+        "n_books": 3
+      },
+      "feature_as_of_utc": "2026-11-10T05:15:00+00:00"
+    },
+    {
+      "game_id": "2026_10_SEA_LV",
+      "kickoff_utc": "2026-11-15T21:05:00+00:00",
+      "home_team": "LV",
+      "away_team": "SEA",
+      "p_home": 0.2217,
+      "pred_margin": -8.52,
+      "pick": "SEA",
+      "vegas": {
+        "spread_line": -6.5,
+        "total_line": 40.5,
+        "p_home_moneyline": 0.2825464949928469,
+        "p_home_from_spread": 0.27032030667455864,
+        "n_books": 3
+      },
+      "feature_as_of_utc": "2026-11-10T05:15:00+00:00"
+    },
+    {
+      "game_id": "2026_10_SF_DAL",
+      "kickoff_utc": "2026-11-15T21:25:00+00:00",
+      "home_team": "DAL",
+      "away_team": "SF",
+      "p_home": 0.4024,
+      "pred_margin": -2.98,
+      "pick": "SF",
+      "vegas": {
+        "spread_line": -4.0,
+        "total_line": 55.5,
+        "p_home_moneyline": 0.3484712230215828,
+        "p_home_from_spread": 0.3479422384027249,
+        "n_books": 3
+      },
+      "feature_as_of_utc": "2026-11-10T05:15:00+00:00"
+    },
+    {
+      "game_id": "2026_10_PIT_CIN",
+      "kickoff_utc": "2026-11-16T01:20:00+00:00",
+      "home_team": "CIN",
+      "away_team": "PIT",
+      "p_home": 0.5664,
+      "pred_margin": 3.28,
+      "pick": "CIN",
+      "vegas": {
+        "spread_line": 3.5,
+        "total_line": 49.5,
+        "p_home_moneyline": 0.6220187393526406,
+        "p_home_from_spread": 0.6145805057489108,
+        "n_books": 3
+      },
+      "feature_as_of_utc": "2026-11-10T05:15:00+00:00"
+    },
+    {
+      "game_id": "2026_10_LAC_BAL",
+      "kickoff_utc": "2026-11-17T01:15:00+00:00",
+      "home_team": "BAL",
+      "away_team": "LAC",
+      "p_home": 0.6401,
+      "pred_margin": 5.63,
+      "pick": "BAL",
+      "vegas": {
+        "spread_line": 4.5,
+        "total_line": 38.5,
+        "p_home_moneyline": 0.6659815005138747,
+        "p_home_from_spread": 0.6485264117130499,
+        "n_books": 3
+      },
+      "feature_as_of_utc": "2026-11-10T05:15:00+00:00"
+    }
+  ]
+}
