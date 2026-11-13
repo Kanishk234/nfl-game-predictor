@@ -1,0 +1,120 @@
+{
+  "season": 2026,
+  "week": 10,
+  "n_games": 14,
+  "n_predicted": 14,
+  "n_graded": 1,
+  "complete": false,
+  "passes": [
+    "early"
+  ],
+  "official_rule": "latest pass generated before each game's actual kickoff",
+  "rescheduled_games": [],
+  "summary": {
+    "n": 1,
+    "model": {
+      "n": 1,
+      "accuracy": 0.0,
+      "brier": 0.32012964,
+      "log_loss": 0.8342500215379455,
+      "auc": NaN,
+      "ece": 0.5658,
+      "spread_mae": 5.4,
+      "ats": {
+        "n": 1,
+        "mae": 5.4,
+        "rmse": 5.4,
+        "ats_w": 0,
+        "ats_l": 1,
+        "ats_push": 0,
+        "ats_pct": 0.0,
+        "breakeven": 0.5238
+      }
+    },
+    "vegas": {
+      "n": 1,
+      "accuracy": 0.0,
+      "brier": 0.29457054887375556,
+      "log_loss": 0.7825108611765439,
+      "auc": NaN,
+      "ece": 0.5427435387673957,
+      "spread_mae": 5.0
+    },
+    "n_with_line": 1,
+    "head_to_head": {
+      "disagreements": 0,
+      "we_were_right": 0,
+      "vegas_was_right": 0
+    }
+  },
+  "by_pass": {
+    "early": {
+      "n": 1,
+      "model": {
+        "n": 1,
+        "accuracy": 0.0,
+        "brier": 0.32012964,
+        "log_loss": 0.8342500215379455,
+        "auc": NaN,
+        "ece": 0.5658,
+        "spread_mae": 5.4,
+        "ats": {
+          "n": 1,
+          "mae": 5.4,
+          "rmse": 5.4,
+          "ats_w": 0,
+          "ats_l": 1,
+          "ats_push": 0,
+          "ats_pct": 0.0,
+          "breakeven": 0.5238
+        }
+      },
+      "vegas": {
+        "n": 1,
+        "accuracy": 0.0,
+        "brier": 0.29457054887375556,
+        "log_loss": 0.7825108611765439,
+        "auc": NaN,
+        "ece": 0.5427435387673957,
+        "spread_mae": 5.0
+      },
+      "n_with_line": 1,
+      "head_to_head": {
+        "disagreements": 0,
+        "we_were_right": 0,
+        "vegas_was_right": 0
+      }
+    }
+  },
+  "games": [
+    {
+      "game_id": "2026_10_WAS_NYG",
+      "pass": "early",
+      "kickoff_utc": "2026-11-13T01:15:00+00:00",
+      "home_team": "NYG",
+      "away_team": "WAS",
+      "home_score": 21,
+      "away_score": 24,
+      "margin": -3.0,
+      "home_win": 0,
+      "winner": "WAS",
+      "pick": "NYG",
+      "model": {
+        "p_home": 0.5658,
+        "pred_margin": 2.4,
+        "pick": "NYG",
+        "correct": 0,
+        "brier": 0.32012964,
+        "abs_error": 5.4,
+        "ats": "loss"
+      },
+      "vegas": {
+        "p_home": 0.5427435387673957,
+        "spread_line": 2.0,
+        "correct": 0,
+        "brier": 0.29457054887375556,
+        "abs_error": 5.0
+      }
+    }
+  ]
+}
