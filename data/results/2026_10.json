@@ -3,8 +3,8 @@
   "week": 10,
   "n_games": 14,
   "n_predicted": 14,
-  "n_graded": 13,
-  "complete": false,
+  "n_graded": 14,
+  "complete": true,
   "passes": [
     "early",
     "late"
@@ -12,36 +12,36 @@
   "official_rule": "latest pass generated before each game's actual kickoff",
   "rescheduled_games": [],
   "summary": {
-    "n": 13,
+    "n": 14,
     "model": {
-      "n": 13,
-      "accuracy": 0.6923076923076923,
-      "brier": 0.16748330153846155,
-      "log_loss": 0.5105148690185229,
-      "auc": 0.8333333333333335,
-      "ece": 0.1861076923076923,
-      "spread_mae": 10.125384615384615,
+      "n": 14,
+      "accuracy": 0.6428571428571429,
+      "brier": 0.1847682092857143,
+      "log_loss": 0.5470047718262933,
+      "auc": 0.75,
+      "ece": 0.16695,
+      "spread_mae": 10.018571428571429,
       "ats": {
-        "n": 13,
-        "mae": 10.125384615384615,
-        "rmse": 13.198076491554483,
+        "n": 14,
+        "mae": 10.018571428571429,
+        "rmse": 12.925436715473651,
         "ats_w": 6,
-        "ats_l": 7,
+        "ats_l": 8,
         "ats_push": 0,
-        "ats_pct": 0.46153846153846156,
+        "ats_pct": 0.42857142857142855,
         "breakeven": 0.5238
       }
     },
     "vegas": {
-      "n": 13,
-      "accuracy": 0.6923076923076923,
-      "brier": 0.17424584199275797,
-      "log_loss": 0.5269102562725148,
-      "auc": 0.8472222222222222,
-      "ece": 0.2215610755197283,
-      "spread_mae": 10.692307692307692
+      "n": 14,
+      "accuracy": 0.6428571428571429,
+      "brier": 0.1932589127606214,
+      "log_loss": 0.5671021963653275,
+      "auc": 0.7625,
+      "ece": 0.158331846968929,
+      "spread_mae": 10.464285714285714
     },
-    "n_with_line": 13,
+    "n_with_line": 14,
     "head_to_head": {
       "disagreements": 2,
       "we_were_right": 1,
@@ -50,19 +50,56 @@
   },
   "by_pass": {
     "early": {
+      "n": 14,
+      "model": {
+        "n": 14,
+        "accuracy": 0.6428571428571429,
+        "brier": 0.1848778357142857,
+        "log_loss": 0.5472354475960789,
+        "auc": 0.75,
+        "ece": 0.1670571428571428,
+        "spread_mae": 10.022142857142857,
+        "ats": {
+          "n": 14,
+          "mae": 10.022142857142857,
+          "rmse": 12.928182669766743,
+          "ats_w": 6,
+          "ats_l": 8,
+          "ats_push": 0,
+          "ats_pct": 0.42857142857142855,
+          "breakeven": 0.5238
+        }
+      },
+      "vegas": {
+        "n": 14,
+        "accuracy": 0.6428571428571429,
+        "brier": 0.19576151587272841,
+        "log_loss": 0.5728633017056953,
+        "auc": 0.75,
+        "ece": 0.161255922618898,
+        "spread_mae": 10.5
+      },
+      "n_with_line": 14,
+      "head_to_head": {
+        "disagreements": 2,
+        "we_were_right": 1,
+        "vegas_was_right": 1
+      }
+    },
+    "late": {
       "n": 13,
       "model": {
         "n": 13,
         "accuracy": 0.6923076923076923,
-        "brier": 0.16758166846153846,
-        "log_loss": 0.5107205540344578,
-        "auc": 0.8333333333333335,
-        "ece": 0.1861461538461538,
-        "spread_mae": 10.12923076923077,
+        "brier": 0.17435579153846156,
+        "log_loss": 0.5249089833869355,
+        "auc": 0.7777777777777779,
+        "ece": 0.13626923076923075,
+        "spread_mae": 10.373846153846152,
         "ats": {
           "n": 13,
-          "mae": 10.12923076923077,
-          "rmse": 13.200972574892992,
+          "mae": 10.373846153846152,
+          "rmse": 13.329483803266294,
           "ats_w": 6,
           "ats_l": 7,
           "ats_push": 0,
@@ -73,50 +110,13 @@
       "vegas": {
         "n": 13,
         "accuracy": 0.6923076923076923,
-        "brier": 0.17670229716857583,
-        "log_loss": 0.5325790249248821,
-        "auc": 0.8333333333333334,
-        "ece": 0.22488957055218822,
-        "spread_mae": 10.73076923076923
+        "brier": 0.185465709982688,
+        "log_loss": 0.5505322990721571,
+        "auc": 0.7638888888888888,
+        "ece": 0.12876171683058543,
+        "spread_mae": 10.884615384615385
       },
       "n_with_line": 13,
-      "head_to_head": {
-        "disagreements": 2,
-        "we_were_right": 1,
-        "vegas_was_right": 1
-      }
-    },
-    "late": {
-      "n": 12,
-      "model": {
-        "n": 12,
-        "accuracy": 0.75,
-        "brier": 0.15476277333333335,
-        "log_loss": 0.4835369396419045,
-        "auc": 0.875,
-        "ece": 0.15446666666666664,
-        "spread_mae": 10.519166666666665,
-        "ats": {
-          "n": 12,
-          "mae": 10.519166666666665,
-          "rmse": 13.64825965706495,
-          "ats_w": 6,
-          "ats_l": 6,
-          "ats_push": 0,
-          "ats_pct": 0.5,
-          "breakeven": 0.5238
-        }
-      },
-      "vegas": {
-        "n": 12,
-        "accuracy": 0.75,
-        "brier": 0.16421878308600815,
-        "log_loss": 0.5056102058638458,
-        "auc": 0.859375,
-        "ece": 0.19479587024908934,
-        "spread_mae": 11.166666666666666
-      },
-      "n_with_line": 12,
       "head_to_head": {
         "disagreements": 2,
         "we_were_right": 1,
@@ -500,6 +500,35 @@
         "correct": 1,
         "brier": 0.14253150446359183,
         "abs_error": 16.5
+      }
+    },
+    {
+      "game_id": "2026_10_LAC_BAL",
+      "pass": "late",
+      "kickoff_utc": "2026-11-17T01:15:00+00:00",
+      "home_team": "BAL",
+      "away_team": "LAC",
+      "home_score": 20,
+      "away_score": 23,
+      "margin": -3.0,
+      "home_win": 0,
+      "winner": "LAC",
+      "pick": "BAL",
+      "model": {
+        "p_home": 0.6399,
+        "pred_margin": 5.63,
+        "pick": "BAL",
+        "correct": 0,
+        "brier": 0.40947201000000005,
+        "abs_error": 8.629999999999999,
+        "ats": "loss"
+      },
+      "vegas": {
+        "p_home": 0.6636481241914618,
+        "spread_line": 4.5,
+        "correct": 0,
+        "brier": 0.4404288327428459,
+        "abs_error": 7.5
       }
     }
   ]
