@@ -1,0 +1,120 @@
+{
+  "season": 2026,
+  "week": 11,
+  "n_games": 13,
+  "n_predicted": 13,
+  "n_graded": 1,
+  "complete": false,
+  "passes": [
+    "early"
+  ],
+  "official_rule": "latest pass generated before each game's actual kickoff",
+  "rescheduled_games": [],
+  "summary": {
+    "n": 1,
+    "model": {
+      "n": 1,
+      "accuracy": 1.0,
+      "brier": 0.07022500000000001,
+      "log_loss": 0.3078847797693004,
+      "auc": NaN,
+      "ece": 0.265,
+      "spread_mae": 15.3,
+      "ats": {
+        "n": 1,
+        "mae": 15.3,
+        "rmse": 15.3,
+        "ats_w": 0,
+        "ats_l": 1,
+        "ats_push": 0,
+        "ats_pct": 0.0,
+        "breakeven": 0.5238
+      }
+    },
+    "vegas": {
+      "n": 1,
+      "accuracy": 1.0,
+      "brier": 0.02389787392937989,
+      "log_loss": 0.16793281934185492,
+      "auc": NaN,
+      "ece": 0.15458937198067624,
+      "spread_mae": 10.5
+    },
+    "n_with_line": 1,
+    "head_to_head": {
+      "disagreements": 0,
+      "we_were_right": 0,
+      "vegas_was_right": 0
+    }
+  },
+  "by_pass": {
+    "early": {
+      "n": 1,
+      "model": {
+        "n": 1,
+        "accuracy": 1.0,
+        "brier": 0.07022500000000001,
+        "log_loss": 0.3078847797693004,
+        "auc": NaN,
+        "ece": 0.265,
+        "spread_mae": 15.3,
+        "ats": {
+          "n": 1,
+          "mae": 15.3,
+          "rmse": 15.3,
+          "ats_w": 0,
+          "ats_l": 1,
+          "ats_push": 0,
+          "ats_pct": 0.0,
+          "breakeven": 0.5238
+        }
+      },
+      "vegas": {
+        "n": 1,
+        "accuracy": 1.0,
+        "brier": 0.02389787392937989,
+        "log_loss": 0.16793281934185492,
+        "auc": NaN,
+        "ece": 0.15458937198067624,
+        "spread_mae": 10.5
+      },
+      "n_with_line": 1,
+      "head_to_head": {
+        "disagreements": 0,
+        "we_were_right": 0,
+        "vegas_was_right": 0
+      }
+    }
+  },
+  "games": [
+    {
+      "game_id": "2026_11_IND_HOU",
+      "pass": "early",
+      "kickoff_utc": "2026-11-20T01:15:00+00:00",
+      "home_team": "HOU",
+      "away_team": "IND",
+      "home_score": 26,
+      "away_score": 3,
+      "margin": 23.0,
+      "home_win": 1,
+      "winner": "HOU",
+      "pick": "HOU",
+      "model": {
+        "p_home": 0.735,
+        "pred_margin": 7.7,
+        "pick": "HOU",
+        "correct": 1,
+        "brier": 0.07022500000000001,
+        "abs_error": 15.3,
+        "ats": "loss"
+      },
+      "vegas": {
+        "p_home": 0.8454106280193238,
+        "spread_line": 12.5,
+        "correct": 1,
+        "brier": 0.02389787392937989,
+        "abs_error": 10.5
+      }
+    }
+  ]
+}
