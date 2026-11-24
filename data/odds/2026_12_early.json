@@ -1,0 +1,814 @@
+{
+  "season": 2026,
+  "week": 12,
+  "pass": "early",
+  "fetched_at_utc": "2026-11-24T18:37:04.056284+00:00",
+  "source": {
+    "provider": "the-odds-api.com",
+    "markets": [
+      "spreads",
+      "h2h",
+      "totals"
+    ],
+    "bookmakers": [
+      "draftkings",
+      "fanduel",
+      "betmgm"
+    ],
+    "region": "us",
+    "quota": {
+      "requests_used": "24",
+      "requests_remaining": "476",
+      "requests_last": "3"
+    }
+  },
+  "n_games_in_week": 16,
+  "n_games_with_lines": 16,
+  "games_without_lines": [],
+  "lines": [
+    {
+      "game_id": "2026_12_GB_LA",
+      "kickoff_utc": "2026-11-26T01:00:00+00:00",
+      "event_id": "5b612899d6dcdf998107f2c6c6e49a58",
+      "commence_time": "2026-11-26T01:00:00Z",
+      "home_team": "LA",
+      "away_team": "GB",
+      "books": {
+        "draftkings": {
+          "last_update": "2026-11-24T18:35:40Z",
+          "moneyline_home": -135,
+          "moneyline_away": 114,
+          "spread_home": -2.5,
+          "spread_home_price": -109,
+          "spread_away_price": -110,
+          "total": 44.5,
+          "over_price": -103,
+          "under_price": -116
+        },
+        "fanduel": {
+          "last_update": "2026-11-24T18:36:53Z",
+          "moneyline_home": -142,
+          "moneyline_away": 120,
+          "spread_home": -2.5,
+          "spread_home_price": -112,
+          "spread_away_price": -108,
+          "total": 44.5,
+          "over_price": 100,
+          "under_price": -120
+        },
+        "betmgm": {
+          "last_update": "2026-11-24T18:36:29Z",
+          "moneyline_home": -135,
+          "moneyline_away": 115,
+          "spread_home": -2.5,
+          "spread_home_price": -110,
+          "spread_away_price": -108,
+          "total": 44.0,
+          "over_price": -110,
+          "under_price": -110
+        }
+      },
+      "consensus": {
+        "spread_line": 2.5,
+        "total_line": 44.5,
+        "p_home_moneyline": 0.552594002855783,
+        "n_books": 3
+      }
+    },
+    {
+      "game_id": "2026_12_CHI_DET",
+      "kickoff_utc": "2026-11-26T18:00:00+00:00",
+      "event_id": "9b825e6518156008da499be041975fdd",
+      "commence_time": "2026-11-26T18:00:00Z",
+      "home_team": "DET",
+      "away_team": "CHI",
+      "books": {
+        "draftkings": {
+          "last_update": "2026-11-24T18:35:40Z",
+          "moneyline_home": 120,
+          "moneyline_away": -142,
+          "spread_home": 2.5,
+          "spread_home_price": -106,
+          "spread_away_price": -114,
+          "total": 55.5,
+          "over_price": -104,
+          "under_price": -115
+        },
+        "fanduel": {
+          "last_update": "2026-11-24T18:36:53Z",
+          "moneyline_home": 122,
+          "moneyline_away": -144,
+          "spread_home": 2.5,
+          "spread_home_price": -108,
+          "spread_away_price": -112,
+          "total": 55.5,
+          "over_price": -105,
+          "under_price": -115
+        },
+        "betmgm": {
+          "last_update": "2026-11-24T18:36:29Z",
+          "moneyline_home": 115,
+          "moneyline_away": -140,
+          "spread_home": 2.5,
+          "spread_home_price": -105,
+          "spread_away_price": -112,
+          "total": 55.0,
+          "over_price": -110,
+          "under_price": -108
+        }
+      },
+      "consensus": {
+        "spread_line": -2.5,
+        "total_line": 55.5,
+        "p_home_moneyline": 0.43650793650793646,
+        "n_books": 3
+      }
+    },
+    {
+      "game_id": "2026_12_PHI_DAL",
+      "kickoff_utc": "2026-11-26T21:30:00+00:00",
+      "event_id": "ffaa06af56a7137d4b078c5c46c0b730",
+      "commence_time": "2026-11-26T21:30:00Z",
+      "home_team": "DAL",
+      "away_team": "PHI",
+      "books": {
+        "draftkings": {
+          "last_update": "2026-11-24T18:35:40Z",
+          "moneyline_home": -469,
+          "moneyline_away": 363,
+          "spread_home": -8.5,
+          "spread_home_price": -111,
+          "spread_away_price": -108,
+          "total": 47.5,
+          "over_price": -115,
+          "under_price": -105
+        },
+        "fanduel": {
+          "last_update": "2026-11-24T18:36:53Z",
+          "moneyline_home": -500,
+          "moneyline_away": 385,
+          "spread_home": -8.5,
+          "spread_home_price": -110,
+          "spread_away_price": -110,
+          "total": 48.5,
+          "over_price": -105,
+          "under_price": -115
+        },
+        "betmgm": {
+          "last_update": "2026-11-24T18:36:29Z",
+          "moneyline_home": -475,
+          "moneyline_away": 350,
+          "spread_home": -8.5,
+          "spread_home_price": -108,
+          "spread_away_price": -110,
+          "total": 48.0,
+          "over_price": -108,
+          "under_price": -110
+        }
+      },
+      "consensus": {
+        "spread_line": 8.5,
+        "total_line": 48.0,
+        "p_home_moneyline": 0.7923713815513397,
+        "n_books": 3
+      }
+    },
+    {
+      "game_id": "2026_12_KC_BUF",
+      "kickoff_utc": "2026-11-27T01:20:00+00:00",
+      "event_id": "f36f518585aec40e8cb40e071c0844aa",
+      "commence_time": "2026-11-27T01:20:00Z",
+      "home_team": "BUF",
+      "away_team": "KC",
+      "books": {
+        "draftkings": {
+          "last_update": "2026-11-24T18:35:40Z",
+          "moneyline_home": -151,
+          "moneyline_away": 127,
+          "spread_home": -3.0,
+          "spread_home_price": 100,
+          "spread_away_price": -120,
+          "total": 47.5,
+          "over_price": -107,
+          "under_price": -112
+        },
+        "fanduel": {
+          "last_update": "2026-11-24T18:36:53Z",
+          "moneyline_home": -152,
+          "moneyline_away": 128,
+          "spread_home": -2.5,
+          "spread_home_price": -120,
+          "spread_away_price": 100,
+          "total": 47.5,
+          "over_price": -110,
+          "under_price": -110
+        },
+        "betmgm": {
+          "last_update": "2026-11-24T18:36:29Z",
+          "moneyline_home": -150,
+          "moneyline_away": 125,
+          "spread_home": -3.0,
+          "spread_home_price": -102,
+          "spread_away_price": -118,
+          "total": 47.5,
+          "over_price": -105,
+          "under_price": -112
+        }
+      },
+      "consensus": {
+        "spread_line": 3.0,
+        "total_line": 47.5,
+        "p_home_moneyline": 0.5772773969718915,
+        "n_books": 3
+      }
+    },
+    {
+      "game_id": "2026_12_DEN_PIT",
+      "kickoff_utc": "2026-11-27T20:00:00+00:00",
+      "event_id": "44a3bcf5bd002583ddef2207a92dd977",
+      "commence_time": "2026-11-27T20:00:00Z",
+      "home_team": "PIT",
+      "away_team": "DEN",
+      "books": {
+        "draftkings": {
+          "last_update": "2026-11-24T18:35:40Z",
+          "moneyline_home": 132,
+          "moneyline_away": -156,
+          "spread_home": 3.0,
+          "spread_home_price": -115,
+          "spread_away_price": -104,
+          "total": 38.5,
+          "over_price": -105,
+          "under_price": -115
+        },
+        "fanduel": {
+          "last_update": "2026-11-24T18:36:53Z",
+          "moneyline_home": 134,
+          "moneyline_away": -158,
+          "spread_home": 2.5,
+          "spread_home_price": 100,
+          "spread_away_price": -120,
+          "total": 37.5,
+          "over_price": -115,
+          "under_price": -105
+        },
+        "betmgm": {
+          "last_update": "2026-11-24T18:36:29Z",
+          "moneyline_home": 130,
+          "moneyline_away": -155,
+          "spread_home": 3.0,
+          "spread_home_price": -118,
+          "spread_away_price": -102,
+          "total": 37.5,
+          "over_price": -110,
+          "under_price": -108
+        }
+      },
+      "consensus": {
+        "spread_line": -3.0,
+        "total_line": 37.5,
+        "p_home_moneyline": 0.4142931123770068,
+        "n_books": 3
+      }
+    },
+    {
+      "game_id": "2026_12_ATL_MIN",
+      "kickoff_utc": "2026-11-29T18:00:00+00:00",
+      "event_id": "6a05021bdb6bab24b9bb381ffff10f0c",
+      "commence_time": "2026-11-29T18:00:00Z",
+      "home_team": "MIN",
+      "away_team": "ATL",
+      "books": {
+        "draftkings": {
+          "last_update": "2026-11-24T18:35:40Z",
+          "moneyline_home": -351,
+          "moneyline_away": 281,
+          "spread_home": -7.0,
+          "spread_home_price": 100,
+          "spread_away_price": -120,
+          "total": 42.5,
+          "over_price": -104,
+          "under_price": -115
+        },
+        "fanduel": {
+          "last_update": "2026-11-24T18:36:53Z",
+          "moneyline_home": -320,
+          "moneyline_away": 260,
+          "spread_home": -6.5,
+          "spread_home_price": -115,
+          "spread_away_price": -105,
+          "total": 42.5,
+          "over_price": -110,
+          "under_price": -110
+        },
+        "betmgm": {
+          "last_update": "2026-11-24T18:36:29Z",
+          "moneyline_home": -325,
+          "moneyline_away": 260,
+          "spread_home": -7.0,
+          "spread_home_price": -102,
+          "spread_away_price": -115,
+          "total": 42.5,
+          "over_price": -108,
+          "under_price": -110
+        }
+      },
+      "consensus": {
+        "spread_line": 7.0,
+        "total_line": 42.5,
+        "p_home_moneyline": 0.7335423197492164,
+        "n_books": 3
+      }
+    },
+    {
+      "game_id": "2026_12_BAL_HOU",
+      "kickoff_utc": "2026-11-29T18:00:00+00:00",
+      "event_id": "60d0c074801985c1062795362a24200e",
+      "commence_time": "2026-11-29T18:00:00Z",
+      "home_team": "HOU",
+      "away_team": "BAL",
+      "books": {
+        "draftkings": {
+          "last_update": "2026-11-24T18:35:40Z",
+          "moneyline_home": -304,
+          "moneyline_away": 247,
+          "spread_home": -6.5,
+          "spread_home_price": -115,
+          "spread_away_price": -104,
+          "total": 46.5,
+          "over_price": -110,
+          "under_price": -109
+        },
+        "fanduel": {
+          "last_update": "2026-11-24T18:36:53Z",
+          "moneyline_home": -340,
+          "moneyline_away": 275,
+          "spread_home": -6.5,
+          "spread_home_price": -115,
+          "spread_away_price": -105,
+          "total": 46.5,
+          "over_price": -110,
+          "under_price": -110
+        },
+        "betmgm": {
+          "last_update": "2026-11-24T18:36:29Z",
+          "moneyline_home": -325,
+          "moneyline_away": 260,
+          "spread_home": -6.5,
+          "spread_home_price": -118,
+          "spread_away_price": -102,
+          "total": 46.5,
+          "over_price": -110,
+          "under_price": -110
+        }
+      },
+      "consensus": {
+        "spread_line": 6.5,
+        "total_line": 46.5,
+        "p_home_moneyline": 0.7335423197492164,
+        "n_books": 3
+      }
+    },
+    {
+      "game_id": "2026_12_NO_CIN",
+      "kickoff_utc": "2026-11-29T18:00:00+00:00",
+      "event_id": "f7d3ae7a8fe2438cef7d7d7bc67e31db",
+      "commence_time": "2026-11-29T18:00:00Z",
+      "home_team": "CIN",
+      "away_team": "NO",
+      "books": {
+        "draftkings": {
+          "last_update": "2026-11-24T18:35:40Z",
+          "moneyline_home": -610,
+          "moneyline_away": 448,
+          "spread_home": -9.5,
+          "spread_home_price": -114,
+          "spread_away_price": -105,
+          "total": 50.5,
+          "over_price": -107,
+          "under_price": -112
+        },
+        "fanduel": {
+          "last_update": "2026-11-24T18:36:53Z",
+          "moneyline_home": -600,
+          "moneyline_away": 450,
+          "spread_home": -9.5,
+          "spread_home_price": -120,
+          "spread_away_price": 100,
+          "total": 50.5,
+          "over_price": -110,
+          "under_price": -110
+        },
+        "betmgm": {
+          "last_update": "2026-11-24T18:36:29Z",
+          "moneyline_home": -600,
+          "moneyline_away": 450,
+          "spread_home": -9.5,
+          "spread_home_price": -112,
+          "spread_away_price": -105,
+          "total": 50.5,
+          "over_price": -108,
+          "under_price": -110
+        }
+      },
+      "consensus": {
+        "spread_line": 9.5,
+        "total_line": 50.5,
+        "p_home_moneyline": 0.8250000000000001,
+        "n_books": 3
+      }
+    },
+    {
+      "game_id": "2026_12_NYG_IND",
+      "kickoff_utc": "2026-11-29T18:00:00+00:00",
+      "event_id": "e9da808e36e1b7475698a57465ad4519",
+      "commence_time": "2026-11-29T18:00:00Z",
+      "home_team": "IND",
+      "away_team": "NYG",
+      "books": {
+        "draftkings": {
+          "last_update": "2026-11-24T18:35:40Z",
+          "moneyline_home": 259,
+          "moneyline_away": -321,
+          "spread_home": 6.5,
+          "spread_home_price": -104,
+          "spread_away_price": -115,
+          "total": 41.5,
+          "over_price": -110,
+          "under_price": -109
+        },
+        "fanduel": {
+          "last_update": "2026-11-24T18:36:53Z",
+          "moneyline_home": 275,
+          "moneyline_away": -340,
+          "spread_home": 6.5,
+          "spread_home_price": -105,
+          "spread_away_price": -115,
+          "total": 42.5,
+          "over_price": 100,
+          "under_price": -120
+        },
+        "betmgm": {
+          "last_update": "2026-11-24T18:36:29Z",
+          "moneyline_home": 260,
+          "moneyline_away": -325,
+          "spread_home": 6.5,
+          "spread_home_price": -105,
+          "spread_away_price": -112,
+          "total": 41.5,
+          "over_price": -108,
+          "under_price": -110
+        }
+      },
+      "consensus": {
+        "spread_line": -6.5,
+        "total_line": 41.5,
+        "p_home_moneyline": 0.26645768025078376,
+        "n_books": 3
+      }
+    },
+    {
+      "game_id": "2026_12_NYJ_MIA",
+      "kickoff_utc": "2026-11-29T18:00:00+00:00",
+      "event_id": "5ea0e3ea5944b0ad5169f21c0787b331",
+      "commence_time": "2026-11-29T18:00:00Z",
+      "home_team": "MIA",
+      "away_team": "NYJ",
+      "books": {
+        "draftkings": {
+          "last_update": "2026-11-24T18:35:40Z",
+          "moneyline_home": 177,
+          "moneyline_away": -212,
+          "spread_home": 3.5,
+          "spread_home_price": -103,
+          "spread_away_price": -117,
+          "total": 40.5,
+          "over_price": -115,
+          "under_price": -104
+        },
+        "fanduel": {
+          "last_update": "2026-11-24T18:36:53Z",
+          "moneyline_home": 176,
+          "moneyline_away": -210,
+          "spread_home": 3.5,
+          "spread_home_price": 100,
+          "spread_away_price": -120,
+          "total": 40.5,
+          "over_price": -110,
+          "under_price": -110
+        },
+        "betmgm": {
+          "last_update": "2026-11-24T18:36:29Z",
+          "moneyline_home": 170,
+          "moneyline_away": -210,
+          "spread_home": 4.0,
+          "spread_home_price": -112,
+          "spread_away_price": -105,
+          "total": 41.0,
+          "over_price": -108,
+          "under_price": -110
+        }
+      },
+      "consensus": {
+        "spread_line": -3.5,
+        "total_line": 40.5,
+        "p_home_moneyline": 0.3484712230215828,
+        "n_books": 3
+      }
+    },
+    {
+      "game_id": "2026_12_TEN_JAX",
+      "kickoff_utc": "2026-11-29T18:00:00+00:00",
+      "event_id": "81a8fee5b649a3ad5ad59e9528f2f376",
+      "commence_time": "2026-11-29T18:00:00Z",
+      "home_team": "JAX",
+      "away_team": "TEN",
+      "books": {
+        "draftkings": {
+          "last_update": "2026-11-24T18:35:40Z",
+          "moneyline_home": -1240,
+          "moneyline_away": 770,
+          "spread_home": -14.5,
+          "spread_home_price": -104,
+          "spread_away_price": -116,
+          "total": 47.5,
+          "over_price": -114,
+          "under_price": -105
+        },
+        "fanduel": {
+          "last_update": "2026-11-24T18:36:53Z",
+          "moneyline_home": -1200,
+          "moneyline_away": 750,
+          "spread_home": -14.5,
+          "spread_home_price": -105,
+          "spread_away_price": -115,
+          "total": 47.5,
+          "over_price": -110,
+          "under_price": -110
+        },
+        "betmgm": {
+          "last_update": "2026-11-24T18:36:29Z",
+          "moneyline_home": -1100,
+          "moneyline_away": 750,
+          "spread_home": -14.5,
+          "spread_home_price": -108,
+          "spread_away_price": -110,
+          "total": 47.5,
+          "over_price": -110,
+          "under_price": -108
+        }
+      },
+      "consensus": {
+        "spread_line": 14.5,
+        "total_line": 47.5,
+        "p_home_moneyline": 0.8869565217391304,
+        "n_books": 3
+      }
+    },
+    {
+      "game_id": "2026_12_NE_LAC",
+      "kickoff_utc": "2026-11-29T21:05:00+00:00",
+      "event_id": "c64ceba13ede564e8658693e3171e7f9",
+      "commence_time": "2026-11-29T21:05:00Z",
+      "home_team": "LAC",
+      "away_team": "NE",
+      "books": {
+        "draftkings": {
+          "last_update": "2026-11-24T18:35:40Z",
+          "moneyline_home": -114,
+          "moneyline_away": -103,
+          "spread_home": -1.5,
+          "spread_home_price": 102,
+          "spread_away_price": -122,
+          "total": 35.5,
+          "over_price": -109,
+          "under_price": -110
+        },
+        "fanduel": {
+          "last_update": "2026-11-24T18:36:53Z",
+          "moneyline_home": -112,
+          "moneyline_away": -104,
+          "spread_home": -1.5,
+          "spread_home_price": -105,
+          "spread_away_price": -115,
+          "total": 35.5,
+          "over_price": -112,
+          "under_price": -108
+        },
+        "betmgm": {
+          "last_update": "2026-11-24T18:36:29Z",
+          "moneyline_home": -112,
+          "moneyline_away": -105,
+          "spread_home": -1.0,
+          "spread_home_price": -105,
+          "spread_away_price": -112,
+          "total": 35.5,
+          "over_price": -108,
+          "under_price": -110
+        }
+      },
+      "consensus": {
+        "spread_line": 1.5,
+        "total_line": 35.5,
+        "p_home_moneyline": 0.5089094796863863,
+        "n_books": 3
+      }
+    },
+    {
+      "game_id": "2026_12_SEA_SF",
+      "kickoff_utc": "2026-11-29T21:25:00+00:00",
+      "event_id": "d68dced0b26726890b9c79bd19a5ffe5",
+      "commence_time": "2026-11-29T21:25:00Z",
+      "home_team": "SF",
+      "away_team": "SEA",
+      "books": {
+        "draftkings": {
+          "last_update": "2026-11-24T18:35:40Z",
+          "moneyline_home": -176,
+          "moneyline_away": 148,
+          "spread_home": -3.0,
+          "spread_home_price": -120,
+          "spread_away_price": 100,
+          "total": 46.5,
+          "over_price": -107,
+          "under_price": -112
+        },
+        "fanduel": {
+          "last_update": "2026-11-24T18:36:53Z",
+          "moneyline_home": -174,
+          "moneyline_away": 146,
+          "spread_home": -3.0,
+          "spread_home_price": -115,
+          "spread_away_price": -105,
+          "total": 45.5,
+          "over_price": -105,
+          "under_price": -115
+        },
+        "betmgm": {
+          "last_update": "2026-11-24T18:36:29Z",
+          "moneyline_home": -185,
+          "moneyline_away": 150,
+          "spread_home": -3.0,
+          "spread_home_price": -118,
+          "spread_away_price": -102,
+          "total": 45.5,
+          "over_price": -108,
+          "under_price": -110
+        }
+      },
+      "consensus": {
+        "spread_line": 3.0,
+        "total_line": 45.5,
+        "p_home_moneyline": 0.6126207051426006,
+        "n_books": 3
+      }
+    },
+    {
+      "game_id": "2026_12_WAS_ARI",
+      "kickoff_utc": "2026-11-29T21:25:00+00:00",
+      "event_id": "69a1dbe9de3d3212c3a7a55be5d204ab",
+      "commence_time": "2026-11-29T21:25:00Z",
+      "home_team": "ARI",
+      "away_team": "WAS",
+      "books": {
+        "draftkings": {
+          "last_update": "2026-11-24T18:35:40Z",
+          "moneyline_home": 325,
+          "moneyline_away": -413,
+          "spread_home": 7.5,
+          "spread_home_price": -110,
+          "spread_away_price": -109,
+          "total": 42.5,
+          "over_price": -104,
+          "under_price": -115
+        },
+        "fanduel": {
+          "last_update": "2026-11-24T18:36:53Z",
+          "moneyline_home": 300,
+          "moneyline_away": -375,
+          "spread_home": 7.5,
+          "spread_home_price": -115,
+          "spread_away_price": -105,
+          "total": 41.5,
+          "over_price": -115,
+          "under_price": -105
+        },
+        "betmgm": {
+          "last_update": "2026-11-24T18:36:29Z",
+          "moneyline_home": 310,
+          "moneyline_away": -375,
+          "spread_home": 7.5,
+          "spread_home_price": -112,
+          "spread_away_price": -105,
+          "total": 42.0,
+          "over_price": -108,
+          "under_price": -110
+        }
+      },
+      "consensus": {
+        "spread_line": -7.5,
+        "total_line": 42.0,
+        "p_home_moneyline": 0.2360248447204969,
+        "n_books": 3
+      }
+    },
+    {
+      "game_id": "2026_12_LV_CLE",
+      "kickoff_utc": "2026-11-30T01:20:00+00:00",
+      "event_id": "eaa993c3d62d6b5aeb6142cdd7862fd5",
+      "commence_time": "2026-11-30T01:20:00Z",
+      "home_team": "CLE",
+      "away_team": "LV",
+      "books": {
+        "draftkings": {
+          "last_update": "2026-11-24T18:35:40Z",
+          "moneyline_home": -220,
+          "moneyline_away": 183,
+          "spread_home": -4.5,
+          "spread_home_price": -105,
+          "spread_away_price": -114,
+          "total": 41.5,
+          "over_price": -103,
+          "under_price": -117
+        },
+        "fanduel": {
+          "last_update": "2026-11-24T18:36:53Z",
+          "moneyline_home": -240,
+          "moneyline_away": 198,
+          "spread_home": -4.5,
+          "spread_home_price": -115,
+          "spread_away_price": -105,
+          "total": 41.5,
+          "over_price": -105,
+          "under_price": -115
+        },
+        "betmgm": {
+          "last_update": "2026-11-24T18:36:29Z",
+          "moneyline_home": -225,
+          "moneyline_away": 188,
+          "spread_home": -4.5,
+          "spread_home_price": -110,
+          "spread_away_price": -108,
+          "total": 41.0,
+          "over_price": -112,
+          "under_price": -105
+        }
+      },
+      "consensus": {
+        "spread_line": 4.5,
+        "total_line": 41.5,
+        "p_home_moneyline": 0.6659815005138747,
+        "n_books": 3
+      }
+    },
+    {
+      "game_id": "2026_12_CAR_TB",
+      "kickoff_utc": "2026-12-01T01:15:00+00:00",
+      "event_id": "2cdaecba7c0bff9b58a48a82e6ee17a7",
+      "commence_time": "2026-12-01T01:15:00Z",
+      "home_team": "TB",
+      "away_team": "CAR",
+      "books": {
+        "draftkings": {
+          "last_update": "2026-11-24T18:35:40Z",
+          "moneyline_home": -154,
+          "moneyline_away": 130,
+          "spread_home": -3.0,
+          "spread_home_price": -105,
+          "spread_away_price": -115,
+          "total": 43.5,
+          "over_price": -110,
+          "under_price": -109
+        },
+        "fanduel": {
+          "last_update": "2026-11-24T18:36:53Z",
+          "moneyline_home": -156,
+          "moneyline_away": 132,
+          "spread_home": -3.0,
+          "spread_home_price": 100,
+          "spread_away_price": -120,
+          "total": 43.5,
+          "over_price": -115,
+          "under_price": -105
+        },
+        "betmgm": {
+          "last_update": "2026-11-24T18:36:29Z",
+          "moneyline_home": -155,
+          "moneyline_away": 130,
+          "spread_home": -3.0,
+          "spread_home_price": -102,
+          "spread_away_price": -118,
+          "total": 43.5,
+          "over_price": -110,
+          "under_price": -108
+        }
+      },
+      "consensus": {
+        "spread_line": 3.0,
+        "total_line": 43.5,
+        "p_home_moneyline": 0.5829926410466066,
+        "n_books": 3
+      }
+    }
+  ]
+}
