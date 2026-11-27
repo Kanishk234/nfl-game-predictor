@@ -3,7 +3,7 @@
   "week": 12,
   "n_games": 16,
   "n_predicted": 16,
-  "n_graded": 4,
+  "n_graded": 5,
   "complete": false,
   "passes": [
     "early"
@@ -11,36 +11,36 @@
   "official_rule": "latest pass generated before each game's actual kickoff",
   "rescheduled_games": [],
   "summary": {
-    "n": 4,
+    "n": 5,
     "model": {
-      "n": 4,
-      "accuracy": 0.5,
-      "brier": 0.2859725125,
-      "log_loss": 0.773657772710194,
-      "auc": 0.5,
-      "ece": 0.195125,
-      "spread_mae": 6.67,
+      "n": 5,
+      "accuracy": 0.4,
+      "brier": 0.29147561200000005,
+      "log_loss": 0.7830768792011734,
+      "auc": 0.3333333333333333,
+      "ece": 0.26808000000000004,
+      "spread_mae": 10.065999999999999,
       "ats": {
-        "n": 4,
-        "mae": 6.67,
-        "rmse": 6.943655377393092,
-        "ats_w": 2,
+        "n": 5,
+        "mae": 10.065999999999999,
+        "rmse": 12.26523460843697,
+        "ats_w": 3,
         "ats_l": 1,
         "ats_push": 1,
-        "ats_pct": 0.6666666666666666,
+        "ats_pct": 0.75,
         "breakeven": 0.5238
       }
     },
     "vegas": {
-      "n": 4,
-      "accuracy": 0.75,
-      "brier": 0.29931452758186655,
-      "log_loss": 0.8220426007833841,
-      "auc": 0.5,
-      "ece": 0.5247519795579004,
-      "spread_mae": 5.375
+      "n": 5,
+      "accuracy": 0.6,
+      "brier": 0.30806213370729596,
+      "log_loss": 0.8338703915788248,
+      "auc": 0.3333333333333333,
+      "ece": 0.3623397865677444,
+      "spread_mae": 9.3
     },
-    "n_with_line": 4,
+    "n_with_line": 5,
     "head_to_head": {
       "disagreements": 1,
       "we_were_right": 0,
@@ -49,36 +49,36 @@
   },
   "by_pass": {
     "early": {
-      "n": 4,
+      "n": 5,
       "model": {
-        "n": 4,
-        "accuracy": 0.5,
-        "brier": 0.2859725125,
-        "log_loss": 0.773657772710194,
-        "auc": 0.5,
-        "ece": 0.195125,
-        "spread_mae": 6.67,
+        "n": 5,
+        "accuracy": 0.4,
+        "brier": 0.29147561200000005,
+        "log_loss": 0.7830768792011734,
+        "auc": 0.3333333333333333,
+        "ece": 0.26808000000000004,
+        "spread_mae": 10.065999999999999,
         "ats": {
-          "n": 4,
-          "mae": 6.67,
-          "rmse": 6.943655377393092,
-          "ats_w": 2,
+          "n": 5,
+          "mae": 10.065999999999999,
+          "rmse": 12.26523460843697,
+          "ats_w": 3,
           "ats_l": 1,
           "ats_push": 1,
-          "ats_pct": 0.6666666666666666,
+          "ats_pct": 0.75,
           "breakeven": 0.5238
         }
       },
       "vegas": {
-        "n": 4,
-        "accuracy": 0.75,
-        "brier": 0.29931452758186655,
-        "log_loss": 0.8220426007833841,
-        "auc": 0.5,
-        "ece": 0.5247519795579004,
-        "spread_mae": 5.375
+        "n": 5,
+        "accuracy": 0.6,
+        "brier": 0.30806213370729596,
+        "log_loss": 0.8338703915788248,
+        "auc": 0.3333333333333333,
+        "ece": 0.3623397865677444,
+        "spread_mae": 9.3
       },
-      "n_with_line": 4,
+      "n_with_line": 5,
       "head_to_head": {
         "disagreements": 1,
         "we_were_right": 0,
@@ -201,6 +201,35 @@
         "correct": 1,
         "brier": 0.1786943991108598,
         "abs_error": 0.0
+      }
+    },
+    {
+      "game_id": "2026_12_DEN_PIT",
+      "pass": "early",
+      "kickoff_utc": "2026-11-27T20:00:00+00:00",
+      "home_team": "PIT",
+      "away_team": "DEN",
+      "home_score": 27,
+      "away_score": 5,
+      "margin": 22.0,
+      "home_win": 1,
+      "winner": "PIT",
+      "pick": "DEN",
+      "model": {
+        "p_home": 0.4401,
+        "pred_margin": -1.65,
+        "pick": "DEN",
+        "correct": 0,
+        "brier": 0.3134880100000001,
+        "abs_error": 23.65,
+        "ats": "win"
+      },
+      "vegas": {
+        "p_home": 0.4142931123770068,
+        "spread_line": -3.0,
+        "correct": 0,
+        "brier": 0.34305255820901354,
+        "abs_error": 25.0
       }
     }
   ]
