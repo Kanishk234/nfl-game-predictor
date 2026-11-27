@@ -1,0 +1,207 @@
+{
+  "season": 2026,
+  "week": 12,
+  "n_games": 16,
+  "n_predicted": 16,
+  "n_graded": 4,
+  "complete": false,
+  "passes": [
+    "early"
+  ],
+  "official_rule": "latest pass generated before each game's actual kickoff",
+  "rescheduled_games": [],
+  "summary": {
+    "n": 4,
+    "model": {
+      "n": 4,
+      "accuracy": 0.5,
+      "brier": 0.2859725125,
+      "log_loss": 0.773657772710194,
+      "auc": 0.5,
+      "ece": 0.195125,
+      "spread_mae": 6.67,
+      "ats": {
+        "n": 4,
+        "mae": 6.67,
+        "rmse": 6.943655377393092,
+        "ats_w": 2,
+        "ats_l": 1,
+        "ats_push": 1,
+        "ats_pct": 0.6666666666666666,
+        "breakeven": 0.5238
+      }
+    },
+    "vegas": {
+      "n": 4,
+      "accuracy": 0.75,
+      "brier": 0.29931452758186655,
+      "log_loss": 0.8220426007833841,
+      "auc": 0.5,
+      "ece": 0.5247519795579004,
+      "spread_mae": 5.375
+    },
+    "n_with_line": 4,
+    "head_to_head": {
+      "disagreements": 1,
+      "we_were_right": 0,
+      "vegas_was_right": 1
+    }
+  },
+  "by_pass": {
+    "early": {
+      "n": 4,
+      "model": {
+        "n": 4,
+        "accuracy": 0.5,
+        "brier": 0.2859725125,
+        "log_loss": 0.773657772710194,
+        "auc": 0.5,
+        "ece": 0.195125,
+        "spread_mae": 6.67,
+        "ats": {
+          "n": 4,
+          "mae": 6.67,
+          "rmse": 6.943655377393092,
+          "ats_w": 2,
+          "ats_l": 1,
+          "ats_push": 1,
+          "ats_pct": 0.6666666666666666,
+          "breakeven": 0.5238
+        }
+      },
+      "vegas": {
+        "n": 4,
+        "accuracy": 0.75,
+        "brier": 0.29931452758186655,
+        "log_loss": 0.8220426007833841,
+        "auc": 0.5,
+        "ece": 0.5247519795579004,
+        "spread_mae": 5.375
+      },
+      "n_with_line": 4,
+      "head_to_head": {
+        "disagreements": 1,
+        "we_were_right": 0,
+        "vegas_was_right": 1
+      }
+    }
+  },
+  "games": [
+    {
+      "game_id": "2026_12_GB_LA",
+      "pass": "early",
+      "kickoff_utc": "2026-11-26T01:00:00+00:00",
+      "home_team": "LA",
+      "away_team": "GB",
+      "home_score": 26,
+      "away_score": 13,
+      "margin": 13.0,
+      "home_win": 1,
+      "winner": "LA",
+      "pick": "LA",
+      "model": {
+        "p_home": 0.6958,
+        "pred_margin": 6.66,
+        "pick": "LA",
+        "correct": 1,
+        "brier": 0.09253764000000002,
+        "abs_error": 6.34,
+        "ats": "win"
+      },
+      "vegas": {
+        "p_home": 0.552594002855783,
+        "spread_line": 2.5,
+        "correct": 1,
+        "brier": 0.20017212628061112,
+        "abs_error": 10.5
+      }
+    },
+    {
+      "game_id": "2026_12_CHI_DET",
+      "pass": "early",
+      "kickoff_utc": "2026-11-26T18:00:00+00:00",
+      "home_team": "DET",
+      "away_team": "CHI",
+      "home_score": 35,
+      "away_score": 39,
+      "margin": -4.0,
+      "home_win": 0,
+      "winner": "CHI",
+      "pick": "DET",
+      "model": {
+        "p_home": 0.6482,
+        "pred_margin": 4.52,
+        "pick": "DET",
+        "correct": 0,
+        "brier": 0.42016324,
+        "abs_error": 8.52,
+        "ats": "loss"
+      },
+      "vegas": {
+        "p_home": 0.43650793650793646,
+        "spread_line": -2.5,
+        "correct": 1,
+        "brier": 0.1905391786344167,
+        "abs_error": 1.5
+      }
+    },
+    {
+      "game_id": "2026_12_PHI_DAL",
+      "pass": "early",
+      "kickoff_utc": "2026-11-26T21:30:00+00:00",
+      "home_team": "DAL",
+      "away_team": "PHI",
+      "home_score": 38,
+      "away_score": 39,
+      "margin": -1.0,
+      "home_win": 0,
+      "winner": "PHI",
+      "pick": "DAL",
+      "model": {
+        "p_home": 0.7359,
+        "pred_margin": 7.17,
+        "pick": "DAL",
+        "correct": 0,
+        "brier": 0.54154881,
+        "abs_error": 8.17,
+        "ats": "win"
+      },
+      "vegas": {
+        "p_home": 0.7923713815513397,
+        "spread_line": 8.5,
+        "correct": 0,
+        "brier": 0.6278524063015787,
+        "abs_error": 9.5
+      }
+    },
+    {
+      "game_id": "2026_12_KC_BUF",
+      "pass": "early",
+      "kickoff_utc": "2026-11-27T01:20:00+00:00",
+      "home_team": "BUF",
+      "away_team": "KC",
+      "home_score": 13,
+      "away_score": 10,
+      "margin": 3.0,
+      "home_win": 1,
+      "winner": "BUF",
+      "pick": "BUF",
+      "model": {
+        "p_home": 0.7006,
+        "pred_margin": 6.65,
+        "pick": "BUF",
+        "correct": 1,
+        "brier": 0.08964036,
+        "abs_error": 3.6500000000000004,
+        "ats": "push"
+      },
+      "vegas": {
+        "p_home": 0.5772773969718915,
+        "spread_line": 3.0,
+        "correct": 1,
+        "brier": 0.1786943991108598,
+        "abs_error": 0.0
+      }
+    }
+  ]
+}
